@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 class DashboardRedirectController extends Controller
 {
@@ -16,27 +16,23 @@ class DashboardRedirectController extends Controller
 
         // Gunakan hasRole() dari Spatie untuk memeriksa peran pengguna
         if ($user->hasRole('admin')) {
-            // Arahkan ke dashboard admin
-            // Contoh: return redirect()->route('admin.dashboard');
-            return redirect('/admin/dashboard'); // Sesuaikan dengan nama route Anda
+            // BENAR: Menggunakan nama rute 'admin.dashboard'
+            return redirect()->route('admin.dashboard');
         }
 
         if ($user->hasRole('dokter')) {
-            // Arahkan ke dashboard dokter
-            // Contoh: return redirect()->route('doctor.dashboard');
-            return redirect('/doctor/dashboard'); // Sesuaikan dengan nama route Anda
+            // Anda perlu mendefinisikan rute dengan nama 'dokter.dashboard'
+            return redirect()->route('dokter.dashboard');
         }
 
         if ($user->hasRole('petugas loket apotek')) {
-            // Arahkan ke dashboard apotek
-            // Contoh: return redirect()->route('pharmacy.dashboard');
-            return redirect('/pharmacy/dashboard'); // Sesuaikan dengan nama route Anda
+             // Anda perlu mendefinisikan rute dengan nama 'apotek.dashboard'
+            return redirect()->route('apotek.dashboard');
         }
 
         if ($user->hasRole('pasien')) {
-            // Arahkan ke dashboard pasien
-            // Contoh: return redirect()->route('pasien.dashboard');
-            return redirect('/pasien/dashboard'); // Sesuaikan dengan nama route Anda
+            // BENAR: Menggunakan nama rute 'pasien.dashboard'
+            return redirect()->route('pasien.dashboard');
         }
 
         // Fallback: Jika user login tapi tidak punya role yang dikenali, logout saja.
@@ -44,4 +40,3 @@ class DashboardRedirectController extends Controller
         return redirect('/login')->withErrors(['email' => 'Anda tidak memiliki hak akses yang valid.']);
     }
 }
-

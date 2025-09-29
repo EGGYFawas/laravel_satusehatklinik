@@ -4,48 +4,47 @@
 
 @section('content')
     <!-- Header -->
-    <!-- Header -->
-<header class="bg-white py-4 sticky top-0 z-[1000] shadow-md transition-all duration-300 ease-in-out">
-    <div class="max-w-7xl mx-auto px-6">
-        <nav class="flex justify-between items-center">
-            <a href="/" class="flex items-center gap-2 text-xl sm:text-2xl font-bold text-brand-primary no-underline">
-                <svg class="w-7 h-7 sm:w-8 sm:h-8" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"></path></svg>
-                Klinik Sehat
-            </a>
-            <ul class="hidden lg:flex gap-10 list-none">
-                <li><a href="#beranda" class="text-text-grey font-medium no-underline relative transition-colors duration-300 ease-in-out hover:text-brand-primary after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-[-5px] after:left-1/2 after:bg-brand-primary after:transition-all after:duration-300 after:ease-in-out after:-translate-x-1/2 hover:after:w-full">Beranda</a></li>
-                <li><a href="#layanan" class="text-text-grey font-medium no-underline relative transition-colors duration-300 ease-in-out hover:text-brand-primary after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-[-5px] after:left-1/2 after:bg-brand-primary after:transition-all after:duration-300 after:ease-in-out after:-translate-x-1/2 hover:after:w-full">Layanan Kami</a></li>
-                <li><a href="#dokter" class="text-text-grey font-medium no-underline relative transition-colors duration-300 ease-in-out hover:text-brand-primary after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-[-5px] after:left-1/2 after:bg-brand-primary after:transition-all after:duration-300 after:ease-in-out after:-translate-x-1/2 hover:after:w-full">Dokter</a></li>
-                <li><a href="#tentang" class="text-text-grey font-medium no-underline relative transition-colors duration-300 ease-in-out hover:text-brand-primary after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-[-5px] after:left-1/2 after:bg-brand-primary after:transition-all after:duration-300 after:ease-in-out after:-translate-x-1/2 hover:after:w-full">Tentang Kami</a></li>
-            </ul>
-            
-            {{-- Cek jika pengguna sudah login --}}
-            @auth
-                <!-- Tampilkan menu setelah login -->
-                <div class="hidden lg:flex gap-4">
-                    <a href="{{ route('dashboard') }}" class="inline-block text-center py-2.5 px-6 rounded-lg no-underline font-semibold transition-all duration-300 ease-in-out border border-transparent bg-brand-primary text-brand-text hover:opacity-90 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-none">Dashboard</a>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button type="submit" class="inline-block text-center py-2.5 px-6 rounded-lg no-underline font-semibold transition-all duration-300 ease-in-out border bg-white text-brand-primary border-gray-300 hover:bg-gray-50 hover:border-brand-primary">Keluar</button>
-                    </form>
-                </div>
-            @else
-                {{-- Tampilkan tombol Masuk dan Daftar hanya jika pengguna belum login --}}
+    <header class="bg-white py-4 sticky top-0 z-[1000] shadow-md transition-all duration-300 ease-in-out">
+        <div class="max-w-7xl mx-auto px-6">
+            <nav class="flex justify-between items-center">
+                <a href="/" class="flex items-center gap-2 text-xl sm:text-2xl font-bold text-brand-primary no-underline">
+                    <svg class="w-7 h-7 sm:w-8 sm:h-8" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"></path></svg>
+                    Klinik Sehat
+                </a>
+                <ul class="hidden lg:flex gap-10 list-none">
+                    <li><a href="#beranda" class="text-text-grey font-medium no-underline relative transition-colors duration-300 ease-in-out hover:text-brand-primary after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-[-5px] after:left-1/2 after:bg-brand-primary after:transition-all after:duration-300 after:ease-in-out after:-translate-x-1/2 hover:after:w-full">Beranda</a></li>
+                    <li><a href="#layanan" class="text-text-grey font-medium no-underline relative transition-colors duration-300 ease-in-out hover:text-brand-primary after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-[-5px] after:left-1/2 after:bg-brand-primary after:transition-all after:duration-300 after:ease-in-out after:-translate-x-1/2 hover:after:w-full">Layanan Kami</a></li>
+                    <li><a href="#dokter" class="text-text-grey font-medium no-underline relative transition-colors duration-300 ease-in-out hover:text-brand-primary after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-[-5px] after:left-1/2 after:bg-brand-primary after:transition-all after:duration-300 after:ease-in-out after:-translate-x-1/2 hover:after:w-full">Dokter</a></li>
+                    <li><a href="#tentang" class="text-text-grey font-medium no-underline relative transition-colors duration-300 ease-in-out hover:text-brand-primary after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-[-5px] after:left-1/2 after:bg-brand-primary after:transition-all after:duration-300 after:ease-in-out after:-translate-x-1/2 hover:after:w-full">Tentang Kami</a></li>
+                </ul>
                 <div class="hidden lg:flex gap-4">
                     <a href="{{ route('login') }}" class="inline-block text-center py-2.5 px-6 rounded-lg no-underline font-semibold transition-all duration-300 ease-in-out border border-transparent bg-brand-primary text-brand-text hover:opacity-90 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-none">Masuk</a>
                     <a href="{{ route('register') }}" class="inline-block text-center py-2.5 px-6 rounded-lg no-underline font-semibold transition-all duration-300 ease-in-out border bg-white text-brand-primary border-gray-300 hover:bg-gray-50 hover:border-brand-primary">Daftar</a>
                 </div>
-            @endauth
-
-            <div class="lg:hidden cursor-pointer z-[1010]" id="burger-menu">
-                <div class="w-6 h-0.5 bg-brand-primary m-1.5 transition-all duration-300 ease-in-out"></div>
-                <div class="w-6 h-0.5 bg-brand-primary m-1.5 transition-all duration-300 ease-in-out"></div>
-                <div class="w-6 h-0.5 bg-brand-primary m-1.5 transition-all duration-300 ease-in-out"></div>
-            </div>
-        </nav>
-    </div>
-</header>
-
+                {{-- Tampilkan ini jika pengguna SUDAH LOGIN --}}
+                @auth
+                    <div class="flex items-center gap-x-4">
+                        <a href="{{ route('dashboard') }}" class="py-2 px-6 bg-brand-primary text-brand-text ...">
+                            Dashboard 
+                        </a>
+                        
+                        {{-- Form untuk logout --}}
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="py-2 px-6 border border-gray-300 ...">
+                                Keluar
+                            </button>
+                        </form>
+                    </div>
+                @endauth
+                <div class="lg:hidden cursor-pointer z-[1010]" id="burger-menu">
+                    <div class="w-6 h-0.5 bg-brand-primary m-1.5 transition-all duration-300 ease-in-out"></div>
+                    <div class="w-6 h-0.5 bg-brand-primary m-1.5 transition-all duration-300 ease-in-out"></div>
+                    <div class="w-6 h-0.5 bg-brand-primary m-1.5 transition-all duration-300 ease-in-out"></div>
+                </div>
+            </nav>
+        </div>
+    </header>
     
     <!-- Mobile Navigation -->
     <div class="fixed top-0 h-screen w-[70%] bg-white shadow-lg z-[1005] transition-transform duration-400 ease-in-out flex flex-col items-center justify-center pt-20 -right-full" id="mobile-nav">

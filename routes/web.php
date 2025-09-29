@@ -4,19 +4,16 @@ use Illuminate\Support\Facades\Route;
 
 // Import untuk Controller Aplikasi
 use App\Http\Controllers\AppInfoController;
-use App\Http\Controllers\BayarController;
-// ... (sisa use statement Anda yang lain tetap sama)
-use App\Http\Controllers\TindakanController;
-use App\Http\Controllers\PasienController;
-use App\Http\Controllers\PractitionerController;
-use App\Http\Controllers\PendaftaranController;
-use App\Http\Controllers\SatusehatController;
+// ... (sisa use statement Anda yang lain)
 use App\Http\Controllers\BundleController;
-
 
 // Import untuk Controller Autentikasi & Redirect
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DashboardRedirectController;
+
+// BENAR: Tambahkan 'use' statement untuk AdminDashboardController Anda
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -24,11 +21,7 @@ use App\Http\Controllers\DashboardRedirectController;
 |--------------------------------------------------------------------------
 */
 
-// MODIFIKASI: Langsung tampilkan view landing page di route utama
-// dan berikan nama 'landing' untuk mengatasi error "Route [landing] not defined".
 Route::get('/', function () {
-    // Pastikan Anda memiliki file view di resources/views/landing.blade.php
-    // Jika file Anda masih bernama welcome.blade.php, ganti 'landing' menjadi 'welcome'
     return view('landing');
 })->name('landing');
 
@@ -51,27 +44,21 @@ Route::middleware(['auth'])->group(function () {
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 
     // --- GRUP ROUTE UNTUK PASIEN ---
-    // PERBAIKAN: Gunakan middleware 'role' dari Spatie, bukan CheckRole::class
     Route::middleware(['role:pasien'])->prefix('pasien')->name('pasien.')->group(function () {
         Route::get('/dashboard', function () {
             return view('pasien.dashboard'); 
         })->name('dashboard');
     });
 
-    // --- GRUP ROUTE UNTUK ADMIN / STAF KLINIK ---
-    // PERBAIKAN: Gunakan middleware 'role' dari Spatie
+    // --- GRUP ROUTE UNTUK ADMIN (SATU-SATUNYA YANG BENAR) ---
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
-        Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
         
-        // ... (sisa rute admin Anda tetap sama)
-        Route::resource('pasien', App\Http\Controllers\PasienController::class);
-        Route::resource('kunjungan', App\Http\Controllers\PendaftaranController::class);
-        // ... dan seterusnya
+        // Menggunakan AdminDashboardController yang sudah di-import di atas
+        Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+        
+        // Tempatkan rute admin lainnya di sini jika ada
+        // Route::resource('pasien', App\Http\Controllers\PasienController::class);
     });
 
-    // Anda bisa menambahkan grup lain untuk role 'dokter', 'petugas loket apotek', dll.
-    // Contoh:
-    // Route::middleware(['role:dokter'])->prefix('dokter')->name('dokter.')->group(function () {
-    //      // Rute-rute dokter
-    // });
+    // HAPUS BLOK ADMIN YANG DUPLIKAT DARI SINI
 });
