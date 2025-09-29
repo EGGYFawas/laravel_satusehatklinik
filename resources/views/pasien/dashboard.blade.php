@@ -242,6 +242,21 @@
                 <div class="queue-label">Nomor Antrean</div>
                 <div class="queue-number">-</div>
             </div>
+
+            <div class="card antrean-card">
+                <img src="https://cdni.iconscout.com/illustration/premium/thumb/online-doctor-consultation-5693986-4759529.png" alt="Ilustrasi Antrean Online">
+                <div class="antrean-info">
+                    <h2>Antrean Online</h2>
+                    <p>Antrean Online, Lebih Efisien untuk Semua</p>
+                    <button class="btn-primary">Ambil Antrean</button>
+                </div>
+            </div>
+
+            <div class="card status-card">
+                <h3>BELUM ADA ANTRIAN DIBUAT</h3>
+                <div class="queue-label">Nomor Antrean</div>
+                <div class="queue-number">-</div>
+            </div>
         </main>
     </div>
 
