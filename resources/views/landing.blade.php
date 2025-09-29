@@ -25,7 +25,7 @@
                 @auth
                     <div class="flex items-center gap-x-4">
                         <a href="{{ route('dashboard') }}" class="py-2 px-6 bg-brand-primary text-brand-text ...">
-                            Dashboard
+                            Dashboard cobadeh
                         </a>
                         
                         {{-- Form untuk logout --}}
