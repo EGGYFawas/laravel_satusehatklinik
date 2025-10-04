@@ -16,7 +16,7 @@
         <aside 
             class="fixed inset-y-0 left-0 z-30 w-64 flex flex-col text-white transform -translate-x-full transition-transform duration-300 ease-in-out md:relative md:translate-x-0 bg-gradient-to-b from-[#4F46E5] to-[#0F172A]"
             :class="{'translate-x-0': sidebarOpen, '-translate-x-full': !sidebarOpen}">
-                
+                    
             <!-- Kontainer utama untuk area logo, diberi padding atas dan samping -->
             <div class="p-4">
     <div class="aspect-square bg-[#f1eff1] p-4 rounded-full shadow-lg flex items-center justify-center">
