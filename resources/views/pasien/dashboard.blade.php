@@ -3,248 +3,300 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Pasien</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+    <title>Dashboard Pasien - Klinik Sehat</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        :root {
-            --primary-color: #3B82F6; /* Biru untuk tombol utama */
-            --secondary-color: #A8FBD3; /* Hijau mint dari desain */
-            --dark-purple: #4C51BF; /* Ungu gelap untuk tombol keluar */
-            --text-dark: #333;
-            --text-light: #555;
-            --white-color: #FFFFFF;
-            --bg-light: #F9FAFB;
-            --card-bg: #FFFFFF;
-            --font-family: 'Poppins', sans-serif;
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
         }
-
-        body {
-            font-family: var(--font-family);
-            background-color: var(--bg-light);
-            margin: 0;
-            padding: 20px;
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
         }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
+        ::-webkit-scrollbar-thumb {
+            background: #ABDCD6;
+            border-radius: 10px;
         }
-
-        /* Header */
-        .header {
-            background-color: var(--secondary-color);
-            border: 2px solid #92eac5;
-            border-radius: 12px;
-            padding: 15px 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
+        ::-webkit-scrollbar-thumb:hover {
+            background: #9accc7;
         }
-
-        .header-greeting {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .header-greeting img {
-            width: 50px;
-            height: 50px;
-        }
-
-        .header-greeting h1 {
-            font-size: 22px;
-            font-weight: 600;
-            color: var(--text-dark);
-        }
-
-        .btn-logout {
-            background-color: var(--dark-purple);
-            color: var(--white-color);
-            border: none;
-            padding: 10px 25px;
-            border-radius: 20px;
-            font-size: 15px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        .btn-logout:hover {
-            background-color: #3c409a;
-        }
-
-        /* Nav Menu */
-        .nav-menu {
-            display: flex;
-            gap: 15px;
-            justify-content: flex-start;
-            margin-bottom: 30px;
-        }
-
-        .nav-button {
-            background-color: #92eac5;
-            color: var(--text-dark);
-            border: none;
-            padding: 12px 30px;
-            border-radius: 20px;
-            font-size: 15px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        
-        .nav-button:hover {
-            background-color: #79d4b0;
-        }
-
-        /* Main Content */
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-        }
-
-        .card {
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-        }
-
-        .antrean-card {
-            display: flex;
-            align-items: center;
-            gap: 30px;
-        }
-
-        .antrean-card img {
-            max-width: 120px;
-        }
-
-        .antrean-card h2 {
-            font-size: 24px;
-            color: var(--primary-color);
-            margin: 0 0 10px 0;
-            font-weight: 600;
-        }
-
-        .antrean-card p {
-            font-size: 15px;
-            color: var(--text-light);
-            margin: 0 0 20px 0;
-        }
-
-        .btn-primary {
-            background-color: var(--dark-purple);
-            color: var(--white-color);
-            border: none;
-            padding: 12px 30px;
-            border-radius: 20px;
-            font-size: 15px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        
-        .btn-primary:hover {
-            background-color: #3c409a;
-        }
-        
-        .status-card {
-            background-color: #eef2ff; /* Latar belakang lebih soft */
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        
-        .status-card h3 {
-            font-size: 16px;
-            font-weight: 500;
-            color: var(--text-light);
-            margin: 0 0 20px 0;
-        }
-        
-        .status-card .queue-label {
-            font-size: 18px;
-            color: var(--text-dark);
-            margin: 0 0 10px 0;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 10px;
-        }
-
-        .status-card .queue-number {
-            font-size: 48px;
-            font-weight: 700;
-            color: var(--dark-purple);
-        }
-
-        /* Responsiveness */
-        @media (max-width: 900px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-            .header-greeting h1 {
-                font-size: 18px;
-            }
-            .nav-menu {
-                flex-wrap: wrap;
-                justify-content: center;
-            }
-        }
-         @media (max-width: 600px) {
-            body { padding: 10px; }
-            .header { flex-direction: column; gap: 15px; }
-            .antrean-card { flex-direction: column; text-align: center; }
-        }
-
+        /* Menggunakan custom color palette dari permintaan */
+        .bg-custom-sidebar { background-color: #E9E6E6; }
+        .bg-custom-button { background-color: #24306E; }
+        .text-custom-button { color: #24306E; }
+        .bg-custom-container { background-color: #ABDCD6; }
+        .bg-custom-status-waiting { background-color: #facc15; color: #713f12; } /* Kuning */
+        .bg-custom-status-called { background-color: #4ade80; color: #166534; } /* Hijau */
+        .bg-custom-status-finished { background-color: #E9E6E6; color: #4b5563; } /* Abu-abu */
     </style>
 </head>
-<body>
+<body class="bg-gray-100 font-sans" style="background-image: url('https://images.unsplash.com/photo-1576091160550-2173dba999ef?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80'); background-size: cover; background-attachment: fixed;">
 
-    <div class="container">
-        <header class="header">
-            <div class="header-greeting">
-                <img src="{{ asset('assets/img/logo_login.png') }}" alt="Logo Klinik">
-                {{-- DIUBAH: Menggunakan 'full_name' sesuai database --}}
-                <h1>Selamat Datang, {{ Auth::user()->full_name }}</h1>
+    <div class="flex flex-col lg:flex-row min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-full lg:w-64 bg-custom-sidebar text-gray-800 p-4 shadow-lg lg:fixed lg:h-screen">
+            <div class="flex items-center justify-between lg:justify-center mb-10">
+                <div class="flex items-center">
+                    <i class="fas fa-clinic-medical text-4xl text-custom-button"></i>
+                    <h1 class="text-2xl font-bold ml-2 text-custom-button">Klinik Sehat</h1>
+                </div>
+                <button id="mobile-menu-button" class="lg:hidden text-2xl">
+                    <i class="fas fa-bars"></i>
+                </button>
             </div>
-            <form action="{{ route('logout') }}" method="POST">
-                @csrf
-                <button type="submit" class="btn-logout">Keluar</button>
-            </form>
-        </header>
+            <nav id="mobile-menu" class="hidden lg:block">
+                <ul>
+                    <li class="mb-4">
+                        <a href="#" class="flex items-center p-3 rounded-lg bg-custom-button text-white shadow">
+                            <i class="fas fa-tachometer-alt w-6"></i>
+                            <span class="ml-3">Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="mb-4">
+                        <a href="#" class="flex items-center p-3 rounded-lg hover:bg-gray-300 transition-colors">
+                            <i class="fas fa-history w-6"></i>
+                            <span class="ml-3">Riwayat Kunjungan</span>
+                        </a>
+                    </li>
+                    <li class="mb-4">
+                        <a href="#" class="flex items-center p-3 rounded-lg hover:bg-gray-300 transition-colors">
+                            <i class="fas fa-user-md w-6"></i>
+                            <span class="ml-3">Jadwal Dokter</span>
+                        </a>
+                    </li>
+                    <li class="mb-4">
+                        <a href="#" class="flex items-center p-3 rounded-lg hover:bg-gray-300 transition-colors">
+                            <i class="far fa-newspaper w-6"></i>
+                            <span class="ml-3">Artikel</span>
+                        </a>
+                    </li>
+                </ul>
+                <div class="absolute bottom-4 left-4 right-4">
+                    <a href="#" class="flex items-center p-3 rounded-lg hover:bg-gray-300 transition-colors">
+                        <i class="fas fa-user-circle w-6"></i>
+                        <span class="ml-3">Profile Akun</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
 
-        <nav class="nav-menu">
-            <button class="nav-button">Dashboard</button>
-            <button class="nav-button">Apotek</button>
-            <button class="nav-button">Riwayat Kunjungan</button>
-            <button class="nav-button">Daftar</button>
-        </nav>
+        <!-- Main Content -->
+        <main class="flex-1 lg:ml-64 p-4 sm:p-6 md:p-8">
+            <!-- Header -->
+            <header class="flex justify-between items-center mb-8 p-4 bg-white/80 backdrop-blur-sm rounded-xl shadow-md">
+                <h2 class="text-xl sm:text-2xl font-semibold text-gray-700">Selamat Datang, Adinda Rahmanda Putri</h2>
+                <button class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg shadow transition-colors">
+                    Keluar
+                </button>
+            </header>
 
-        <main class="main-content">
-            <div class="card antrean-card">
-                <img src="https://cdni.iconscout.com/illustration/premium/thumb/online-doctor-consultation-5693986-4759529.png" alt="Ilustrasi Antrean Online">
-                <div class="antrean-info">
-                    <h2>Antrean Online</h2>
-                    <p>Antrean Online, Lebih Efisien untuk Semua</p>
-                    <button class="btn-primary">Ambil Antrean</button>
+            <!-- Dashboard Content -->
+            <div id="dashboard-content" class="space-y-8">
+                
+                <!-- State: No Queue -->
+                <div id="no-queue-state" class="hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <div class="md:col-span-1 p-6 rounded-2xl shadow-xl bg-white/90 backdrop-blur-sm flex flex-col items-center justify-center text-center">
+                            <img src="https://storage.googleapis.com/gemini-prod-us-west1-assets/generated_images/6353381a-6d65-4df3-9e45-733d7b7e090a.png?Expires=1725170400&GoogleAccessId=gcs-assets-prod%40mythic-dream-399709.iam.gserviceaccount.com&Signature=Vp6F1q22%2F6L%2FFHhV9hU5x0pM6X4yL6GkP7pDkH6d3k7Yf7dF7Hw3g%2BE%2B9bL2g%2Bv7n8h6e7p8e7d7g%2Bv7n8h6e7p8e7d7g%2Bv7n8h6e7p8e7d7g%2Bv7n8h6e7p8e7d7g%2Bv7n8h6e7p8e7d7g%2Bv7n8h6e7p8e7d7g%3D%3D" alt="Antrean Online" class="w-32 h-32 mb-4">
+                            <h3 class="text-xl font-bold text-custom-button mb-1">Antrean Online</h3>
+                            <p class="text-gray-600 mb-4">Antrean Online, Lebih Efisien untuk Semua</p>
+                            <button id="ambil-antrian-btn" class="bg-custom-button hover:bg-blue-900 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105">
+                                Ambil Antrian
+                            </button>
+                        </div>
+                        <div class="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-8">
+                            <div class="p-6 rounded-2xl shadow-xl bg-custom-container/90 backdrop-blur-sm flex flex-col justify-center items-center">
+                                 <h3 class="text-lg font-bold text-custom-button mb-4">Nomor Antrean Berobat</h3>
+                                 <p class="text-gray-700 text-center">Belum ada antrean dibuat.<br>Silahkan buat antrian baru.</p>
+                            </div>
+                            <div class="p-6 rounded-2xl shadow-xl bg-custom-container/90 backdrop-blur-sm flex flex-col justify-center items-center">
+                                 <h3 class="text-lg font-bold text-custom-button mb-4">Nomor Antrean Apotek</h3>
+                                 <p class="text-gray-700 text-center">Belum ada pemeriksaan terbaru.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- State: Queue Active -->
+                <div id="queue-active-state" class="hidden">
+                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                         <!-- Kolom Kiri: Antrean Berobat -->
+                         <div class="p-6 rounded-2xl shadow-xl bg-custom-container/90 backdrop-blur-sm flex flex-col justify-between">
+                            <div>
+                                <h3 class="text-lg font-bold text-custom-button mb-4 text-center">Nomor Antrean Berobat</h3>
+                                <div class="text-center mb-4">
+                                    <p class="text-gray-600">Nomor Antrean Anda</p>
+                                    <p id="queue-number" class="text-6xl font-extrabold text-custom-button">PU10</p>
+                                    <span id="queue-status-badge" class="mt-2 inline-block px-4 py-1 text-sm font-semibold rounded-full">DIPANGGIL</span>
+                                </div>
+                                <hr class="my-4 border-gray-400">
+                                <div class="text-center">
+                                    <p class="text-gray-600">Status yang Sedang Dipanggil: <span id="current-serving" class="font-bold text-custom-button">PU09</span></p>
+                                    <p class="text-gray-600">Estimasi Waktu Tunggu: <span id="wait-time" class="font-bold text-custom-button">5 Menit</span></p>
+                                </div>
+                            </div>
+                            <button id="cancel-queue-btn" class="w-full mt-6 bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
+                                Batalkan Antrian
+                            </button>
+                         </div>
+                         <!-- Kolom Kanan: Antrean Apotek -->
+                         <div class="p-6 rounded-2xl shadow-xl bg-custom-container/90 backdrop-blur-sm flex flex-col justify-center items-center">
+                             <h3 class="text-lg font-bold text-custom-button mb-4">Nomor Antrean Apotek</h3>
+                             <p class="text-gray-700 text-center">Belum ada pemeriksaan terbaru.</p>
+                         </div>
+                     </div>
+                </div>
+
+                <!-- Artikel Kesehatan -->
+                <div class="mt-8">
+                    <h3 class="text-2xl font-bold mb-4 text-white">Artikel Kesehatan</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Artikel 1 -->
+                        <div class="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden">
+                            <img class="w-full h-48 object-cover" src="https://images.unsplash.com/photo-1579165466949-c9247c3d3de1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80" alt="Artikel 1">
+                            <div class="p-4">
+                                <h4 class="font-bold text-lg mb-2">Banyak Kasus Keracunan, Epidemiolog Minta MBG Dihentikan Sementara</h4>
+                                <p class="text-gray-600 text-sm">Berita ini menyoroti pentingnya keamanan pangan dan pengawasan...</p>
+                            </div>
+                        </div>
+                        <!-- Artikel 2 -->
+                        <div class="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden">
+                            <img class="w-full h-48 object-cover" src="https://images.unsplash.com/photo-1528825871115-3581a5387919?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1915&q=80" alt="Artikel 2">
+                            <div class="p-4">
+                                <h4 class="font-bold text-lg mb-2">Manfaat Pepaya Ternyata Luar Biasa dengan Kandungan Bioaktif</h4>
+                                <p class="text-gray-600 text-sm">Pepaya kaya akan vitamin, mineral, dan senyawa antioksidan...</p>
+                            </div>
+                        </div>
+                        <!-- Artikel 3 -->
+                        <div class="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg overflow-hidden">
+                            <img class="w-full h-48 object-cover" src="https://images.unsplash.com/photo-1618939307313-a21c2c5445aa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80" alt="Artikel 3">
+                            <div class="p-4">
+                                <h4 class="font-bold text-lg mb-2">Pencegahan Penyakit Demam Berdarah</h4>
+                                <p class="text-gray-600 text-sm">Pentingnya menjaga kebersihan lingkungan untuk mencegah nyamuk...</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <div class="card status-card">
-                <h3>BELUM ADA ANTRIAN DIBUAT</h3>
-                <div class="queue-label">Nomor Antrean</div>
-                <div class="queue-number">-</div>
-            </div>
-
         </main>
     </div>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // --- DATA SIMULASI ---
+            // Anda bisa mengganti ini dengan data dari API
+            const mockData = {
+                hasQueue: false, // Ubah ke true untuk melihat state antrean aktif
+                queueDetails: {
+                    number: 'PU10',
+                    status: 'menunggu', // 'menunggu', 'dipanggil', 'selesai'
+                    servingNumber: 'PU09',
+                    estimatedWaitMinutes: 5,
+                    // Waktu panggil simulasi: 70 menit dari sekarang
+                    // Ubah angka 70 menjadi 50 untuk menguji tombol batal yang nonaktif
+                    estimatedCallTime: new Date(new Date().getTime() + 70 * 60000) 
+                }
+            };
+
+            // --- ELEMEN UI ---
+            const noQueueState = document.getElementById('no-queue-state');
+            const queueActiveState = document.getElementById('queue-active-state');
+            const ambilAntrianBtn = document.getElementById('ambil-antrian-btn');
+
+            // Elemen di kartu antrean aktif
+            const queueNumberEl = document.getElementById('queue-number');
+            const queueStatusBadgeEl = document.getElementById('queue-status-badge');
+            const currentServingEl = document.getElementById('current-serving');
+            const waitTimeEl = document.getElementById('wait-time');
+            const cancelQueueBtn = document.getElementById('cancel-queue-btn');
+
+            // --- LOGIKA UTAMA ---
+            function renderDashboard(data) {
+                if (data.hasQueue) {
+                    noQueueState.classList.add('hidden');
+                    queueActiveState.classList.remove('hidden');
+                    updateQueueCard(data.queueDetails);
+                } else {
+                    noQueueState.classList.remove('hidden');
+                    queueActiveState.classList.add('hidden');
+                }
+            }
+
+            function updateQueueCard(details) {
+                queueNumberEl.textContent = details.number;
+                currentServingEl.textContent = details.servingNumber;
+                waitTimeEl.textContent = `${details.estimatedWaitMinutes} Menit`;
+
+                // Update status dan warna badge
+                queueStatusBadgeEl.classList.remove('bg-custom-status-waiting', 'bg-custom-status-called', 'bg-custom-status-finished');
+                if (details.status === 'menunggu') {
+                    queueStatusBadgeEl.textContent = 'MENUNGGU DIPANGGIL';
+                    queueStatusBadgeEl.classList.add('bg-custom-status-waiting');
+                } else if (details.status === 'dipanggil') {
+                    queueStatusBadgeEl.textContent = 'DIPANGGIL';
+                    queueStatusBadgeEl.classList.add('bg-custom-status-called');
+                } else if (details.status === 'selesai') {
+                    queueStatusBadgeEl.textContent = 'SELESAI';
+                    queueStatusBadgeEl.classList.add('bg-custom-status-finished');
+                }
+
+                // Logika untuk menonaktifkan tombol batal
+                const now = new Date();
+                const timeDiffMinutes = (details.estimatedCallTime - now) / 60000;
+                
+                if (timeDiffMinutes < 60) {
+                    cancelQueueBtn.disabled = true;
+                    cancelQueueBtn.title = "Antrean tidak dapat dibatalkan kurang dari 60 menit sebelum panggilan.";
+                } else {
+                    cancelQueueBtn.disabled = false;
+                    cancelQueueBtn.title = "";
+                }
+            }
+
+            // --- EVENT LISTENERS ---
+            ambilAntrianBtn.addEventListener('click', () => {
+                // Simulasi mengambil antrian
+                alert('Logika untuk mengambil antrian akan diimplementasikan di sini.');
+                // Contoh perubahan state
+                mockData.hasQueue = true;
+                renderDashboard(mockData);
+            });
+            
+            cancelQueueBtn.addEventListener('click', () => {
+                if(confirm('Apakah Anda yakin ingin membatalkan antrean ini?')) {
+                    alert('Logika untuk membatalkan antrean akan diimplementasikan di sini.');
+                    // Contoh perubahan state
+                    mockData.hasQueue = false;
+                    renderDashboard(mockData);
+                }
+            });
+            
+            // --- Navigasi Mobile ---
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+
+            // --- Render Awal ---
+            renderDashboard(mockData);
+
+            // --- (Opsional) Simulasi perubahan status antrean ---
+            // Kode ini untuk demonstrasi perubahan warna status secara otomatis
+            let statuses = ['menunggu', 'dipanggil', 'selesai'];
+            let currentStatusIndex = 0;
+            setInterval(() => {
+                if (mockData.hasQueue) {
+                    currentStatusIndex = (currentStatusIndex + 1) % statuses.length;
+                    mockData.queueDetails.status = statuses[currentStatusIndex];
+                    updateQueueCard(mockData.queueDetails);
+                }
+            }, 5000); // Ganti status setiap 5 detik
+
+        });
+    </script>
 </body>
 </html>
