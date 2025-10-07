@@ -10,12 +10,12 @@ class Patient extends Model
     use HasFactory;
 
     /**
-     * Properti $fillable disesuaikan total dengan ERD terbaru.
+     * Properti $fillable disesuaikan untuk mendukung pendaftaran anggota keluarga.
      */
     protected $fillable = [
         'user_id',
         'nik',
-        // 'full_name' tidak perlu di sini karena data nama diambil dari tabel User
+        'full_name', // <-- PERBAIKAN: Menambahkan 'full_name' ke dalam fillable
         'date_of_birth',
         'gender',
         'address',
@@ -27,6 +27,7 @@ class Patient extends Model
 
     /**
      * Relasi one-to-one (inverse) ke User.
+     * Pasien yang memiliki akun.
      */
     public function user()
     {

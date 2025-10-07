@@ -8,114 +8,165 @@ use App\Models\ClinicQueue;
 use App\Models\Patient;
 use App\Models\Poli;
 use App\Models\Doctor;
+use App\Models\Article;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log; // Import Log Facade
 
 class DashboardController extends Controller
 {
     /**
-     * Menampilkan dashboard pasien beserta data antrean dan list poli.
+     * Menampilkan dashboard pasien.
      */
     public function index()
     {
         $user = Auth::user();
-        // Cari data pasien berdasarkan user_id yang sedang login.
         $patient = Patient::where('user_id', $user->id)->first();
-        
         $today = Carbon::today()->toDateString();
         $antreanBerobat = null;
 
-        // Hanya cari antrean jika data pasien ditemukan.
         if ($patient) {
-            $antreanBerobat = ClinicQueue::with('poli') // Eager load relasi poli
+            $antreanBerobat = ClinicQueue::with('poli')
                 ->where('patient_id', $patient->id)
                 ->whereDate('registration_time', $today)
-                ->whereIn('status', ['MENUNGGU', 'DIPANGGIL']) // Status sesuai ERD yang masih aktif
+                ->whereIn('status', ['MENUNGGU', 'DIPANGGIL'])
                 ->first();
         }
 
-        // Ambil semua data poli untuk ditampilkan di dropdown form.
         $polis = Poli::orderBy('name', 'asc')->get();
+        $articles = Article::whereNotNull('published_at')
+                            ->latest('published_at')
+                            ->take(3)
+                            ->get();
 
-        // Kirim semua data yang diperlukan ke view, termasuk data pasien
-        return view('pasien.dashboard', compact('user', 'patient', 'antreanBerobat', 'polis'));
+        return view('pasien.dashboard', compact('user', 'patient', 'antreanBerobat', 'polis', 'articles'));
     }
 
     /**
-     * Menyimpan antrean klinik baru ke database.
+     * Menyimpan antrean klinik baru, baik untuk diri sendiri maupun keluarga.
      */
     public function store(Request $request)
     {
-        // Validasi input dari form modal
-        $request->validate([
+        $user = Auth::user();
+        $isFamilyRegistration = filter_var($request->input('is_family'), FILTER_VALIDATE_BOOLEAN);
+
+        $baseRules = [
             'poli_id' => 'required|exists:polis,id',
             'doctor_id' => 'required|exists:doctors,id',
             'chief_complaint' => 'required|string|min:5|max:255',
             'registration_date' => 'required|date',
-            // 'patient_relationship' => 'required|string', // Sesuaikan jika field ini masih digunakan
-        ]);
+        ];
 
-        $user = Auth::user();
-        $patient = Patient::where('user_id', $user->id)->first();
-
-        // Keamanan: Pastikan data pasien ada sebelum membuat antrean.
-        if (!$patient) {
-            return redirect()->back()->with('error', 'Data profil pasien tidak ditemukan. Silakan lengkapi profil Anda terlebih dahulu.');
+        $familyRules = [];
+        if ($isFamilyRegistration) {
+            $familyRules = [
+                'new_patient_name' => 'required|string|max:255',
+                // Validasi unique di sini tetap penting sebagai lapisan pertama
+                'new_patient_nik' => 'required|string|digits:16|unique:patients,nik',
+                'new_patient_dob' => 'required|date|before_or_equal:today',
+                'new_patient_gender' => 'required|in:Laki-laki,Perempuan',
+                'patient_relationship' => 'required|string',
+                'patient_relationship_custom' => 'nullable|string|max:100|required_if:patient_relationship,Lainnya',
+            ];
         }
         
-        $registrationDate = Carbon::parse($request->registration_date)->toDateString();
-        
-        // Cek apakah pasien sudah memiliki antrean aktif pada hari yang sama.
-        $existingAntrean = ClinicQueue::where('patient_id', $patient->id)
-            ->whereDate('registration_time', $registrationDate)
-            ->whereIn('status', ['MENUNGGU', 'DIPANGGIL']) // Cek status yang masih aktif
-            ->exists();
+        $validator = Validator::make($request->all(), array_merge($baseRules, $familyRules));
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput()->with('error', 'Terdapat kesalahan pada data yang Anda masukkan. Silakan periksa kembali.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $patientForQueue = null;
+            $relationship = 'Diri Sendiri';
+            $customRelationship = null;
+
+            if ($isFamilyRegistration) {
+                // --- PERBAIKAN KRUSIAL: Mengganti create() dengan firstOrCreate() ---
+                $patientForQueue = Patient::firstOrCreate(
+                    ['nik' => $request->new_patient_nik], // Kunci unik untuk mencari
+                    [ // Data untuk diisi jika tidak ditemukan
+                        'full_name' => $request->new_patient_name,
+                        'date_of_birth' => $request->new_patient_dob,
+                        'gender' => $request->new_patient_gender,
+                        'user_id' => null,
+                    ]
+                );
+                
+                $relationship = $request->patient_relationship;
+                if ($relationship === 'Lainnya') {
+                    $customRelationship = $request->patient_relationship_custom;
+                }
+
+            } else {
+                $patientForQueue = Patient::where('user_id', $user->id)->first();
+                if (!$patientForQueue) {
+                    return redirect()->back()->with('error', 'Data profil pasien Anda tidak ditemukan.');
+                }
+            }
+
+            $registrationDate = Carbon::parse($request->registration_date)->toDateString();
+            $existingAntrean = ClinicQueue::where('patient_id', $patientForQueue->id)
+                ->whereDate('registration_time', $registrationDate)
+                ->whereIn('status', ['MENUNGGU', 'DIPANGGIL'])
+                ->exists();
             
-        if ($existingAntrean) {
-             return redirect()->back()->with('error', 'Anda sudah terdaftar dalam antrean untuk hari ini.');
+            if ($existingAntrean) {
+                 return redirect()->back()->with('error', 'Pasien yang didaftarkan sudah memiliki antrean aktif untuk hari ini.');
+            }
+
+            $poli = Poli::findOrFail($request->poli_id);
+            $lastQueueCount = ClinicQueue::where('poli_id', $request->poli_id)->whereDate('registration_time', $registrationDate)->count();
+            $queueNumber = $poli->code . '-' . str_pad($lastQueueCount + 1, 3, '0', STR_PAD_LEFT);
+
+            ClinicQueue::create([
+                'patient_id' => $patientForQueue->id,
+                'poli_id' => $request->poli_id,
+                'doctor_id' => $request->doctor_id,
+                'registered_by_user_id' => $user->id,
+                'queue_number' => $queueNumber,
+                'chief_complaint' => $request->chief_complaint,
+                'patient_relationship' => $relationship,
+                'patient_relationship_custom' => $customRelationship,
+                'status' => 'MENUNGGU',
+                'registration_time' => Carbon::parse($registrationDate . ' ' . now()->format('H:i:s')),
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('pasien.dashboard')->with('success', 'Pendaftaran antrean berhasil!');
+
+        } catch (\Throwable $e) { // Menangkap semua jenis error/exception
+            DB::rollBack();
+            
+            // PERBAIKAN: Menambahkan log yang lebih detail
+            Log::error('Gagal membuat antrean: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString() // Memberikan trace lengkap error
+            ]);
+            
+            return redirect()->back()->with('error', 'Terjadi kesalahan pada server. Gagal membuat antrean.');
         }
-
-        // Logika untuk membuat nomor antrean baru
-        $poli = Poli::findOrFail($request->poli_id);
-        $poliCode = $poli->code;
-        $lastQueueCount = ClinicQueue::where('poli_id', $request->poli_id)->whereDate('registration_time', $registrationDate)->count();
-        $queueNumber = $poliCode . '-' . str_pad($lastQueueCount + 1, 3, '0', STR_PAD_LEFT);
-
-        // Buat record baru di tabel clinic_queues
-        ClinicQueue::create([
-            'patient_id' => $patient->id,
-            'poli_id' => $request->poli_id,
-            'doctor_id' => $request->doctor_id,
-            'registered_by_user_id' => $user->id,
-            'queue_number' => $queueNumber,
-            'chief_complaint' => $request->chief_complaint,
-            'patient_relationship' => 'Diri Sendiri', // Default atau ambil dari form jika ada
-            'status' => 'MENUNGGU',
-            'registration_time' => Carbon::parse($registrationDate . ' ' . now()->format('H:i:s')), // Gabungkan tanggal dari form dan waktu saat ini
-        ]);
-
-        return redirect()->route('pasien.dashboard')->with('success', 'Pendaftaran antrean berhasil!');
     }
 
     /**
-     * API untuk mengambil data dokter berdasarkan poli_id dan jadwal praktek hari ini.
+     * API untuk mengambil data dokter berdasarkan poli dan jadwal.
      */
     public function getDoctorsByPoli($poli_id)
     {
-        // Set locale Carbon ke Indonesia untuk mendapatkan nama hari yang benar
         Carbon::setLocale('id');
-        $dayName = ucfirst(Carbon::now()->dayName); // Hasilnya: 'Senin', 'Selasa', dst.
+        $dayName = ucfirst(Carbon::now()->dayName);
 
         $doctors = Doctor::where('poli_id', $poli_id)
-            ->whereHas('schedules' , function ($query) use ($dayName) {
-                // Filter berdasarkan jadwal yang aktif pada hari ini
+            ->whereHas('doctorSchedules' , function ($query) use ($dayName) {
                 $query->where('day_of_week', $dayName)->where('is_active', true);
             })
-            // Tambahkan pengecekan schedule_overrides jika diperlukan nanti
-            // ->whereDoesntHave('overrides', function ($query) {
-            //     $query->where('override_date', Carbon::today()->toDateString())
-            //           ->where('status', 'TIDAK_TERSEDIA');
-            // })
             ->with('user')
             ->get()
             ->map(function($doctor) {
@@ -128,3 +179,4 @@ class DashboardController extends Controller
         return response()->json($doctors);
     }
 }
+

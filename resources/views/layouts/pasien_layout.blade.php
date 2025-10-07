@@ -17,18 +17,13 @@
             background-image: url('https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=2070&auto=format&fit=crop');
             background-size: cover; background-position: center;
         }
-        /* PERBAIKAN: Mengembalikan lapisan semi-transparan untuk keterbacaan
-        .bg-clinic::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: rgba(249, 250, 251, 0.85);
-            z-index: 1;
-        }
-        .content-wrapper { position: relative; z-index: 2; }
-        [x-cloak] { display: none !important; } */
-        /* Lapisan semi-transparan (::before) telah dihapus dari sini */
         .content-wrapper { position: relative; z-index: 2; }
         [x-cloak] { display: none !important; }
     </style>
+    
+    {{-- PERBAIKAN: Menambahkan stack 'styles' yang hilang agar SweetAlert dapat dimuat --}}
+    @stack('styles')
+
 </head>
 <body class="bg-gray-100" x-data="{ sidebarOpen: window.innerWidth > 1024 }" @resize.window="sidebarOpen = window.innerWidth > 1024" x-cloak>
     <div class="flex h-screen overflow-hidden">
@@ -56,17 +51,14 @@
                 <ul>
                     @php
                     function menu_item($route, $name, $icon) {
-                        // Gunakan wildcard (*) agar jika ada sub-rute, menu tetap aktif
                         $isActive = request()->routeIs($route) || request()->routeIs($route . '.*');
                         
                         $baseClasses = 'flex items-center p-3 rounded-lg w-full text-left transition-colors duration-200';
                         $activeClasses = 'bg-[#24306E] text-white shadow-md';
-                        // PERBAIKAN: Gaya menu tidak aktif sesuai gambar referensi
                         $inactiveClasses = 'text-gray-600 hover:bg-gray-900/5 hover:text-[#24306E]';
                         
                         $linkClasses = $baseClasses . ' ' . ($isActive ? $activeClasses : $inactiveClasses);
                         
-                        // Cek apakah rute ada sebelum membuat URL
                         $url = Route::has($route) ? route($route) : '#';
                         $disabledTooltip = !Route::has($route) ? 'title="Halaman belum tersedia"' : '';
 
@@ -82,7 +74,6 @@
                     }
                     @endphp
 
-                    {{-- PERBAIKAN: Setiap menu sekarang memiliki nama rute yang unik --}}
                     {!! menu_item('pasien.dashboard', 'Dashboard', '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>') !!}
                     {!! menu_item('pasien.riwayat', 'Riwayat Kunjungan', '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>') !!}
                     {!! menu_item('pasien.jadwal', 'Jadwal Dokter', '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>') !!}

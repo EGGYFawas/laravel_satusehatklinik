@@ -18,14 +18,10 @@
     <div class="max-w-7xl mx-auto px-6">
         <nav class="flex justify-between items-center">
             <a href="/" class="flex items-center gap-2 text-xl sm:text-2xl font-bold text-brand-primary no-underline">
-                <svg class="w-7 h-7 sm:w-8 sm:h-8" fill="currentColor" viewBox="0 0 20 20"
-                    xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
-                        clip-rule="evenodd"></path>
-                </svg>
-                Klinik Sehat
-            </a>
+            {{-- SVG diganti dengan IMG --}}
+            <img src="{{ asset('assets/img/logo_login.png') }}" alt="Logo Klinik Sehat" class="w-7 h-7 sm:w-8 sm:h-8 object-contain">
+            Klinik Satu Sehat
+        </a>
             <ul class="hidden lg:flex gap-10 list-none">
                 <li><a href="#beranda"
                         class="text-text-grey font-medium no-underline relative transition-colors duration-300 ease-in-out hover:text-brand-primary after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-[-5px] after:left-1/2 after:bg-brand-primary after:transition-all after:duration-300 after:ease-in-out after:-translate-x-1/2 hover:after:w-full">Beranda</a>
