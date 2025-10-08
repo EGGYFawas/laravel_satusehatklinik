@@ -8,13 +8,20 @@
     .bg-brand-background {
         background-color: #f8f9fa;
     }
-
+    .schedule-panel.hidden {
+        display: none;
+    }
+    .day-button.active {
+        background-color: #334155; /* slate-700 */
+        color: white;
+    }
 </style>
 @endpush
 
 @section('content')
 <!-- Header -->
 <header class="bg-white py-4 sticky top-0 z-[1000] shadow-md transition-all duration-300 ease-in-out">
+    <!-- ... existing header code ... -->
     <div class="max-w-7xl mx-auto px-6">
         <nav class="flex justify-between items-center">
             <a href="/" class="flex items-center gap-2 text-xl sm:text-2xl font-bold text-brand-primary no-underline">
@@ -69,6 +76,7 @@
 </header>
 
 <!-- Mobile Navigation -->
+<!-- ... existing mobile nav code ... -->
 <div class="fixed top-0 h-screen w-[70%] bg-white shadow-lg z-[1005] transition-transform duration-400 ease-in-out flex flex-col items-center justify-center pt-20 -right-full"
     id="mobile-nav">
     <ul class="list-none w-full text-center">
@@ -98,6 +106,7 @@
 
 <main class="overflow-x-hidden bg-brand-background">
     <!-- Hero Section -->
+    <!-- ... existing hero section code ... -->
     <section id="beranda" class="relative min-h-[90vh] bg-cover bg-center flex items-center text-white"
         style="background-image: url('https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=2070&auto=format&fit=crop');">
         <div class="absolute inset-0 bg-brand-primary/60"></div>
@@ -120,6 +129,7 @@
     </section>
 
     <!-- Why Us Section -->
+    <!-- ... existing why us section code ... -->
     <section id="layanan" class="py-16 md:py-20">
         <div class="max-w-7xl mx-auto px-6">
             <h2 class="text-center text-3xl md:text-4xl font-bold mb-4 text-text-dark">Mengapa Memilih Kami ?</h2>
@@ -160,56 +170,108 @@
     </section>
 
     <!-- Doctor Schedule Section -->
-    <section id="jadwal-dokter" class="py-16 md:py-20 bg-white">
-        <div class="max-w-7xl mx-auto px-6">
-            <h2 class="text-center text-3xl md:text-4xl font-bold mb-12 text-text-dark">Jadwal Dokter Klinik Sehat
-            </h2>
-            <div class="flex justify-center mb-8">
-                <div class="flex space-x-1 bg-gray-200 p-1 rounded-full">
-                    <button class="px-6 py-2 text-sm font-medium text-gray-700 rounded-full">Senin</button>
-                    <button class="px-6 py-2 text-sm font-medium text-white bg-brand-primary rounded-full">Selasa</button>
-                    <button class="px-6 py-2 text-sm font-medium text-gray-700 rounded-full">Rabu</button>
-                    <button class="px-6 py-2 text-sm font-medium text-gray-700 rounded-full">Kamis</button>
-                    <button class="px-6 py-2 text-sm font-medium text-gray-700 rounded-full">Jumat</button>
-                    <button class="px-6 py-2 text-sm font-medium text-gray-700 rounded-full">Sabtu</button>
+    <section id="jadwal-dokter" class="py-16 md:py-20 relative bg-slate-100 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3');">
+        <div class="absolute inset-0 bg-slate-100/80 backdrop-blur-sm"></div>
+        <div class="max-w-7xl mx-auto px-6 relative z-10">
+            <h2 class="text-center text-3xl md:text-4xl font-bold mb-4 text-slate-800">Jadwal Dokter Klinik Sehat</h2>
+            <p class="text-center text-slate-600 mb-12 max-w-2xl mx-auto">Temukan jadwal dokter kami dan rencanakan kunjungan Anda. Klik pada hari untuk melihat dokter yang tersedia.</p>
+
+            <div class="flex justify-center mb-12">
+                <div id="day-buttons" class="flex flex-wrap justify-center items-center gap-2 md:gap-4 bg-slate-200/50 p-2 rounded-lg">
+                    <button data-day="senin" class="day-button px-4 py-2 text-sm md:text-base font-semibold rounded-md transition-colors duration-300">Senin</button>
+                    <button data-day="selasa" class="day-button px-4 py-2 text-sm md:text-base font-semibold rounded-md transition-colors duration-300">Selasa</button>
+                    <button data-day="rabu" class="day-button px-4 py-2 text-sm md:text-base font-semibold rounded-md transition-colors duration-300">Rabu</button>
+                    <button data-day="kamis" class="day-button px-4 py-2 text-sm md:text-base font-semibold rounded-md transition-colors duration-300">Kamis</button>
+                    <button data-day="jumat" class="day-button px-4 py-2 text-sm md:text-base font-semibold rounded-md transition-colors duration-300">Jumat</button>
+                    <button data-day="sabtu" class="day-button px-4 py-2 text-sm md:text-base font-semibold rounded-md transition-colors duration-300">Sabtu</button>
                 </div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Jadwal Card -->
-                <div class="bg-brand-primary text-white p-6 rounded-lg shadow-lg">
-                    <h3 class="font-bold text-lg mb-2">Poli Umum</h3>
-                    <p class="text-sm mb-4">dr. Anisa Pujianti</p>
-                    <div class="flex items-center text-sm">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        08:00 - 12:00 WIB
+
+            <div id="schedule-panels">
+                <!-- Senin -->
+                <div id="senin" class="schedule-panel grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="bg-slate-800 text-white p-5 rounded-xl shadow-lg flex items-center gap-4 transition-transform duration-300 hover:transform hover:-translate-y-1">
+                        <div class="flex-shrink-0 w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div>
+                        <div>
+                            <h3 class="font-bold text-lg">Poli Umum</h3>
+                            <p class="text-sm text-slate-300">dr. Anisa Pujianti</p>
+                            <div class="flex items-center text-sm mt-2 text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>08:00 - 12:00 WIB</div>
+                        </div>
                     </div>
                 </div>
-                <div class="bg-brand-primary text-white p-6 rounded-lg shadow-lg">
-                    <h3 class="font-bold text-lg mb-2">Poli Ibu dan Anak</h3>
-                    <p class="text-sm mb-4">dr. Budi Santoso</p>
-                    <div class="flex items-center text-sm">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        12:00 - 15:00 WIB
+                <!-- Selasa -->
+                <div id="selasa" class="schedule-panel grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                     <div class="bg-slate-800 text-white p-5 rounded-xl shadow-lg flex items-center gap-4 transition-transform duration-300 hover:transform hover:-translate-y-1">
+                        <div class="flex-shrink-0 w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div>
+                        <div>
+                            <h3 class="font-bold text-lg">Poli Umum</h3>
+                            <p class="text-sm text-slate-300">dr. Anisa Pujianti</p>
+                            <div class="flex items-center text-sm mt-2 text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>08:00 - 12:00 WIB</div>
+                        </div>
+                    </div>
+                     <div class="bg-slate-800 text-white p-5 rounded-xl shadow-lg flex items-center gap-4 transition-transform duration-300 hover:transform hover:-translate-y-1">
+                        <div class="flex-shrink-0 w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div>
+                        <div>
+                            <h3 class="font-bold text-lg">Poli Ibu dan Anak</h3>
+                            <p class="text-sm text-slate-300">dr. Budi Santoso</p>
+                            <div class="flex items-center text-sm mt-2 text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>12:00 - 15:00 WIB</div>
+                        </div>
+                    </div>
+                     <div class="bg-slate-800 text-white p-5 rounded-xl shadow-lg flex items-center gap-4 transition-transform duration-300 hover:transform hover:-translate-y-1">
+                        <div class="flex-shrink-0 w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div>
+                        <div>
+                            <h3 class="font-bold text-lg">Poli Gigi</h3>
+                            <p class="text-sm text-slate-300">dr. Amelia Lestari</p>
+                            <div class="flex items-center text-sm mt-2 text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>13:00 - 17:00 WIB</div>
+                        </div>
                     </div>
                 </div>
-                 <div class="bg-brand-primary text-white p-6 rounded-lg shadow-lg">
-                    <h3 class="font-bold text-lg mb-2">Poli Gigi</h3>
-                    <p class="text-sm mb-4">dr. Amelia Lestari</p>
-                    <div class="flex items-center text-sm">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        13:00 - 17:00 WIB
+                <!-- Rabu -->
+                <div id="rabu" class="schedule-panel grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                     <div class="bg-slate-800 text-white p-5 rounded-xl shadow-lg flex items-center gap-4 transition-transform duration-300 hover:transform hover:-translate-y-1">
+                        <div class="flex-shrink-0 w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div>
+                        <div>
+                            <h3 class="font-bold text-lg">Poli Gigi</h3>
+                            <p class="text-sm text-slate-300">dr. Amelia Lestari</p>
+                            <div class="flex items-center text-sm mt-2 text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>09:00 - 13:00 WIB</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Kamis -->
+                <div id="kamis" class="schedule-panel grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="bg-slate-800 text-white p-5 rounded-xl shadow-lg flex items-center gap-4 transition-transform duration-300 hover:transform hover:-translate-y-1">
+                        <div class="flex-shrink-0 w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div>
+                        <div>
+                            <h3 class="font-bold text-lg">Poli Ibu dan Anak</h3>
+                            <p class="text-sm text-slate-300">dr. Budi Santoso</p>
+                            <div class="flex items-center text-sm mt-2 text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>14:00 - 18:00 WIB</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Jumat -->
+                <div id="jumat" class="schedule-panel grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <div class="bg-slate-800 text-white p-5 rounded-xl shadow-lg flex items-center gap-4 transition-transform duration-300 hover:transform hover:-translate-y-1">
+                        <div class="flex-shrink-0 w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div>
+                        <div>
+                            <h3 class="font-bold text-lg">Poli Umum</h3>
+                            <p class="text-sm text-slate-300">dr. Anisa Pujianti</p>
+                            <div class="flex items-center text-sm mt-2 text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>08:00 - 12:00 WIB</div>
+                        </div>
+                    </div>
+                     <div class="bg-slate-800 text-white p-5 rounded-xl shadow-lg flex items-center gap-4 transition-transform duration-300 hover:transform hover:-translate-y-1">
+                        <div class="flex-shrink-0 w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div>
+                        <div>
+                            <h3 class="font-bold text-lg">Poli Gigi</h3>
+                            <p class="text-sm text-slate-300">dr. Amelia Lestari</p>
+                            <div class="flex items-center text-sm mt-2 text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>13:00 - 17:00 WIB</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Sabtu -->
+                <div id="sabtu" class="schedule-panel">
+                    <div class="col-span-full text-center bg-white/80 p-8 rounded-lg shadow-md">
+                        <h3 class="text-xl font-semibold text-slate-700">Tidak Ada Jadwal Dokter</h3>
+                        <p class="text-slate-500 mt-2">Layanan klinik pada hari Sabtu hanya untuk pengambilan obat atau administrasi.</p>
                     </div>
                 </div>
             </div>
@@ -217,6 +279,7 @@
     </section>
 
     <!-- About Section -->
+    <!-- ... existing about section code ... -->
     <section id="tentang" class="py-16 md:py-20 bg-brand-background">
         <div class="max-w-7xl mx-auto px-6">
             <div class="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
@@ -238,18 +301,20 @@
     </section>
 
     <!-- Guide Section -->
+    <!-- ... existing guide section code ... -->
     <section id="panduan" class="py-16 md:py-20 bg-white">
         <div class="max-w-7xl mx-auto px-6">
             <h2 class="text-center text-3xl md:text-4xl font-bold mb-12 text-text-dark">Panduan Penggunaan Website</h2>
             <div class="text-center">
-                 <h3 class="text-2xl font-semibold mb-4 text-text-dark">Cara Menggunakan Website Klinik Sehat</h3>
-                 <p class="text-text-grey max-w-2xl mx-auto">Kami telah menyusun panduan langkah-demi-langkah yang mudah diikuti untuk memastikan Anda dapat memanfaatkan semua fitur website kami secara maksimal. Mulai dari pendaftaran pasien baru, membuat janji temu, hingga mengakses rekam medis digital Anda.</p>
-                 <a href="#" class="mt-8 inline-block text-center py-3 px-8 rounded-lg no-underline font-semibold transition-all duration-300 ease-in-out border-2 border-brand-primary bg-brand-primary text-white hover:bg-transparent hover:text-brand-primary">Lihat Panduan Lengkap</a>
+                   <h3 class="text-2xl font-semibold mb-4 text-text-dark">Cara Menggunakan Website Klinik Sehat</h3>
+                   <p class="text-text-grey max-w-2xl mx-auto">Kami telah menyusun panduan langkah-demi-langkah yang mudah diikuti untuk memastikan Anda dapat memanfaatkan semua fitur website kami secara maksimal. Mulai dari pendaftaran pasien baru, membuat janji temu, hingga mengakses rekam medis digital Anda.</p>
+                   <a href="#" class="mt-8 inline-block text-center py-3 px-8 rounded-lg no-underline font-semibold transition-all duration-300 ease-in-out border-2 border-brand-primary bg-brand-primary text-white hover:bg-transparent hover:text-brand-primary">Lihat Panduan Lengkap</a>
             </div>
         </div>
     </section>
 
     <!-- Articles Section -->
+    <!-- ... existing articles section code ... -->
     <section id="artikel" class="py-16 md:py-20 bg-brand-background">
         <div class="max-w-7xl mx-auto px-6">
             <h2 class="text-center text-3xl md:text-4xl font-bold mb-12 text-text-dark">Artikel Kesehatan</h2>
@@ -287,6 +352,7 @@
 </main>
 
 <!-- Footer -->
+<!-- ... existing footer code ... -->
 <footer class="bg-brand-primary text-brand-text pt-16 pb-8">
     <div class="max-w-7xl mx-auto px-6">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 text-center md:text-left">
@@ -320,7 +386,7 @@
                     </a>
                     <a href="#" class="opacity-80 hover:opacity-100 transition-opacity">
                          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path fill-rule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.024.06 1.378.06 3.808s-.012 2.784-.06 3.808c-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.024.048-1.378.06-3.808.06s-2.784-.012-3.808-.06c-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.048-1.024-.06-1.378-.06-3.808s.012-2.784.06-3.808c.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 016.08 2.525c.636-.247 1.363-.416 2.427-.465C9.53 2.013 9.884 2 12.315 2zM12 7a5 5 0 100 10 5 5 0 000-10zm0-2a7 7 0 110 14 7 7 0 010-14zm6.406-2.186a1.2 1.2 0 100 2.4 1.2 1.2 0 000-2.4z" clip-rule="evenodd" />
+                            <path fill-rule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.024.06 1.378.06 3.808s-.012 2.784-.06 3.808c-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.024.048-1.378.06-3.808.06s-2.784-.012-3.808-.06c-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.048-1.024-.06-1.378-.06-3.808s.012-2.784.06-3.808c.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 016.08 2.525c.636-.247 1.363-.416 2.427.465C9.53 2.013 9.884 2 12.315 2zM12 7a5 5 0 100 10 5 5 0 000-10zm0-2a7 7 0 110 14 7 7 0 010-14zm6.406-2.186a1.2 1.2 0 100 2.4 1.2 1.2 0 000-2.4z" clip-rule="evenodd" />
                         </svg>
                     </a>
                 </div>
@@ -335,6 +401,7 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // ... existing script for burger menu and smooth scroll ...
         const burgerMenu = document.getElementById('burger-menu');
         const mobileNav = document.getElementById('mobile-nav');
         const navLinks = document.querySelectorAll('.nav-link-mobile');
@@ -354,7 +421,6 @@
             });
         });
 
-        // Smooth scrolling for all anchor links
         mainNavLinks.forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -367,6 +433,58 @@
                 }
             });
         });
+
+        // --- UPDATED SCRIPT FOR DOCTOR SCHEDULE ---
+        const dayButtons = document.querySelectorAll('.day-button');
+        const schedulePanels = document.querySelectorAll('.schedule-panel');
+
+        function activateDay(day) {
+            // Deactivate all buttons by removing the 'active' class
+            dayButtons.forEach(button => {
+                button.classList.remove('active');
+                 button.classList.add('text-slate-600', 'hover:bg-slate-300');
+            });
+
+            // Hide all panels
+            schedulePanels.forEach(panel => {
+                panel.classList.add('hidden');
+            });
+
+            // Activate the target button and panel
+            const activeButton = document.querySelector(`.day-button[data-day="${day}"]`);
+            const activePanel = document.getElementById(day);
+
+            if (activeButton) {
+                activeButton.classList.add('active');
+                activeButton.classList.remove('text-slate-600', 'hover:bg-slate-300');
+            }
+            if (activePanel) {
+                activePanel.classList.remove('hidden');
+            }
+        }
+
+        dayButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const day = button.getAttribute('data-day');
+                activateDay(day);
+            });
+        });
+
+        // Set the default active day
+        // Day mapping from English to Indonesian for the script
+        const dayMap = {
+            'monday': 'senin',
+            'tuesday': 'selasa',
+            'wednesday': 'rabu',
+            'thursday': 'kamis',
+            'friday': 'jumat',
+            'saturday': 'sabtu',
+            'sunday': 'senin' // Default to Monday if it's Sunday
+        };
+        const today = new Date().toLocaleString('en-US', { weekday: 'long' }).toLowerCase();
+        const todayIndonesian = dayMap[today] || 'senin';
+
+        activateDay(todayIndonesian);
     });
 </script>
 @endpush
