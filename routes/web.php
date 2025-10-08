@@ -2,23 +2,24 @@
 
 use Illuminate\Support\Facades\Route;
 
-// Import untuk Controller Aplikasi
-use App\Http\Controllers\AppInfoController;
-use App\Http\Controllers\BundleController;
-
 // Import untuk Controller Autentikasi & Redirect
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DashboardRedirectController;
 
-// Import untuk Controller Role Spesifik
+// Import untuk Controller Role Spesifik dengan Alias untuk menghindari konflik nama
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
-use App\Http\Controllers\Pasien\DashboardController as PasienDashboardController; // Import controller pasien
-
+use App\Http\Controllers\Pasien\DashboardController as PasienDashboardController;
+use App\Http\Controllers\Dokter\DashboardController as DokterDashboardController;
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
+|
+| Di sini Anda dapat mendaftarkan rute web untuk aplikasi Anda. Rute-rute
+| ini dimuat oleh RouteServiceProvider dalam sebuah grup yang
+| berisi grup middleware "web". Buat sesuatu yang hebat!
+|
 */
 
 Route::get('/', function () {
@@ -26,7 +27,7 @@ Route::get('/', function () {
 })->name('landing');
 
 
-// == GRUP UNTUK TAMU (PENGGUNA YANG BELUM LOGIN) ==
+// == GRUP UNTTUK PENGGUNA YANG BELUM LOGIN (GUEST) ==
 Route::middleware('guest')->group(function () {
     Route::get('login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('login', [AuthController::class, 'login']);
@@ -34,37 +35,36 @@ Route::middleware('guest')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
 });
 
-// == GRUP UNTUK PENGGUNA YANG SUDAH LOGIN ==
+// == GRUP UNTUK PENGGUNA YANG SUDAH LOGIN (AUTHENTICATED) ==
 Route::middleware(['auth'])->group(function () {
     
-    // Rute "Pintu Gerbang" setelah login yang akan diarahkan oleh DashboardRedirectController
+    // Rute "Gerbang Utama" setelah login, akan diarahkan sesuai role
     Route::get('/dashboard', [DashboardRedirectController::class, 'index'])->name('dashboard');
 
-    // Rute Logout
+    // Rute untuk proses Logout
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 
-    // --- GRUP ROUTE UNTUK PASIEN (VERSI FINAL) ---
+    // --- GRUP ROUTE UNTUK PASIEN ---
     Route::middleware(['role:pasien'])->prefix('pasien')->name('pasien.')->group(function () {
-        // Rute untuk menampilkan halaman dashboard utama
         Route::get('/dashboard', [PasienDashboardController::class, 'index'])->name('dashboard');
-        
-        // Rute untuk menyimpan data antrean baru dari form
         Route::post('/antrean', [PasienDashboardController::class, 'store'])->name('antrean.store');
-        
-        // Rute API internal untuk mengambil daftar dokter berdasarkan poli yang dipilih
         Route::get('/doctors-by-poli/{poli_id}', [PasienDashboardController::class, 'getDoctorsByPoli'])->name('doctors.by.poli');
+        // Tambahkan rute pasien lainnya di sini
+    });
+
+    // --- GRUP ROUTE UNTUK DOKTER ---
+    Route::middleware(['role:dokter'])->prefix('dokter')->name('dokter.')->group(function () {
+        Route::get('/dashboard', [DokterDashboardController::class, 'index'])->name('dashboard');
+        Route::post('/antrean/{antrean}/panggil', [DokterDashboardController::class, 'panggilPasien'])->name('antrean.panggil');
+        Route::post('/antrean/{antrean}/simpan-pemeriksaan', [DokterDashboardController::class, 'simpanPemeriksaan'])->name('antrean.simpanPemeriksaan');
+        // Tambahkan rute dokter lainnya di sini
     });
 
     // --- GRUP ROUTE UNTUK ADMIN ---
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
-        
-        // Menggunakan AdminDashboardController yang sudah di-import di atas
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-        
-        // Tempatkan rute admin lainnya di sini jika ada
+        // Tambahkan rute admin lainnya di sini
     });
-
-    // Anda bisa menambahkan grup rute untuk role lain di sini (dokter, apotek, dll.)
 
 });
 
