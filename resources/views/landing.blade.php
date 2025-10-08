@@ -366,6 +366,7 @@
                 <ul class="list-none space-y-2 text-sm">
                     <li><a href="#beranda" class="opacity-80 hover:opacity-100 transition-opacity">Beranda</a></li>
                     <li><a href="#layanan" class="opacity-80 hover:opacity-100 transition-opacity">Layanan Kami</a></li>
+                    
                     <li><a href="#tentang" class="opacity-80 hover:opacity-100 transition-opacity">Tentang</a></li>
                 </ul>
             </div>
