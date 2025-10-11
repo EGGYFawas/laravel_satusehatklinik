@@ -14,7 +14,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+<<<<<<< Updated upstream
 use Illuminate\Support\Facades\Log; // Import Log Facade
+=======
+use Illuminate\Support\Facades\Log;
+>>>>>>> Stashed changes
 
 class DashboardController extends Controller
 {
@@ -29,11 +33,34 @@ class DashboardController extends Controller
         $antreanBerobat = null;
 
         if ($patient) {
+<<<<<<< Updated upstream
             $antreanBerobat = ClinicQueue::with('poli')
                 ->where('patient_id', $patient->id)
                 ->whereDate('registration_time', $today)
                 ->whereIn('status', ['MENUNGGU', 'DIPANGGIL'])
                 ->first();
+=======
+            // Mengambil antrean berobat aktif milik pasien (termasuk yang sudah selesai pemeriksaan)
+            $antreanBerobat = ClinicQueue::with('poli')
+                ->where('patient_id', $patient->id)
+                ->whereDate('registration_time', $today)
+                ->whereIn('status', ['MENUNGGU', 'HADIR', 'DIPANGGIL', 'SELESAI'])
+                ->first();
+            
+            if ($antreanBerobat) {
+                // Mengambil antrean yang sedang dipanggil oleh dokter di poli yang sama
+                $antreanBerjalan = ClinicQueue::where('poli_id', $antreanBerobat->poli_id)
+                    ->whereDate('registration_time', $today)
+                    ->where('status', 'DIPANGGIL')
+                    ->orderBy('call_time', 'desc')
+                    ->first();
+
+                // Mengambil antrean apotek jika pemeriksaan sudah selesai
+                if ($antreanBerobat->status === 'SELESAI') {
+                    $antreanApotek = PharmacyQueue::where('clinic_queue_id', $antreanBerobat->id)->first();
+                }
+            }
+>>>>>>> Stashed changes
         }
 
         $polis = Poli::orderBy('name', 'asc')->get();
@@ -45,9 +72,12 @@ class DashboardController extends Controller
         return view('pasien.dashboard', compact('user', 'patient', 'antreanBerobat', 'polis', 'articles'));
     }
 
+<<<<<<< Updated upstream
     /**
      * Menyimpan antrean klinik baru, baik untuk diri sendiri maupun keluarga.
      */
+=======
+>>>>>>> Stashed changes
     public function store(Request $request)
     {
         $user = Auth::user();
@@ -64,7 +94,10 @@ class DashboardController extends Controller
         if ($isFamilyRegistration) {
             $familyRules = [
                 'new_patient_name' => 'required|string|max:255',
+<<<<<<< Updated upstream
                 // Validasi unique di sini tetap penting sebagai lapisan pertama
+=======
+>>>>>>> Stashed changes
                 'new_patient_nik' => 'required|string|digits:16|unique:patients,nik',
                 'new_patient_dob' => 'required|date|before_or_equal:today',
                 'new_patient_gender' => 'required|in:Laki-laki,Perempuan',
@@ -76,7 +109,11 @@ class DashboardController extends Controller
         $validator = Validator::make($request->all(), array_merge($baseRules, $familyRules));
 
         if ($validator->fails()) {
+<<<<<<< Updated upstream
             return redirect()->back()->withErrors($validator)->withInput()->with('error', 'Terdapat kesalahan pada data yang Anda masukkan. Silakan periksa kembali.');
+=======
+            return redirect()->back()->withErrors($validator)->withInput()->with('error', 'Terdapat kesalahan pada data yang Anda masukkan.');
+>>>>>>> Stashed changes
         }
 
         try {
@@ -87,10 +124,16 @@ class DashboardController extends Controller
             $customRelationship = null;
 
             if ($isFamilyRegistration) {
+<<<<<<< Updated upstream
                 // --- PERBAIKAN KRUSIAL: Mengganti create() dengan firstOrCreate() ---
                 $patientForQueue = Patient::firstOrCreate(
                     ['nik' => $request->new_patient_nik], // Kunci unik untuk mencari
                     [ // Data untuk diisi jika tidak ditemukan
+=======
+                $patientForQueue = Patient::firstOrCreate(
+                    ['nik' => $request->new_patient_nik],
+                    [
+>>>>>>> Stashed changes
                         'full_name' => $request->new_patient_name,
                         'date_of_birth' => $request->new_patient_dob,
                         'gender' => $request->new_patient_gender,
@@ -113,11 +156,19 @@ class DashboardController extends Controller
             $registrationDate = Carbon::parse($request->registration_date)->toDateString();
             $existingAntrean = ClinicQueue::where('patient_id', $patientForQueue->id)
                 ->whereDate('registration_time', $registrationDate)
+<<<<<<< Updated upstream
                 ->whereIn('status', ['MENUNGGU', 'DIPANGGIL'])
                 ->exists();
             
             if ($existingAntrean) {
                  return redirect()->back()->with('error', 'Pasien yang didaftarkan sudah memiliki antrean aktif untuk hari ini.');
+=======
+                ->whereIn('status', ['MENUNGGU', 'HADIR', 'DIPANGGIL'])
+                ->exists();
+            
+            if ($existingAntrean) {
+                return redirect()->back()->with('error', 'Pasien yang didaftarkan sudah memiliki antrean aktif untuk hari ini.');
+>>>>>>> Stashed changes
             }
 
             $poli = Poli::findOrFail($request->poli_id);
@@ -141,7 +192,11 @@ class DashboardController extends Controller
 
             return redirect()->route('pasien.dashboard')->with('success', 'Pendaftaran antrean berhasil!');
 
+<<<<<<< Updated upstream
         } catch (\Throwable $e) { // Menangkap semua jenis error/exception
+=======
+        } catch (\Throwable $e) {
+>>>>>>> Stashed changes
             DB::rollBack();
             
             // PERBAIKAN: Menambahkan log yang lebih detail

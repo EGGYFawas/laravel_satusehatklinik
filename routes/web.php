@@ -49,15 +49,26 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard', [PasienDashboardController::class, 'index'])->name('dashboard');
         Route::post('/antrean', [PasienDashboardController::class, 'store'])->name('antrean.store');
         Route::get('/doctors-by-poli/{poli_id}', [PasienDashboardController::class, 'getDoctorsByPoli'])->name('doctors.by.poli');
+<<<<<<< Updated upstream
         // Tambahkan rute pasien lainnya di sini
+=======
+        Route::get('/check-in/{clinic_uuid}', [CheckInController::class, 'processCheckIn'])->name('queue.checkin');
+            // Route::get('/antrean/check-in/{clinic_uuid}', [App\Http\Controllers\Pasien\CheckInController::class, 'processCheckIn'])->name('antrean.check-in');
+>>>>>>> Stashed changes
     });
 
     // --- GRUP ROUTE UNTUK DOKTER ---
     Route::middleware(['role:dokter'])->prefix('dokter')->name('dokter.')->group(function () {
         Route::get('/dashboard', [DokterDashboardController::class, 'index'])->name('dashboard');
         Route::post('/antrean/{antrean}/panggil', [DokterDashboardController::class, 'panggilPasien'])->name('antrean.panggil');
+        
         Route::post('/antrean/{antrean}/simpan-pemeriksaan', [DokterDashboardController::class, 'simpanPemeriksaan'])->name('antrean.simpanPemeriksaan');
+<<<<<<< Updated upstream
         // Tambahkan rute dokter lainnya di sini
+=======
+        Route::post('/antrean-apotek/{antreanApotek}/konfirmasi', [App\Http\Controllers\Pasien\DashboardController::class, 'konfirmasiPenerimaanObat'])->name('antrean.apotek.konfirmasi');
+
+>>>>>>> Stashed changes
     });
 
     // --- GRUP ROUTE UNTUK ADMIN ---
