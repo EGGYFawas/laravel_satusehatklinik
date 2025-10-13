@@ -11,7 +11,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Pasien\DashboardController as PasienDashboardController;
 use App\Http\Controllers\Dokter\DashboardController as DokterDashboardController;
 use App\Http\Controllers\Pasien\CheckInController;
-use App\Http\Controllers\PetugasLoket\DashboardController as PetugasLoketDashboardController; // <-- TAMBAHKAN INI
+use App\Http\Controllers\PetugasLoket\DashboardController as PetugasLoketDashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,7 +43,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard', [PasienDashboardController::class, 'index'])->name('dashboard');
         Route::post('/antrean', [PasienDashboardController::class, 'store'])->name('antrean.store');
         Route::get('/doctors-by-poli/{poli_id}', [PasienDashboardController::class, 'getDoctorsByPoli'])->name('doctors.by.poli');
-        Route::get('/check-in/{clinic_uuid}', [CheckInController::class, 'processCheckIn'])->name('queue.checkin');
+        
+        // ==============================================================================
+        // == PERBAIKAN: Mengubah route ini agar mengarah ke fungsi AJAX yang benar ==
+        // ==============================================================================
+        Route::get('/check-in/{clinic_uuid}', [CheckInController::class, 'processCheckInAjax'])->name('checkin.ajax');
     });
 
     // --- GRUP ROUTE UNTUK DOKTER ---
@@ -70,4 +74,3 @@ Route::middleware(['auth'])->group(function () {
     });
 
 });
-
