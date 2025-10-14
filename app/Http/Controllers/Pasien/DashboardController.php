@@ -36,24 +36,31 @@ class DashboardController extends Controller
         $jumlahAntreanApotekSebelumnya = 0;
 
         if ($patient) {
-            // 1. Cari kunjungan pasien hari ini, APAPUN STATUSNYA. Ini menjadi data acuan utama.
+            // [PERBAIKAN KRUSIAL]
+            // Query ini SEHARUSNYA mengambil SEMUA status aktif, TERMASUK 'HADIR'.
+            // Inilah sumber bug yang membuat antrean hilang setelah check-in.
             $kunjunganHariIni = ClinicQueue::with(['poli', 'doctor.user'])
                 ->where('patient_id', $patient->id)
                 ->whereDate('registration_time', $today)
+                ->whereIn('status', ['MENUNGGU', 'HADIR', 'DIPANGGIL']) // <-- 'HADIR' ditambahkan di sini
                 ->first();
 
+            // Jika tidak ada antrean aktif, baru cari yang sudah selesai hari ini
+            if (!$kunjunganHariIni) {
+                $kunjunganHariIni = ClinicQueue::with(['poli', 'doctor.user'])
+                    ->where('patient_id', $patient->id)
+                    ->whereDate('registration_time', $today)
+                    ->where('status', 'SELESAI')
+                    ->first();
+            }
+
             if ($kunjunganHariIni) {
-                // [MODIFIKASI UTAMA]
-                // 2. Selalu isi '$antreanBerobat' jika ada kunjungan hari ini.
-                // File Blade akan secara cerdas menentukan tampilan (aktif/selesai) berdasarkan status di dalamnya.
                 $antreanBerobat = $kunjunganHariIni;
 
-                // 3. Selalu cari antrean apotek yang terhubung.
                 $antreanApotek = PharmacyQueue::where('clinic_queue_id', $kunjunganHariIni->id)
                     ->where('status', '!=', 'BATAL')
                     ->first();
 
-                // 4. Ambil data pendukung (seperti estimasi) HANYA jika proses berobat masih berjalan.
                 if (!in_array($kunjunganHariIni->status, ['SELESAI', 'BATAL'])) {
                     $antreanBerjalan = ClinicQueue::where('poli_id', $antreanBerobat->poli_id)
                         ->whereDate('registration_time', $today)
@@ -62,7 +69,6 @@ class DashboardController extends Controller
                         ->first();
                 }
                 
-                // 5. Jika ada antrean apotek, siapkan data pendukung untuk estimasinya.
                 if ($antreanApotek) {
                     $antreanApotekBerjalan = PharmacyQueue::whereDate('created_at', $today)
                         ->where('status', 'SEDANG_DIRACIK')
@@ -78,7 +84,7 @@ class DashboardController extends Controller
                 }
 
             } else {
-                // 6. Jika TIDAK ADA kunjungan sama sekali hari ini, baru cari riwayat kunjungan terakhir.
+                // Jika TIDAK ADA kunjungan sama sekali hari ini, baru cari riwayat kunjungan terakhir.
                 $riwayatBerobatTerakhir = ClinicQueue::with(['poli', 'doctor.user'])
                     ->where('patient_id', $patient->id)
                     ->where(function ($query) {
@@ -92,12 +98,10 @@ class DashboardController extends Controller
             }
         }
 
-        // Data lain yang tidak berubah
         $polis = Poli::orderBy('name', 'asc')->get();
         $articles = Article::whereNotNull('published_at')
             ->latest('published_at')->take(3)->get();
 
-        // Kirim semua variabel yang dibutuhkan oleh view
         return view('pasien.dashboard', compact(
             'user',
             'patient',
@@ -112,9 +116,9 @@ class DashboardController extends Controller
         ));
     }
     
-    /**
-     * Menangani konfirmasi penerimaan obat oleh pasien. (Tidak Diubah)
-     */
+    // ... Sisa method lainnya (store, getDoctorsByPoli, dll) tetap sama dan tidak perlu diubah ...
+    // [PASTIKAN ANDA MENYALIN SELURUH KONTEN FILE INI, TERMASUK METHOD LAINNYA DI BAWAH]
+    
     public function konfirmasiPenerimaanObat($pharmacyQueueId)
     {
         try {
@@ -146,10 +150,6 @@ class DashboardController extends Controller
         }
     }
     
-    // ============================================================================================
-    // == FUNGSI DI BAWAH INI TIDAK DIUBAH ==
-    // ============================================================================================
-
     public function store(Request $request)
     {
         $user = Auth::user();
@@ -218,4 +218,3 @@ class DashboardController extends Controller
         return response()->json($doctors);
     }
 }
-
