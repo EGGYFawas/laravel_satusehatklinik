@@ -44,10 +44,11 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/antrean', [PasienDashboardController::class, 'store'])->name('antrean.store');
         Route::get('/doctors-by-poli/{poli_id}', [PasienDashboardController::class, 'getDoctorsByPoli'])->name('doctors.by.poli');
         
-        // ==============================================================================
-        // == PERBAIKAN: Mengubah route ini agar mengarah ke fungsi AJAX yang benar ==
-        // ==============================================================================
+        // Route untuk proses Check-In via QR Code (tidak diubah)
         Route::get('/check-in/{clinic_uuid}', [CheckInController::class, 'processCheckInAjax'])->name('checkin.ajax');
+
+        // [BARU] Menambahkan route untuk menangani konfirmasi penerimaan obat oleh pasien
+        Route::post('/antrean/apotek/{pharmacyQueueId}/konfirmasi', [PasienDashboardController::class, 'konfirmasiPenerimaanObat'])->name('antrean.apotek.konfirmasi');
     });
 
     // --- GRUP ROUTE UNTUK DOKTER ---
@@ -62,7 +63,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
     });
 
-    // --- GRUP ROUTE BARU UNTUK PETUGAS LOKET ---
+    // --- GRUP ROUTE UNTUK PETUGAS LOKET ---
     Route::middleware(['role:petugas loket'])->prefix('petugas-loket')->name('petugas-loket.')->group(function () {
         // Rute untuk menampilkan dashboard utama apotek
         Route::get('/dashboard', [PetugasLoketDashboardController::class, 'index'])->name('dashboard');

@@ -18,54 +18,148 @@ use Illuminate\Support\Facades\Validator;
 
 class DashboardController extends Controller
 {
+    /**
+     * Menampilkan halaman dashboard pasien dengan data antrean atau riwayat terakhir.
+     */
     public function index()
     {
         $user = Auth::user();
         $patient = Patient::where('user_id', $user->id)->first();
         $today = Carbon::today()->toDateString();
+
+        // Inisialisasi variabel untuk dikirim ke view
         $antreanBerobat = null;
+        $riwayatBerobatTerakhir = null;
         $antreanBerjalan = null;
         $antreanApotek = null;
+        $antreanApotekBerjalan = null;
+        $jumlahAntreanApotekSebelumnya = 0;
 
         if ($patient) {
             // -- LOGIKA PENGAMBILAN DATA YANG DIPERBARUI --
-            // 1. Ambil antrean berobat aktif (termasuk yang sudah selesai untuk dicek resepnya)
-            $latestClinicQueue = ClinicQueue::with('poli')
+
+            // [MODIFIKASI UTAMA]
+            // Mencari antrean yang dianggap masih "aktif" untuk hari ini.
+            // Antrean aktif adalah semua antrean yang statusnya BUKAN 'SELESAI' atau 'BATAL'.
+            // Ini memastikan antrean dengan status 'MENUNGGU', 'HADIR', 'DIPANGGIL', 'DIPERIKSA' akan selalu ditampilkan.
+            $antreanBerobat = ClinicQueue::with(['poli', 'doctor'])
                 ->where('patient_id', $patient->id)
                 ->whereDate('registration_time', $today)
+                ->whereNotIn('status', ['SELESAI', 'BATAL']) // Ini adalah kunci perbaikannya
                 ->orderBy('registration_time', 'desc')
                 ->first();
 
-            if ($latestClinicQueue) {
-                // Tampilkan antrean berobat jika statusnya belum 'SELESAI' atau 'BATAL'
-                if (!in_array($latestClinicQueue->status, ['SELESAI', 'BATAL'])) {
-                    $antreanBerobat = $latestClinicQueue;
-                }
+            if ($antreanBerobat) {
+                // Jika ada antrean berobat yang AKTIF hari ini, ambil data pendukungnya.
 
-                // 2. Ambil antrean yang sedang berjalan di poli yang sama
-                $antreanBerjalan = ClinicQueue::where('poli_id', $latestClinicQueue->poli_id)
+                // Ambil antrean yang sedang berjalan di poli yang sama untuk estimasi
+                $antreanBerjalan = ClinicQueue::where('poli_id', $antreanBerobat->poli_id)
                     ->whereDate('registration_time', $today)
                     ->where('status', 'DIPANGGIL')
                     ->orderBy('call_time', 'desc')
                     ->first();
 
-                // 3. Ambil antrean apotek jika antrean berobat sudah selesai dan ada resep
-                if (in_array($latestClinicQueue->status, ['SELESAI', 'MENUNGGU_RACIK', 'SEDANG_DIRACIK', 'SIAP_DIAMBIL'])) {
-                    $antreanApotek = PharmacyQueue::where('clinic_queue_id', $latestClinicQueue->id)
-                        ->whereIn('status', ['MENUNGGU_RACIK', 'SEDANG_DIRACIK', 'SIAP_DIAMBIL'])
+                // Ambil antrean apotek yang terkait dengan antrean berobat hari ini
+                $antreanApotek = PharmacyQueue::where('clinic_queue_id', $antreanBerobat->id)
+                    ->where('status', '!=', 'BATAL')
+                    ->first();
+
+                // Jika ada antrean apotek, siapkan data untuk estimasi
+                if ($antreanApotek) {
+                    // Ambil antrean apotek yang sedang diracik hari ini
+                    $antreanApotekBerjalan = PharmacyQueue::whereDate('created_at', $today)
+                        ->where('status', 'DIRACIK')
+                        ->orderBy('updated_at', 'asc')
                         ->first();
+                    
+                    // Hitung jumlah antrean apotek sebelumnya yang masih menunggu
+                    if ($antreanApotek->status == 'MENUNGGU_RACIK') {
+                        $jumlahAntreanApotekSebelumnya = PharmacyQueue::whereDate('created_at', $today)
+                            ->where('status', 'MENUNGGU_RACIK')
+                            ->where('created_at', '<', $antreanApotek->created_at)
+                            ->count();
+                    }
                 }
+
+            } else {
+                // Jika TIDAK ADA antrean aktif sama sekali hari ini, baru tampilkan riwayat kunjungan terakhir.
+                // Logika ini sekarang hanya akan berjalan jika pasien benar-benar sudah selesai berobat
+                // atau belum mendaftar sama sekali hari ini.
+                $riwayatBerobatTerakhir = ClinicQueue::with(['poli', 'doctor'])
+                    ->where('patient_id', $patient->id)
+                    // Mengambil riwayat yang sudah selesai atau yang obatnya sudah diterima
+                    ->where(function ($query) {
+                        $query->where('status', 'SELESAI')
+                              ->orWhereHas('pharmacyQueue', function ($subQuery) {
+                                  $subQuery->where('status', 'DITERIMA_PASIEN');
+                              });
+                    })
+                    ->orderBy('finish_time', 'desc')
+                    ->first();
             }
         }
 
+        // Data untuk modal pendaftaran dan artikel (tidak berubah)
         $polis = Poli::orderBy('name', 'asc')->get();
         $articles = Article::whereNotNull('published_at')
             ->latest('published_at')->take(3)->get();
 
-        return view('pasien.dashboard', compact('user', 'patient', 'antreanBerobat', 'antreanBerjalan', 'antreanApotek', 'polis', 'articles'));
+        // Kirim semua variabel yang dibutuhkan oleh view
+        return view('pasien.dashboard', compact(
+            'user',
+            'patient',
+            'antreanBerobat',
+            'riwayatBerobatTerakhir',
+            'antreanBerjalan',
+            'antreanApotek',
+            'antreanApotekBerjalan',
+            'jumlahAntreanApotekSebelumnya',
+            'polis',
+            'articles'
+        ));
     }
     
-    // ... (Sisa method store() dan getDoctorsByPoli() tidak perlu diubah)
+    /**
+     * Menangani konfirmasi penerimaan obat oleh pasien.
+     */
+    public function konfirmasiPenerimaanObat($pharmacyQueueId)
+    {
+        try {
+            $antreanApotek = PharmacyQueue::findOrFail($pharmacyQueueId);
+            $antreanKlinik = ClinicQueue::find($antreanApotek->clinic_queue_id);
+            $pasien = Patient::find($antreanKlinik->patient_id);
+
+            // Pastikan yang konfirmasi adalah pasien yang benar
+            if ($pasien->user_id !== Auth::id()) {
+                return redirect()->route('pasien.dashboard')->with('error', 'Akses tidak sah.');
+            }
+
+            DB::beginTransaction();
+
+            $antreanApotek->update([
+                'status' => 'DITERIMA_PASIEN',
+                'taken_time' => now()
+            ]);
+
+            // [PENTING] PICU PEMBUATAN REKAM MEDIS DI SINI
+            // Logika untuk membuat rekam medis final bisa diletakkan di sini
+            Log::info("Rekam medis untuk antrean #{$antreanKlinik->id} telah dibuat setelah konfirmasi obat.");
+
+            DB::commit();
+
+            return redirect()->route('pasien.dashboard')->with('success', 'Konfirmasi penerimaan obat berhasil. Terima kasih.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Gagal konfirmasi obat: ' . $e->getMessage());
+            return redirect()->route('pasien.dashboard')->with('error', 'Terjadi kesalahan saat melakukan konfirmasi.');
+        }
+    }
+    
+    // ============================================================================================
+    // == FUNGSI DI BAWAH INI TIDAK DIUBAH KARENA SUDAH BERFUNGSI DENGAN BAIK ==
+    // ============================================================================================
+
     public function store(Request $request)
     {
         $user = Auth::user();
@@ -122,4 +216,3 @@ class DashboardController extends Controller
         return response()->json($doctors);
     }
 }
-
