@@ -3,39 +3,44 @@
 namespace App\Http\Controllers\PetugasLoket;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use App\Models\PharmacyQueue;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
     /**
      * Menampilkan dashboard utama petugas loket/apotek.
+     * [MODIFIKASI] Mengambil data untuk 4 kolom Kanban baru.
      */
     public function index()
     {
         $today = Carbon::today();
 
-        // [FIX] Daftar status yang relevan dan SINKRON dengan seluruh sistem
-        $activeStatuses = ['MENUNGGU_RACIK', 'DIRACIK', 'SELESAI_RACIK', 'DIAMBIL'];
-        
+        // Mengambil semua antrean apotek untuk hari ini dengan relasi yang dibutuhkan
         $allQueues = PharmacyQueue::with([
                 'clinicQueue.patient', 
+                'clinicQueue.poli',
                 'prescription.prescriptionDetails.medicine'
             ])
             ->whereDate('entry_time', $today)
-            ->whereIn('status', $activeStatuses) // <-- Perbaikan Kritis ada di sini
             ->orderBy('pharmacy_queue_number', 'asc')
             ->get();
 
-        $queuesByStatus = $allQueues->groupBy('status');
-
-        $menungguRacik = $queuesByStatus->get('MENUNGGU_RACIK', collect());
-        $sedangDiracik = $queuesByStatus->get('DIRACIK', collect());
-        $siapDiambil = $queuesByStatus->get('SELESAI_RACIK', collect());
-        $telahDiserahkan = $queuesByStatus->get('DIAMBIL', collect());
+        // Mengelompokkan antrean berdasarkan status baru
+        $dalamAntrean = $allQueues->where('status', 'DALAM_ANTREAN');
+        $sedangDiracik = $allQueues->where('status', 'SEDANG_DIRACIK');
+        $siapDiambil = $allQueues->where('status', 'SIAP_DIAMBIL');
         
+        // Kolom riwayat menampilkan status DISERAHKAN dan DITERIMA_PASIEN
+        $telahDiserahkan = $allQueues->whereIn('status', ['DISERAHKAN', 'DITERIMA_PASIEN'])
+                                   ->sortByDesc('taken_time'); // Urutkan berdasarkan waktu diserahkan
+
         return view('petugas-loket.dashboard', compact(
-            'menungguRacik',
+            'dalamAntrean',
             'sedangDiracik',
             'siapDiambil',
             'telahDiserahkan'
@@ -43,54 +48,69 @@ class DashboardController extends Controller
     }
 
     /**
-     * Mengubah status antrean menjadi 'DIRACIK'.
+     * [FUNGSI BARU] Meng-handle semua pembaruan status dari satu route.
+     * Menggantikan startRacik(), finishRacik(), dan markAsTaken().
+     *
+     * @param Request $request
+     * @param PharmacyQueue $pharmacyQueue
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function startRacik(PharmacyQueue $pharmacyQueue)
+    public function updateStatus(Request $request, PharmacyQueue $pharmacyQueue)
     {
-        if ($pharmacyQueue->status !== 'MENUNGGU_RACIK') {
-            return redirect()->back()->with('error', 'Status antrean ini sudah diproses.');
-        }
-
-        $pharmacyQueue->update([
-            'status' => 'DIRACIK',
-            'start_racik_time' => now(),
+        $request->validate([
+            'status' => 'required|in:SEDANG_DIRACIK,SIAP_DIAMBIL,DISERAHKAN,BATAL'
         ]);
 
-        return redirect()->route('petugas-loket.dashboard')->with('success', "Obat untuk antrean {$pharmacyQueue->pharmacy_queue_number} mulai diracik.");
-    }
+        $newStatus = $request->input('status');
+        $currentStatus = $pharmacyQueue->status;
+        $updateData = ['status' => $newStatus];
+        $successMessage = '';
 
-    /**
-     * Mengubah status antrean menjadi 'SELESAI_RACIK'.
-     */
-    public function finishRacik(PharmacyQueue $pharmacyQueue)
-    {
-        if ($pharmacyQueue->status !== 'DIRACIK') {
-            return redirect()->back()->with('error', 'Status antrean ini tidak sedang dalam proses peracikan.');
+        try {
+            DB::beginTransaction();
+
+            // Logika untuk mengisi timestamp berdasarkan status baru
+            switch ($newStatus) {
+                case 'SEDANG_DIRACIK':
+                    if ($currentStatus !== 'DALAM_ANTREAN') {
+                        return redirect()->back()->with('error', 'Hanya resep dalam antrean yang bisa diproses.');
+                    }
+                    $updateData['start_racik_time'] = now();
+                    $successMessage = "Resep {$pharmacyQueue->pharmacy_queue_number} mulai disiapkan.";
+                    break;
+
+                case 'SIAP_DIAMBIL':
+                    if ($currentStatus !== 'SEDANG_DIRACIK') {
+                        return redirect()->back()->with('error', 'Hanya resep yang sedang disiapkan yang bisa diselesaikan.');
+                    }
+                    $updateData['finish_racik_time'] = now();
+                    $successMessage = "Obat untuk {$pharmacyQueue->pharmacy_queue_number} telah siap diambil.";
+                    break;
+
+                case 'DISERAHKAN':
+                    if ($currentStatus !== 'SIAP_DIAMBIL') {
+                        return redirect()->back()->with('error', 'Hanya obat yang siap yang bisa diserahkan.');
+                    }
+                    $updateData['taken_time'] = now();
+                    $successMessage = "Obat untuk {$pharmacyQueue->pharmacy_queue_number} telah diserahkan ke pasien.";
+                    break;
+                
+                // Opsi untuk pembatalan jika diperlukan di masa depan
+                case 'BATAL':
+                    $successMessage = "Antrean {$pharmacyQueue->pharmacy_queue_number} telah dibatalkan.";
+                    break;
+            }
+
+            $pharmacyQueue->update($updateData);
+
+            DB::commit();
+
+            return redirect()->route('petugas-loket.dashboard')->with('success', $successMessage);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Gagal update status antrean apotek: " . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat memperbarui status antrean.');
         }
-
-        $pharmacyQueue->update([
-            'status' => 'SELESAI_RACIK',
-            'finish_racik_time' => now(),
-        ]);
-
-        return redirect()->route('petugas-loket.dashboard')->with('success', "Obat untuk antrean {$pharmacyQueue->pharmacy_queue_number} telah siap diambil.");
-    }
-
-    /**
-     * Mengubah status antrean menjadi 'DIAMBIL' (menunggu konfirmasi pasien).
-     */
-    public function markAsTaken(PharmacyQueue $pharmacyQueue)
-    {
-        if ($pharmacyQueue->status !== 'SELESAI_RACIK') {
-            return redirect()->back()->with('error', 'Obat untuk antrean ini belum siap diserahkan.');
-        }
-
-        $pharmacyQueue->update([
-            'status' => 'DIAMBIL',
-            'taken_time' => now(),
-        ]);
-
-        return redirect()->route('petugas-loket.dashboard')->with('success', "Obat untuk antrean {$pharmacyQueue->pharmacy_queue_number} telah diserahkan. Menunggu konfirmasi pasien.");
     }
 }
-

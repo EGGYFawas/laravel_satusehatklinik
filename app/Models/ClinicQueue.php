@@ -73,5 +73,10 @@ class ClinicQueue extends Model
     {
         return $this->hasOne(MedicalRecord::class);
     }
+    public function pharmacyQueue()
+    {
+        // Asumsi foreign key di tabel pharmacy_queues adalah 'clinic_queue_id'
+        return $this->hasOne(PharmacyQueue::class);
+    }
 }
 
