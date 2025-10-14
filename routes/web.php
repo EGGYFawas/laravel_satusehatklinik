@@ -44,10 +44,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/antrean', [PasienDashboardController::class, 'store'])->name('antrean.store');
         Route::get('/doctors-by-poli/{poli_id}', [PasienDashboardController::class, 'getDoctorsByPoli'])->name('doctors.by.poli');
         
-        // Route untuk proses Check-In via QR Code (tidak diubah)
         Route::get('/check-in/{clinic_uuid}', [CheckInController::class, 'processCheckInAjax'])->name('checkin.ajax');
 
-        // [BARU] Menambahkan route untuk menangani konfirmasi penerimaan obat oleh pasien
         Route::post('/antrean/apotek/{pharmacyQueueId}/konfirmasi', [PasienDashboardController::class, 'konfirmasiPenerimaanObat'])->name('antrean.apotek.konfirmasi');
     });
 
@@ -68,10 +66,7 @@ Route::middleware(['auth'])->group(function () {
         // Rute untuk menampilkan dashboard utama apotek
         Route::get('/dashboard', [PetugasLoketDashboardController::class, 'index'])->name('dashboard');
 
-        // Rute untuk aksi-aksi yang dilakukan petugas
-        Route::post('/antrean-apotek/{pharmacyQueue}/mulai-racik', [PetugasLoketDashboardController::class, 'startRacik'])->name('antrean-apotek.startRacik');
-        Route::post('/antrean-apotek/{pharmacyQueue}/selesai-racik', [PetugasLoketDashboardController::class, 'finishRacik'])->name('antrean-apotek.finishRacik');
-        Route::post('/antrean-apotek/{pharmacyQueue}/serahkan-obat', [PetugasLoketDashboardController::class, 'markAsTaken'])->name('antrean-apotek.markAsTaken');
+        Route::patch('/antrean-apotek/{pharmacyQueue}/update-status', [PetugasLoketDashboardController::class, 'updateStatus'])->name('antrean-apotek.updateStatus');
     });
 
 });

@@ -24,17 +24,17 @@
         <p class="text-slate-600">Kelola antrean resep obat pasien secara real-time.</p>
     </div>
 
-    {{-- Kanban Board untuk Antrean Apotek --}}
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    {{-- [MODIFIKASI UTAMA] Kanban Board diubah menjadi 4 kolom --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
-        <!-- Kolom 1: Menunggu Racik -->
+        <!-- Kolom 1: Dalam Antrean (Menggantikan 'Menunggu Racik') -->
         <div class="bg-white/80 rounded-xl shadow-md flex flex-col">
-            <h3 class="text-lg font-bold text-red-800 border-b-2 border-red-200 p-4 bg-red-100 rounded-t-xl">
-                Menunggu Racik ({{ $menungguRacik->count() }})
+            <h3 class="text-lg font-bold text-slate-800 border-b-2 border-slate-200 p-4 bg-slate-100 rounded-t-xl">
+                Dalam Antrean ({{ $dalamAntrean->count() }})
             </h3>
             <div class="p-4 space-y-4 overflow-y-auto flex-grow" style="max-height: 70vh;">
-                @forelse ($menungguRacik as $queue)
-                    <div class="bg-white rounded-lg shadow-lg p-4 border-l-4 border-red-500">
+                @forelse ($dalamAntrean as $queue)
+                    <div class="bg-white rounded-lg shadow-lg p-4 border-l-4 border-slate-500">
                         <div class="flex justify-between items-start mb-2">
                             <span class="font-bold text-2xl text-gray-800">{{ $queue->pharmacy_queue_number }}</span>
                             <span class="text-xs font-semibold text-gray-500">{{ $queue->clinicQueue->poli->name }}</span>
@@ -50,10 +50,13 @@
                             </ul>
                         </div>
                         
-                        <form action="{{ route('petugas-loket.antrean-apotek.startRacik', $queue->id) }}" method="POST" class="mt-4 form-submit-confirm">
+                        {{-- Aksi untuk mengubah status ke SEDANG_DIRACIK --}}
+                        <form action="{{ route('petugas-loket.antrean-apotek.updateStatus', $queue->id) }}" method="POST" class="mt-4 form-submit-confirm">
                             @csrf
-                            <button type="submit" class="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-md transition-colors">
-                                Mulai Racik
+                            @method('PATCH')
+                            <input type="hidden" name="status" value="SEDANG_DIRACIK">
+                            <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md transition-colors">
+                                Proses Resep
                             </button>
                         </form>
                     </div>
@@ -63,10 +66,10 @@
             </div>
         </div>
 
-        <!-- Kolom 2: Sedang Diracik -->
+        <!-- Kolom 2: Sedang Disiapkan (Menggantikan 'Sedang Diracik') -->
         <div class="bg-white/80 rounded-xl shadow-md flex flex-col">
             <h3 class="text-lg font-bold text-yellow-800 border-b-2 border-yellow-200 p-4 bg-yellow-100 rounded-t-xl">
-                Sedang Diracik ({{ $sedangDiracik->count() }})
+                Sedang Disiapkan ({{ $sedangDiracik->count() }})
             </h3>
             <div class="p-4 space-y-4 overflow-y-auto flex-grow" style="max-height: 70vh;">
                 @forelse ($sedangDiracik as $queue)
@@ -78,7 +81,7 @@
                         <p class="text-sm font-semibold text-gray-700 mb-3">{{ $queue->clinicQueue->patient->full_name }}</p>
                         
                         <div class="text-xs text-gray-600 border-t pt-2">
-                             <p class="font-semibold mb-1">Resep Obat:</p>
+                            <p class="font-semibold mb-1">Resep Obat:</p>
                             <ul class="list-disc pl-4 space-y-1">
                                 @foreach ($queue->prescription->prescriptionDetails as $detail)
                                     <li>{{ $detail->medicine->name }} ({{ $detail->quantity }}) - {{ $detail->dosage }}</li>
@@ -86,15 +89,18 @@
                             </ul>
                         </div>
                         
-                        <form action="{{ route('petugas-loket.antrean-apotek.finishRacik', $queue->id) }}" method="POST" class="mt-4 form-submit-confirm">
+                        {{-- Aksi untuk mengubah status ke SIAP_DIAMBIL --}}
+                        <form action="{{ route('petugas-loket.antrean-apotek.updateStatus', $queue->id) }}" method="POST" class="mt-4 form-submit-confirm">
                             @csrf
+                            @method('PATCH')
+                            <input type="hidden" name="status" value="SIAP_DIAMBIL">
                             <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded-md transition-colors">
-                                Selesai Racik
+                                Selesai & Siap Diambil
                             </button>
                         </form>
                     </div>
                 @empty
-                    <p class="text-center text-gray-500 py-10">Tidak ada antrean.</p>
+                    <p class="text-center text-gray-500 py-10">Tidak ada resep yang sedang disiapkan.</p>
                 @endforelse
             </div>
         </div>
@@ -114,7 +120,7 @@
                         <p class="text-sm font-semibold text-gray-700 mb-3">{{ $queue->clinicQueue->patient->full_name }}</p>
                         
                         <div class="text-xs text-gray-600 border-t pt-2">
-                             <p class="font-semibold mb-1">Resep Obat:</p>
+                            <p class="font-semibold mb-1">Resep Obat:</p>
                             <ul class="list-disc pl-4 space-y-1">
                                 @foreach ($queue->prescription->prescriptionDetails as $detail)
                                     <li>{{ $detail->medicine->name }} ({{ $detail->quantity }}) - {{ $detail->dosage }}</li>
@@ -122,15 +128,51 @@
                             </ul>
                         </div>
                         
-                        <form action="{{ route('petugas-loket.antrean-apotek.markAsTaken', $queue->id) }}" method="POST" class="mt-4 form-submit-confirm">
+                        {{-- Aksi untuk mengubah status ke DISERAHKAN --}}
+                        <form action="{{ route('petugas-loket.antrean-apotek.updateStatus', $queue->id) }}" method="POST" class="mt-4 form-submit-confirm">
                             @csrf
+                            @method('PATCH')
+                            <input type="hidden" name="status" value="DISERAHKAN">
                             <button type="submit" class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-md transition-colors">
-                                Serahkan Obat
+                                Serahkan ke Pasien
                             </button>
                         </form>
                     </div>
                 @empty
-                    <p class="text-center text-gray-500 py-10">Tidak ada antrean.</p>
+                    <p class="text-center text-gray-500 py-10">Tidak ada obat yang siap diambil.</p>
+                @endforelse
+            </div>
+        </div>
+
+        <!-- Kolom 4: Riwayat Hari Ini (Kolom Baru) -->
+        <div class="bg-white/80 rounded-xl shadow-md flex flex-col">
+            <h3 class="text-lg font-bold text-purple-800 border-b-2 border-purple-200 p-4 bg-purple-100 rounded-t-xl">
+                Riwayat Hari Ini ({{ $telahDiserahkan->count() }})
+            </h3>
+            <div class="p-4 space-y-4 overflow-y-auto flex-grow" style="max-height: 70vh;">
+                @forelse ($telahDiserahkan as $queue)
+                    <div class="bg-white rounded-lg shadow-lg p-4 border-l-4 {{ $queue->status == 'DITERIMA_PASIEN' ? 'border-purple-500' : 'border-gray-400' }}">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="font-bold text-2xl text-gray-800">{{ $queue->pharmacy_queue_number }}</span>
+                            @if($queue->status == 'DITERIMA_PASIEN')
+                                <span class="text-xs font-bold text-purple-600 bg-purple-200 px-2 py-1 rounded-full">Selesai</span>
+                            @else
+                                <span class="text-xs font-semibold text-gray-600 bg-gray-200 px-2 py-1 rounded-full">Diserahkan</span>
+                            @endif
+                        </div>
+                        <p class="text-sm font-semibold text-gray-700 mb-3">{{ $queue->clinicQueue->patient->full_name }}</p>
+                        
+                        <div class="text-xs text-gray-600 border-t pt-2">
+                             <p class="font-semibold mb-1">Resep Obat:</p>
+                            <ul class="list-disc pl-4 space-y-1">
+                                @foreach ($queue->prescription->prescriptionDetails as $detail)
+                                    <li>{{ $detail->medicine->name }} ({{ $detail->quantity }})</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+                @empty
+                    <p class="text-center text-gray-500 py-10">Belum ada riwayat hari ini.</p>
                 @endforelse
             </div>
         </div>
@@ -148,7 +190,6 @@
                 e.preventDefault();
                 
                 let confirmationText = 'Apakah Anda yakin?';
-                // Dapatkan teks dari tombol untuk membuat pesan lebih spesifik
                 const buttonText = e.target.querySelector('button[type="submit"]').textContent.trim();
                 confirmationText = `Anda yakin ingin melanjutkan proses "${buttonText}"?`;
 
@@ -163,7 +204,7 @@
                     cancelButtonText: 'Batal'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        form.submit(); // Lanjutkan submit form jika dikonfirmasi
+                        form.submit();
                     }
                 });
             });
@@ -171,4 +212,3 @@
     });
 </script>
 @endpush
-

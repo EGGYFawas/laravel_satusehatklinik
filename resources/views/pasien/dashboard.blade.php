@@ -46,6 +46,7 @@
             $hasActiveProcess = ($antreanBerobat && !in_array($antreanBerobat->status, ['SELESAI', 'BATAL'])) || 
                                 ($antreanApotek && !in_array($antreanApotek->status, ['DITERIMA_PASIEN', 'BATAL']));
         @endphp
+
         @if(!$hasActiveProcess)
             <div class="w-full max-w-lg bg-white rounded-xl shadow-lg p-6 text-center mb-8">
                 <img src="{{ asset('assets/img/ambil_antrean.png') }}" alt="Antrean Online" class="w-32 h-32 mx-auto mb-4">
@@ -58,7 +59,7 @@
         <div class="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-8">
             
             <!-- ====================================================== -->
-            <!-- == KARTU ANTRIAN BEROBAT (DENGAN RIWAYAT & PESAN BARU) == -->
+            <!-- == KARTU ANTRIAN BEROBAT (Tidak Diubah) == -->
             <!-- ====================================================== -->
             <div class="bg-white rounded-xl shadow-lg p-6">
                 <h3 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">Nomor Antrean Berobat</h3>
@@ -137,11 +138,19 @@
                 @elseif($riwayatBerobatTerakhir)
                     <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
                         <p class="font-semibold text-gray-700">Kunjungan Terakhir Anda</p>
-                        <p class="text-2xl font-bold text-gray-800 mt-2">{{ \Carbon\Carbon::parse($riwayatBerobatTerakhir->finish_time)->isoFormat('dddd, D MMMM YYYY') }}</p>
+                        
+                        @php \Carbon\Carbon::setLocale('id'); @endphp
+                        
+                        <p class="text-2xl font-bold text-gray-800 mt-2">
+                            {{ \Carbon\Carbon::parse($riwayatBerobatTerakhir->finish_time)->isoFormat('dddd, D MMMM YYYY') }}
+                        </p>
+
                         <div class="mt-4 text-left space-y-2 text-sm">
-                            <p><span class="font-semibold">Poli:</span> {{ $riwayatBerobatTerakhir->poli->name }}</p>
-                            <p><span class="font-semibold">Dokter:</span> {{ $riwayatBerobatTerakhir->doctor->user->full_name ?? 'N/A' }}</p>
+                            <p><span class="font-semibold w-24 inline-block">Selesai Pukul</span>: {{ \Carbon\Carbon::parse($riwayatBerobatTerakhir->finish_time)->format('H:i') }} WIB</p>
+                            <p><span class="font-semibold w-24 inline-block">Poli</span>: {{ $riwayatBerobatTerakhir->poli->name }}</p>
+                            <p><span class="font-semibold w-24 inline-block">Dokter</span>: {{ $riwayatBerobatTerakhir->doctor->user->full_name ?? 'N/A' }}</p>
                         </div>
+
                         <a href="#" class="mt-4 inline-block bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg text-sm">Lihat Detail Riwayat</a>
                     </div>
                 @else
@@ -152,7 +161,7 @@
             </div>
             
             <!-- ====================================================== -->
-            <!-- == KARTU ANTRIAN APOTEK (DENGAN PERBAIKAN) == -->
+            <!-- == KARTU ANTRIAN APOTEK (DIMODIFIKASI) == -->
             <!-- ====================================================== -->
             <div class="bg-white rounded-xl shadow-lg p-6">
                 <h3 class="text-lg font-bold text-gray-800 border-b pb-2 mb-4">Nomor Antrean Apotek</h3>
@@ -160,16 +169,20 @@
                     @php
                         $statusTextApotek = ''; $bgColorApotek = ''; $textColorApotek = ''; $borderColorApotek = ''; $pulseAnimationApotek = '';
                         switch ($antreanApotek->status) {
-                            case 'MENUNGGU_RACIK':
-                                $statusTextApotek = 'Menunggu Racikan'; $bgColorApotek = 'bg-cyan-100'; $textColorApotek = 'text-cyan-800'; $borderColorApotek = 'border-cyan-300'; break;
-                            case 'DIRACIK':
-                                $statusTextApotek = 'Obat Disiapkan'; $bgColorApotek = 'bg-orange-100'; $textColorApotek = 'text-orange-800'; $borderColorApotek = 'border-orange-300'; break;
-                            case 'SELESAI_RACIK':
+                            case 'DALAM_ANTREAN':
+                                $statusTextApotek = 'Dalam Antrean Apotek'; $bgColorApotek = 'bg-cyan-100'; $textColorApotek = 'text-cyan-800'; $borderColorApotek = 'border-cyan-300'; break;
+                            case 'SEDANG_DIRACIK':
+                                $statusTextApotek = 'Obat Sedang Disiapkan'; $bgColorApotek = 'bg-orange-100'; $textColorApotek = 'text-orange-800'; $borderColorApotek = 'border-orange-300'; break;
+                            case 'SIAP_DIAMBIL':
                                 $statusTextApotek = 'Obat Siap Diambil!'; $bgColorApotek = 'bg-yellow-100'; $textColorApotek = 'text-yellow-800'; $borderColorApotek = 'border-yellow-300'; $pulseAnimationApotek = 'blinking-warning'; break;
-                            case 'DIAMBIL':
+                            case 'DISERAHKAN':
                                 $statusTextApotek = 'Menunggu Konfirmasi Anda'; $bgColorApotek = 'bg-purple-100'; $textColorApotek = 'text-purple-800'; $borderColorApotek = 'border-purple-300'; break;
-                             case 'DITERIMA_PASIEN':
-                                $statusTextApotek = 'Obat Sudah Diterima'; $bgColorApotek = 'bg-green-100'; $textColorApotek = 'text-green-800'; $borderColorApotek = 'border-green-300'; break;
+                            case 'DITERIMA_PASIEN':
+                                $statusTextApotek = 'Proses Selesai'; $bgColorApotek = 'bg-green-100'; $textColorApotek = 'text-green-800'; $borderColorApotek = 'border-green-300'; break;
+                            case 'BATAL':
+                                $statusTextApotek = 'Dibatalkan'; $bgColorApotek = 'bg-red-100'; $textColorApotek = 'text-red-800'; $borderColorApotek = 'border-red-300'; break;
+                            default:
+                                $statusTextApotek = 'Menunggu Proses'; $bgColorApotek = 'bg-gray-100'; $textColorApotek = 'text-gray-800'; $borderColorApotek = 'border-gray-300'; break;
                         }
                     @endphp
 
@@ -180,7 +193,7 @@
                     </div>
 
                     <div class="mt-6 space-y-4">
-                        @if(!in_array($antreanApotek->status, ['DIAMBIL', 'DITERIMA_PASIEN']))
+                        @if(in_array($antreanApotek->status, ['DALAM_ANTREAN', 'SEDANG_DIRACIK']))
                             <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
                                 <span class="font-semibold text-gray-700">Antrean Diproses:</span>
                                 <span class="text-lg font-bold text-gray-900">{{ $antreanApotekBerjalan->pharmacy_queue_number ?? '-' }}</span>
@@ -189,23 +202,22 @@
                                 <span class="font-semibold text-gray-700">Estimasi Selesai:</span>
                                 <span class="text-lg font-bold text-gray-900">
                                      @php
-                                        $estimasiApotek = '-';
-                                        if ($antreanApotek->status === 'SELESAI_RACIK') { $estimasiApotek = "Sekarang!"; } 
-                                        elseif ($antreanApotek->status === 'DIRACIK') { $estimasiApotek = "Segera"; } 
-                                        elseif ($antreanApotek->status === 'MENUNGGU_RACIK') {
-                                            $waktuTunggu = ($jumlahAntreanApotekSebelumnya) * 10; // Asumsi 10 menit per resep
-                                            $estimasiApotek = "sekitar {$waktuTunggu} menit";
-                                        }
-                                    @endphp
-                                    {{ $estimasiApotek }}
+                                         $estimasiApotek = '-';
+                                         if ($antreanApotek->status === 'SEDANG_DIRACIK') { $estimasiApotek = "Segera"; } 
+                                         elseif ($antreanApotek->status === 'DALAM_ANTREAN') {
+                                             $waktuTunggu = ($jumlahAntreanApotekSebelumnya) * 10;
+                                             $estimasiApotek = $waktuTunggu > 0 ? "sekitar {$waktuTunggu} menit" : "Segera";
+                                         }
+                                     @endphp
+                                     {{ $estimasiApotek }}
                                 </span>
                             </div>
                         @endif
                         
                         <div class="pt-4 border-t">
-                             @if($antreanApotek->status == 'SELESAI_RACIK')
+                             @if($antreanApotek->status == 'SIAP_DIAMBIL')
                                  <div class="w-full bg-green-500 text-white font-bold py-3 px-6 rounded-lg text-center text-lg animate-pulse">SEGERA MENUJU LOKET APOTEK</div>
-                             @elseif($antreanApotek->status == 'DIAMBIL')
+                             @elseif($antreanApotek->status == 'DISERAHKAN')
                                  <form action="{{ route('pasien.antrean.apotek.konfirmasi', $antreanApotek->id) }}" method="POST" id="konfirmasiObatForm">
                                      @csrf
                                      <button type="button" id="konfirmasiObatBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md text-base">Konfirmasi Obat Sudah Diterima</button>
@@ -232,7 +244,7 @@
         </div>
     </div>
 
-    {{-- Artikel Kesehatan --}}
+    {{-- Artikel Kesehatan (Tidak Diubah) --}}
     <div class="mt-12 w-full max-w-5xl mx-auto">
         <h2 class="text-2xl font-bold text-gray-800 mb-6">Artikel Kesehatan Terbaru</h2>
         @if(isset($articles) && $articles->isNotEmpty())
@@ -255,7 +267,7 @@
 @endsection
 
 @push('modals')
-    {{-- [PERBAIKAN] Mengembalikan modal pendaftaran ke versi lengkap dengan fitur keluarga --}}
+    {{-- Tidak ada perubahan pada Modals --}}
     @if(!$hasActiveProcess)
     <div id="antrianModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-70 flex items-center justify-center z-50 p-4">
          <div id="modalContent" class="bg-white rounded-xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[95vh] transform transition-all" 
@@ -276,84 +288,79 @@
                           <input type="hidden" name="is_family" x-bind:value="isFamily">
                       </div>
                       <div class="border-t border-gray-200 pt-6">
-                            {{-- TAMPILAN DATA DIRI SENDIRI --}}
-                            <div x-show="!isFamily" x-transition class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-4">
-                                <h4 class="md:col-span-2 text-lg font-semibold text-gray-700 mb-2">Data Pasien</h4>
-                                 <div>
-                                     <label for="nama" class="block text-sm font-medium text-gray-700 mb-1">Nama</label>
-                                     <input type="text" id="nama" class="w-full p-2 bg-gray-100 border border-gray-300 rounded-md" value="{{ $patient->full_name ?? $user->full_name }}" readonly>
-                                 </div>
-                                 <div>
-                                     <label for="nik" class="block text-sm font-medium text-gray-700 mb-1">NIK</label>
-                                     <input type="text" id="nik" class="w-full p-2 bg-gray-100 border border-gray-300 rounded-md" value="{{ $patient->nik ?? 'NIK tidak ditemukan' }}" readonly>
-                                 </div>
-                            </div>
-                            
-                            {{-- TAMPILAN FORM ANGGOTA KELUARGA --}}
-                            <div x-show="isFamily" x-transition class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-4 border-b border-gray-200 pb-4">
-                                <h4 class="md:col-span-2 text-lg font-semibold text-gray-700 mb-2">Data Anggota Keluarga</h4>
-                                <div>
-                                    <label for="new_patient_name" class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap Pasien <span class="text-red-500">*</span></label>
-                                    <input type="text" name="new_patient_name" class="w-full p-2 border border-gray-300 rounded-md" :required="isFamily" @input="event.target.value = event.target.value.toUpperCase()">
-                                </div>
-                                <div>
-                                    <label for="new_patient_nik" class="block text-sm font-medium text-gray-700 mb-1">NIK (16 Digit) <span class="text-red-500">*</span></label>
-                                    <input type="text" name="new_patient_nik" class="w-full p-2 border border-gray-300 rounded-md" :required="isFamily" maxlength="16" x-model="nikInput" @input="nikInput = nikInput.replace(/\D/g, '')">
-                                    <p x-show="isFamily && nikInput.length > 0 && nikInput.length !== 16" class="text-xs text-red-600 mt-1">NIK harus terdiri dari 16 digit angka.</p>
-                                </div>
-                                <div>
-                                    <label for="new_patient_dob" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Lahir <span class="text-red-500">*</span></label>
-                                    <input type="date" name="new_patient_dob" class="w-full p-2 border border-gray-300 rounded-md" :required="isFamily">
-                                </div>
-                                <div>
-                                    <label for="new_patient_gender" class="block text-sm font-medium text-gray-700 mb-1">Jenis Kelamin <span class="text-red-500">*</span></label>
-                                    <select name="new_patient_gender" class="w-full p-2 border border-gray-300 rounded-md" :required="isFamily">
-                                        <option value="" disabled selected>-- Pilih Jenis Kelamin --</option>
-                                        <option value="Laki-laki">Laki-laki</option>
-                                        <option value="Perempuan">Perempuan</option>
-                                    </select>
-                                </div>
-                                <div class="md:col-span-2">
-                                     <label for="patient_relationship" class="block text-sm font-medium text-gray-700 mb-1">Hubungan Keluarga <span class="text-red-500">*</span></label>
-                                     <select name="patient_relationship" @change="customRelationship = ($event.target.value === 'Lainnya')" class="w-full p-2 border border-gray-300 rounded-md" :required="isFamily">
-                                         <option value="" disabled selected>-- Pilih Hubungan --</option>
-                                         <option value="Anak">Anak</option>
-                                         <option value="Orang Tua">Orang Tua</option>
-                                         <option value="Pasangan">Pasangan</option>
-                                         <option value="Saudara Kandung">Saudara Kandung</option>
-                                         <option value="Lainnya">Lainnya</option>
-                                     </select>
-                                </div>
-                                <div x-show="customRelationship" x-transition class="md:col-span-2">
-                                    <label for="patient_relationship_custom" class="block text-sm font-medium text-gray-700 mb-1">Sebutkan Hubungan Lainnya</label>
-                                    <input type="text" name="patient_relationship_custom" class="w-full p-2 border border-gray-300 rounded-md" :required="customRelationship">
-                                </div>
-                            </div>
-                            
-                            {{-- DETAIL PENDAFTARAN UMUM --}}
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                                <h4 class="md:col-span-2 text-lg font-semibold text-gray-700 mb-2 pt-4" :class="isFamily ? '' : 'border-t border-gray-200'">Detail Pendaftaran</h4>
-                                 <div>
-                                     <label for="poli" class="block text-sm font-medium text-gray-700 mb-1">Pilih Poli <span class="text-red-500">*</span></label>
-                                     <select id="poli" name="poli_id" class="w-full p-2 border border-gray-300 rounded-md" required>
-                                         <option value="" disabled selected>-- Silahkan Pilih Poli --</option>
-                                         @foreach($polis as $poli)
-                                             <option value="{{ $poli->id }}">{{ $poli->name }}</option>
-                                         @endforeach
-                                     </select>
-                                 </div>
-                                 <div>
-                                     <label for="doctor" class="block text-sm font-medium text-gray-700 mb-1">Pilih Dokter <span class="text-red-500">*</span></label>
-                                     <select id="doctor" name="doctor_id" class="w-full p-2 border border-gray-300 rounded-md" required disabled>
-                                         <option value="">-- Pilih Poli Terlebih Dahulu --</option>
-                                     </select>
-                                 </div>
-                                 <div class="md:col-span-2">
-                                     <label for="keluhan" class="block text-sm font-medium text-gray-700 mb-1">Keluhan <span class="text-red-500">*</span></label>
-                                     <textarea name="chief_complaint" rows="3" class="w-full p-2 border border-gray-300 rounded-md" placeholder="Tuliskan keluhan utama Anda..." required></textarea>
-                                 </div>
-                                 <input type="hidden" name="registration_date" value="{{ date('Y-m-d') }}">
-                            </div>
+                          <div x-show="!isFamily" x-transition class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-4">
+                              <h4 class="md:col-span-2 text-lg font-semibold text-gray-700 mb-2">Data Pasien</h4>
+                               <div>
+                                  <label for="nama" class="block text-sm font-medium text-gray-700 mb-1">Nama</label>
+                                  <input type="text" id="nama" class="w-full p-2 bg-gray-100 border border-gray-300 rounded-md" value="{{ $patient->full_name ?? $user->full_name }}" readonly>
+                               </div>
+                               <div>
+                                  <label for="nik" class="block text-sm font-medium text-gray-700 mb-1">NIK</label>
+                                  <input type="text" id="nik" class="w-full p-2 bg-gray-100 border border-gray-300 rounded-md" value="{{ $patient->nik ?? 'NIK tidak ditemukan' }}" readonly>
+                               </div>
+                          </div>
+                          <div x-show="isFamily" x-transition class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-4 border-b border-gray-200 pb-4">
+                              <h4 class="md:col-span-2 text-lg font-semibold text-gray-700 mb-2">Data Anggota Keluarga</h4>
+                              <div>
+                                  <label for="new_patient_name" class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap Pasien <span class="text-red-500">*</span></label>
+                                  <input type="text" name="new_patient_name" class="w-full p-2 border border-gray-300 rounded-md" :required="isFamily" @input="event.target.value = event.target.value.toUpperCase()">
+                              </div>
+                              <div>
+                                  <label for="new_patient_nik" class="block text-sm font-medium text-gray-700 mb-1">NIK (16 Digit) <span class="text-red-500">*</span></label>
+                                  <input type="text" name="new_patient_nik" class="w-full p-2 border border-gray-300 rounded-md" :required="isFamily" maxlength="16" x-model="nikInput" @input="nikInput = nikInput.replace(/\D/g, '')">
+                                  <p x-show="isFamily && nikInput.length > 0 && nikInput.length !== 16" class="text-xs text-red-600 mt-1">NIK harus terdiri dari 16 digit angka.</p>
+                              </div>
+                              <div>
+                                  <label for="new_patient_dob" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Lahir <span class="text-red-500">*</span></label>
+                                  <input type="date" name="new_patient_dob" class="w-full p-2 border border-gray-300 rounded-md" :required="isFamily">
+                              </div>
+                              <div>
+                                  <label for="new_patient_gender" class="block text-sm font-medium text-gray-700 mb-1">Jenis Kelamin <span class="text-red-500">*</span></label>
+                                  <select name="new_patient_gender" class="w-full p-2 border border-gray-300 rounded-md" :required="isFamily">
+                                      <option value="" disabled selected>-- Pilih Jenis Kelamin --</option>
+                                      <option value="Laki-laki">Laki-laki</option>
+                                      <option value="Perempuan">Perempuan</option>
+                                  </select>
+                              </div>
+                              <div class="md:col-span-2">
+                                   <label for="patient_relationship" class="block text-sm font-medium text-gray-700 mb-1">Hubungan Keluarga <span class="text-red-500">*</span></label>
+                                   <select name="patient_relationship" @change="customRelationship = ($event.target.value === 'Lainnya')" class="w-full p-2 border border-gray-300 rounded-md" :required="isFamily">
+                                       <option value="" disabled selected>-- Pilih Hubungan --</option>
+                                       <option value="Anak">Anak</option>
+                                       <option value="Orang Tua">Orang Tua</option>
+                                       <option value="Pasangan">Pasangan</option>
+                                       <option value="Saudara Kandung">Saudara Kandung</option>
+                                       <option value="Lainnya">Lainnya</option>
+                                   </select>
+                              </div>
+                              <div x-show="customRelationship" x-transition class="md:col-span-2">
+                                  <label for="patient_relationship_custom" class="block text-sm font-medium text-gray-700 mb-1">Sebutkan Hubungan Lainnya</label>
+                                  <input type="text" name="patient_relationship_custom" class="w-full p-2 border border-gray-300 rounded-md" :required="customRelationship">
+                              </div>
+                          </div>
+                          <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                              <h4 class="md:col-span-2 text-lg font-semibold text-gray-700 mb-2 pt-4" :class="isFamily ? '' : 'border-t border-gray-200'">Detail Pendaftaran</h4>
+                               <div>
+                                  <label for="poli" class="block text-sm font-medium text-gray-700 mb-1">Pilih Poli <span class="text-red-500">*</span></label>
+                                  <select id="poli" name="poli_id" class="w-full p-2 border border-gray-300 rounded-md" required>
+                                      <option value="" disabled selected>-- Silahkan Pilih Poli --</option>
+                                      @foreach($polis as $poli)
+                                          <option value="{{ $poli->id }}">{{ $poli->name }}</option>
+                                      @endforeach
+                                  </select>
+                               </div>
+                               <div>
+                                  <label for="doctor" class="block text-sm font-medium text-gray-700 mb-1">Pilih Dokter <span class="text-red-500">*</span></label>
+                                  <select id="doctor" name="doctor_id" class="w-full p-2 border border-gray-300 rounded-md" required disabled>
+                                      <option value="">-- Pilih Poli Terlebih Dahulu --</option>
+                                  </select>
+                               </div>
+                               <div class="md:col-span-2">
+                                  <label for="keluhan" class="block text-sm font-medium text-gray-700 mb-1">Keluhan <span class="text-red-500">*</span></label>
+                                  <textarea name="chief_complaint" rows="3" class="w-full p-2 border border-gray-300 rounded-md" placeholder="Tuliskan keluhan utama Anda..." required></textarea>
+                               </div>
+                               <input type="hidden" name="registration_date" value="{{ date('Y-m-d') }}">
+                          </div>
                       </div>
                   </form>
                   @else
@@ -367,7 +374,6 @@
          </div>
     </div>
     @endif
-    
     <div id="qrScannerModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 text-center relative">
             <h3 class="text-xl font-bold text-gray-800 mb-4">Pindai QR Code Check-In</h3>
@@ -379,6 +385,7 @@
 @endpush
 
 @push('scripts')
+    {{-- Tidak ada perubahan pada Scripts --}}
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function () {

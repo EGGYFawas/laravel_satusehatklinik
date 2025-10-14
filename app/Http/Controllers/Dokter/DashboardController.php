@@ -45,7 +45,7 @@ class DashboardController extends Controller
 
         if ($pasienSedangDipanggil) {
             $patientHistory = MedicalRecord::where('patient_id', $pasienSedangDipanggil->patient_id)
-                                ->orderBy('checkup_date', 'desc')->get();
+                                        ->orderBy('checkup_date', 'desc')->get();
             $medicines = Medicine::where('stock', '>', 0)->orderBy('name', 'asc')->get();
             $diagnosisTags = DiagnosisTag::orderBy('tag_name', 'asc')->get();
         }
@@ -77,9 +77,9 @@ class DashboardController extends Controller
         }
 
         $isCallingAnother = ClinicQueue::where('doctor_id', $doctor->id)
-                                ->whereDate('registration_time', Carbon::today())
-                                ->where('status', 'DIPANGGIL')
-                                ->exists();
+                                        ->whereDate('registration_time', Carbon::today())
+                                        ->where('status', 'DIPANGGIL')
+                                        ->exists();
 
         if ($isCallingAnother) {
             return redirect()->back()->with('error', 'Selesaikan pemeriksaan pasien saat ini terlebih dahulu.');
@@ -92,7 +92,6 @@ class DashboardController extends Controller
         return redirect()->route('dokter.dashboard')->with('success', "Pasien dengan nomor antrean {$antrean->queue_number} telah dipanggil.");
     }
     
-    // ... (method simpanPemeriksaan tidak perlu diubah) ...
     public function simpanPemeriksaan(Request $request, ClinicQueue $antrean)
     {
         $request->validate([ 'patient_id' => 'required|exists:patients,id', 'blood_type' => 'nullable|string|max:3', 'known_allergies' => 'nullable|string|max:500', 'chronic_diseases' => 'nullable|string|max:500', 'doctor_notes' => 'required|string|min:10', 'diagnosis_tags' => 'nullable|array', 'diagnosis_tags.*' => 'string|max:255', 'medicines' => 'nullable|array', 'medicines.*.id' => 'required|exists:medicines,id', 'medicines.*.quantity' => 'required|integer|min:1', 'medicines.*.dosage' => 'required|string|max:255', ]);
@@ -120,10 +119,18 @@ class DashboardController extends Controller
                 }
                 $lastPharmacyQueueCount = PharmacyQueue::whereDate('entry_time', Carbon::today())->count();
                 $pharmacyQueueNumber = 'APT-' . str_pad($lastPharmacyQueueCount + 1, 3, '0', STR_PAD_LEFT);
-                PharmacyQueue::create([ 'clinic_queue_id' => $antrean->id, 'prescription_id' => $prescription->id, 'pharmacy_queue_number' => $pharmacyQueueNumber, 'status' => 'MENUNGGU_RACIK', 'entry_time' => now(), ]);
+                
+                // [MODIFIKASI UTAMA] Mengubah status awal antrean apotek
+                PharmacyQueue::create([ 
+                    'clinic_queue_id' => $antrean->id, 
+                    'prescription_id' => $prescription->id, 
+                    'pharmacy_queue_number' => $pharmacyQueueNumber, 
+                    'status' => 'DALAM_ANTREAN', // <-- Diubah dari 'MENUNGGU_RACIK'
+                    'entry_time' => now(), 
+                ]);
             }
             $antrean->status = 'SELESAI';
-            $antrean->finish_time = now();
+            
             $antrean->save();
             DB::commit();
             return redirect()->route('dokter.dashboard')->with('success', 'Pemeriksaan selesai dan rekam medis berhasil disimpan.');
@@ -134,4 +141,3 @@ class DashboardController extends Controller
         }
     }
 }
-
