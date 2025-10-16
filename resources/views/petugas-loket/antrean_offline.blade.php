@@ -43,32 +43,30 @@
         <div x-show="open" x-collapse>
             <form id="antreanOfflineForm" action="{{ route('petugas-loket.antrean-offline.store') }}" method="POST" class="p-6 space-y-6">
                 @csrf
-                {{-- Data Pasien --}}
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 border-b border-gray-200 pb-6">
                     <h4 class="md:col-span-2 text-lg font-semibold text-gray-700">Data Pasien</h4>
                     <div>
                         <label for="new_patient_name" class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap Pasien <span class="text-red-500">*</span></label>
-                        <input type="text" name="new_patient_name" class="w-full p-2 border border-gray-300 rounded-md" required @input="event.target.value = event.target.value.toUpperCase()">
+                        <input type="text" name="new_patient_name" value="{{ old('new_patient_name') }}" class="w-full p-2 border border-gray-300 rounded-md" required @input="event.target.value = event.target.value.toUpperCase()">
                     </div>
                     <div>
                         <label for="new_patient_nik" class="block text-sm font-medium text-gray-700 mb-1">NIK (16 Digit) <span class="text-red-500">*</span></label>
-                        <input type="text" name="new_patient_nik" class="w-full p-2 border border-gray-300 rounded-md" required maxlength="16" x-model="nikInput" @input="nikInput = nikInput.replace(/\D/g, '')">
+                        <input type="text" name="new_patient_nik" value="{{ old('new_patient_nik') }}" class="w-full p-2 border border-gray-300 rounded-md" required maxlength="16" x-model="nikInput" @input="nikInput = nikInput.replace(/\D/g, '')">
                         <p x-show="nikInput.length > 0 && nikInput.length !== 16" class="text-xs text-red-600 mt-1">NIK harus terdiri dari 16 digit angka.</p>
                     </div>
                     <div>
                         <label for="new_patient_dob" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Lahir <span class="text-red-500">*</span></label>
-                        <input type="date" name="new_patient_dob" class="w-full p-2 border border-gray-300 rounded-md" required>
+                        <input type="date" name="new_patient_dob" value="{{ old('new_patient_dob') }}" class="w-full p-2 border border-gray-300 rounded-md" required>
                     </div>
                     <div>
                         <label for="new_patient_gender" class="block text-sm font-medium text-gray-700 mb-1">Jenis Kelamin <span class="text-red-500">*</span></label>
                         <select name="new_patient_gender" class="w-full p-2 border border-gray-300 rounded-md" required>
                             <option value="" disabled selected>-- Pilih Jenis Kelamin --</option>
-                            <option value="Laki-laki">Laki-laki</option>
-                            <option value="Perempuan">Perempuan</option>
+                            <option value="Laki-laki" @if(old('new_patient_gender') == 'Laki-laki') selected @endif>Laki-laki</option>
+                            <option value="Perempuan" @if(old('new_patient_gender') == 'Perempuan') selected @endif>Perempuan</option>
                         </select>
                     </div>
                 </div>
-                {{-- Detail Pendaftaran --}}
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                      <h4 class="md:col-span-2 text-lg font-semibold text-gray-700">Detail Pendaftaran</h4>
                     <div>
@@ -76,7 +74,7 @@
                         <select id="poli" name="poli_id" class="w-full p-2 border border-gray-300 rounded-md" required>
                             <option value="" disabled selected>-- Silahkan Pilih Poli --</option>
                             @foreach($polis as $poli)
-                                <option value="{{ $poli->id }}">{{ $poli->name }}</option>
+                                <option value="{{ $poli->id }}" @if(old('poli_id') == $poli->id) selected @endif>{{ $poli->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -88,7 +86,8 @@
                     </div>
                     <div class="md:col-span-2">
                         <label for="keluhan" class="block text-sm font-medium text-gray-700 mb-1">Keluhan <span class="text-red-500">*</span></label>
-                        <textarea name="chief_complaint" rows="3" class="w-full p-2 border border-gray-300 rounded-md" placeholder="Tuliskan keluhan utama pasien..." required></textarea>
+                        {{-- [PERBAIKAN] Menambahkan id="keluhan" agar cocok dengan label 'for' --}}
+                        <textarea id="keluhan" name="chief_complaint" rows="3" class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" placeholder="Tuliskan keluhan utama pasien..." required>{{ old('chief_complaint') }}</textarea>
                     </div>
                 </div>
                 <div class="flex justify-end pt-4">
@@ -106,7 +105,7 @@
         <div class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-6 space-y-4 border-t-4 border-blue-500">
             <h3 class="text-2xl font-bold text-gray-800 text-center">Antrean Berobat</h3>
             <div class="text-center">
-                <p class="text-gray-500">Nomor Antrean Saat Ini</p>
+                <p class="text-gray-500">Nomor Antrean Dipanggil</p>
                 <p class="text-6xl font-extrabold text-blue-600">{{ $antreanBerobatBerjalan->queue_number ?? '-' }}</p>
             </div>
             <div class="text-center">
@@ -115,24 +114,47 @@
             </div>
             <hr>
             <div>
-                <h4 class="font-semibold text-gray-700 mb-2">Pasien Menunggu Verifikasi:</h4>
+                <h4 class="font-semibold text-gray-700 mb-2">Daftar Pasien Aktif:</h4>
                 <div class="space-y-3 max-h-60 overflow-y-auto pr-2">
-                    @forelse ($pasienMenungguVerifikasi as $antrean)
-                    <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg shadow-sm">
+                    @forelse ($daftarAntreanBerobat as $antrean)
+                    @php
+                        $bgColor = ''; $statusText = '';
+                        switch($antrean->status) {
+                            case 'MENUNGGU':
+                                $bgColor = 'bg-yellow-50';
+                                $statusText = 'Menunggu Check-in';
+                                break;
+                            case 'HADIR':
+                                $bgColor = 'bg-green-50';
+                                $statusText = 'Sudah Hadir';
+                                break;
+                        }
+                    @endphp
+                    <div class="flex items-center justify-between {{ $bgColor }} p-3 rounded-lg shadow-sm">
                         <div>
-                            <p class="font-bold text-gray-800">{{ $antrean->queue_number }} - {{ $antrean->patient->user->full_name }}</p>
-                            <p class="text-sm text-gray-500">Tipe: {{ $antrean->registration_type == 'ONLINE' ? 'Online' : 'Offline' }}</p>
+                            <p class="font-bold text-gray-800">{{ $antrean->queue_number }} - {{ $antrean->patient->user->full_name ?? $antrean->patient->full_name }}</p>
+                            <p class="text-sm text-gray-500">Poli: {{ $antrean->poli->name }} | <span class="font-semibold">{{ $statusText }}</span></p>
                         </div>
-                        <form action="{{ route('petugas-loket.antrean-offline.checkin', $antrean->id) }}" method="POST" class="checkin-form">
-                            @csrf
-                            @method('PATCH')
-                            <button type="submit" class="px-4 py-2 bg-green-500 text-white text-sm font-semibold rounded-lg hover:bg-green-600 transition checkin-btn">
-                                Check-in
-                            </button>
-                        </form>
+                        
+                        {{-- [MODIFIKASI] Logika Aksi Langsung Disatukan di Sini --}}
+                        <div>
+                            @if ($antrean->status == 'MENUNGGU')
+                                <form action="{{ route('petugas-loket.antrean-offline.checkin', $antrean->id) }}" method="POST" class="checkin-form">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="px-4 py-2 bg-green-500 text-white text-sm font-semibold rounded-lg hover:bg-green-600 transition checkin-btn">
+                                        Check-in
+                                    </button>
+                                </form>
+                            @elseif ($antrean->status == 'HADIR')
+                                <div class="px-3 py-1 bg-green-200 text-green-800 text-sm font-bold rounded-full">
+                                    Hadir
+                                </div>
+                            @endif
+                        </div>
                     </div>
                     @empty
-                    <p class="text-center text-gray-500 py-4">Tidak ada pasien yang menunggu verifikasi.</p>
+                    <p class="text-center text-gray-500 py-4">Tidak ada pasien dalam antrean aktif.</p>
                     @endforelse
                 </div>
             </div>
@@ -147,7 +169,7 @@
             </div>
              <div class="text-center">
                 <p class="text-gray-500">Total Resep Hari Ini</p>
-                <p class="text-3xl font-bold text-gray-700">{{ $totalAntreanApotek }} Resep</p>
+                <p class="text-3xl font-bold text-gray-700">{{ $daftarAntreanApotek->count() }} Resep</p>
             </div>
             <hr>
             <div>
@@ -160,11 +182,12 @@
                             case 'DALAM_ANTREAN': $statusTextApotek = 'Dalam Antrean'; $textColorApotek = 'text-cyan-800'; break;
                             case 'SEDANG_DIRACIK': $statusTextApotek = 'Obat Disiapkan'; $textColorApotek = 'text-orange-800'; break;
                             case 'SIAP_DIAMBIL': $statusTextApotek = 'Siap Diambil'; $textColorApotek = 'text-yellow-800 font-bold'; break;
+                            case 'DISERAHKAN': $statusTextApotek = 'Siap Diserahkan'; $textColorApotek = 'text-purple-800 font-bold'; break;
                             default: $statusTextApotek = 'Selesai'; $textColorApotek = 'text-gray-500'; break;
                         }
                     @endphp
                     <div class="bg-gray-50 p-3 rounded-lg shadow-sm flex justify-between items-center">
-                        <p class="font-bold text-gray-800">{{ $antrean->pharmacy_queue_number }} - {{ $antrean->patient->user->full_name }}</p>
+                        <p class="font-bold text-gray-800">{{ $antrean->pharmacy_queue_number }} - {{ $antrean->patient_name }}</p>
                         <p class="text-sm font-semibold {{ $textColorApotek }}">{{ $statusTextApotek }}</p>
                     </div>
                     @empty
@@ -178,6 +201,7 @@
 @endsection
 
 @push('scripts')
+{{-- Script tidak berubah, sudah benar --}}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const poliSelect = document.getElementById('poli');
@@ -185,7 +209,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const antreanForm = document.getElementById('antreanOfflineForm');
     const checkinForms = document.querySelectorAll('.checkin-form');
 
-    // 1. Logika untuk Dropdown Dokter Dinamis
     poliSelect.addEventListener('change', function() {
         const poliId = this.value;
         doctorSelect.innerHTML = '<option value="">Memuat dokter...</option>';
@@ -214,7 +237,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // 2. Logika untuk Konfirmasi Submit Form Pendaftaran
     if (antreanForm) {
         antreanForm.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -235,7 +257,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // 3. Logika untuk Konfirmasi Check-in
     if (checkinForms) {
         checkinForms.forEach(form => {
             form.addEventListener('submit', function(e) {

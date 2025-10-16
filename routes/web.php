@@ -71,7 +71,7 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/antrean-apotek/{pharmacyQueue}/update-status', [PetugasLoketDashboardController::class, 'updateStatus'])->name('antrean-apotek.updateStatus');
 
         // PENAMBAHAN: Route baru untuk fitur Antrean Pasien Offline
-        Route::get('/antrean-offline', [AntreanOfflineController::class, 'index'])->name('antrean-offline');
+        Route::get('/antrean-offline', [AntreanOfflineController::class, 'index'])->name('antrean-offline.index');
         Route::post('/antrean-offline', [AntreanOfflineController::class, 'store'])->name('antrean-offline.store');
         Route::patch('/antrean-offline/{clinicQueue}/check-in', [AntreanOfflineController::class, 'checkIn'])->name('antrean-offline.checkin');
         Route::get('/doctors-by-poli/{poli}', [AntreanOfflineController::class, 'getDoctorsByPoli'])->name('doctors.by.poli');

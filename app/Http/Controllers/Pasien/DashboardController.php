@@ -25,7 +25,14 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         $patient = Patient::where('user_id', $user->id)->first();
-        $today = Carbon::today()->toDateString();
+
+        // --- PERUBAHAN ZONA WAKTU ---
+        // Menentukan awal dan akhir hari ini sesuai zona waktu WIB (UTC+7)
+        // Ini memastikan kueri selalu akurat tidak peduli jam berapa pun.
+        $tz = 'Asia/Jakarta';
+        $startOfDay = Carbon::now($tz)->startOfDay();
+        $endOfDay = Carbon::now($tz)->endOfDay();
+        // --- AKHIR PERUBAHAN ---
 
         // Inisialisasi semua variabel yang akan dikirim ke view
         $antreanBerobat = null;
@@ -41,7 +48,8 @@ class DashboardController extends Controller
             // Inilah sumber bug yang membuat antrean hilang setelah check-in.
             $kunjunganHariIni = ClinicQueue::with(['poli', 'doctor.user'])
                 ->where('patient_id', $patient->id)
-                ->whereDate('registration_time', $today)
+                // --- PERUBAHAN: Menggunakan whereBetween untuk akurasi zona waktu ---
+                ->whereBetween('registration_time', [$startOfDay, $endOfDay])
                 ->whereIn('status', ['MENUNGGU', 'HADIR', 'DIPANGGIL']) // <-- 'HADIR' ditambahkan di sini
                 ->first();
 
@@ -49,7 +57,8 @@ class DashboardController extends Controller
             if (!$kunjunganHariIni) {
                 $kunjunganHariIni = ClinicQueue::with(['poli', 'doctor.user'])
                     ->where('patient_id', $patient->id)
-                    ->whereDate('registration_time', $today)
+                    // --- PERUBAHAN: Menggunakan whereBetween untuk akurasi zona waktu ---
+                    ->whereBetween('registration_time', [$startOfDay, $endOfDay])
                     ->where('status', 'SELESAI')
                     ->first();
             }
@@ -63,20 +72,23 @@ class DashboardController extends Controller
 
                 if (!in_array($kunjunganHariIni->status, ['SELESAI', 'BATAL'])) {
                     $antreanBerjalan = ClinicQueue::where('poli_id', $antreanBerobat->poli_id)
-                        ->whereDate('registration_time', $today)
+                        // --- PERUBAHAN: Menggunakan whereBetween untuk akurasi zona waktu ---
+                        ->whereBetween('registration_time', [$startOfDay, $endOfDay])
                         ->where('status', 'DIPANGGIL')
                         ->orderBy('call_time', 'desc')
                         ->first();
                 }
                 
                 if ($antreanApotek) {
-                    $antreanApotekBerjalan = PharmacyQueue::whereDate('created_at', $today)
+                    $antreanApotekBerjalan = PharmacyQueue::whereBetween('created_at', [$startOfDay, $endOfDay])
+                        // --- PERUBAHAN: Menggunakan whereBetween untuk akurasi zona waktu ---
                         ->where('status', 'SEDANG_DIRACIK')
                         ->orderBy('updated_at', 'asc')
                         ->first();
                     
                     if ($antreanApotek->status == 'DALAM_ANTREAN') {
-                        $jumlahAntreanApotekSebelumnya = PharmacyQueue::whereDate('created_at', $today)
+                        $jumlahAntreanApotekSebelumnya = PharmacyQueue::whereBetween('created_at', [$startOfDay, $endOfDay])
+                            // --- PERUBAHAN: Menggunakan whereBetween untuk akurasi zona waktu ---
                             ->where('status', 'DALAM_ANTREAN')
                             ->where('created_at', '<', $antreanApotek->created_at)
                             ->count();
@@ -134,7 +146,7 @@ class DashboardController extends Controller
 
             $antreanApotek->update([
                 'status' => 'DITERIMA_PASIEN',
-                'taken_time' => now()
+                'taken_time' => now() // now() otomatis menggunakan zona waktu dari config/app.php
             ]);
 
             Log::info("Rekam medis untuk antrean #{$antreanKlinik->id} telah dibuat setelah konfirmasi obat.");
@@ -179,15 +191,30 @@ class DashboardController extends Controller
                 if (!$patientForQueue) { return redirect()->back()->with('error', 'Data profil pasien Anda tidak ditemukan.'); }
             }
 
-            $registrationDate = Carbon::parse($request->registration_date)->toDateString();
-            $existingAntrean = ClinicQueue::where('patient_id', $patientForQueue->id) ->whereDate('registration_time', $registrationDate) ->whereIn('status', ['MENUNGGU', 'HADIR', 'DIPANGGIL']) ->exists();
+            // --- PERUBAHAN ZONA WAKTU ---
+            // Tentukan awal dan akhir hari untuk tanggal pendaftaran yang dipilih
+            $tz = 'Asia/Jakarta';
+            $registrationStartOfDay = Carbon::parse($request->registration_date, $tz)->startOfDay();
+            $registrationEndOfDay = Carbon::parse($request->registration_date, $tz)->endOfDay();
+            // --- AKHIR PERUBAHAN ---
+
+            $existingAntrean = ClinicQueue::where('patient_id', $patientForQueue->id)
+                // --- PERUBAHAN: Menggunakan whereBetween untuk akurasi zona waktu ---
+                ->whereBetween('registration_time', [$registrationStartOfDay, $registrationEndOfDay])
+                ->whereIn('status', ['MENUNGGU', 'HADIR', 'DIPANGGIL'])
+                ->exists();
             
-            if ($existingAntrean) { return redirect()->back()->with('error', 'Pasien yang didaftarkan sudah memiliki antrean aktif untuk hari ini.'); }
+            if ($existingAntrean) { return redirect()->back()->with('error', 'Pasien yang didaftarkan sudah memiliki antrean aktif untuk hari yang dipilih.'); }
 
             $poli = Poli::findOrFail($request->poli_id);
-            $lastQueueCount = ClinicQueue::where('poli_id', $request->poli_id)->whereDate('registration_time', $registrationDate)->count();
+            $lastQueueCount = ClinicQueue::where('poli_id', $request->poli_id)
+                // --- PERUBAHAN: Menggunakan whereBetween untuk akurasi zona waktu ---
+                ->whereBetween('registration_time', [$registrationStartOfDay, $registrationEndOfDay])
+                ->count();
             $queueNumber = $poli->code . '-' . str_pad($lastQueueCount + 1, 3, '0', STR_PAD_LEFT);
 
+            // [PERBAIKAN] Mengisi 'registration_time' secara manual.
+            // 'created_at' akan diisi otomatis oleh Laravel dengan waktu yang sama.
             ClinicQueue::create([ 
                 'patient_id' => $patientForQueue->id, 
                 'poli_id' => $request->poli_id, 
@@ -198,9 +225,8 @@ class DashboardController extends Controller
                 'patient_relationship' => $relationship, 
                 'patient_relationship_custom' => $customRelationship, 
                 'status' => 'MENUNGGU', 
-                'registration_time' => now(), 
+                'registration_time' => now(),
             ]);
-
             DB::commit();
             return redirect()->route('pasien.dashboard')->with('success', 'Pendaftaran antrean berhasil!');
         } catch (\Throwable $e) {
@@ -213,8 +239,16 @@ class DashboardController extends Controller
     public function getDoctorsByPoli($poli_id)
     {
         Carbon::setLocale('id');
-        $dayName = ucfirst(Carbon::now()->dayName);
-        $doctors = Doctor::where('poli_id', $poli_id) ->whereHas('doctorSchedules' , function ($query) use ($dayName) { $query->where('day_of_week', $dayName)->where('is_active', true); }) ->with('user') ->get() ->map(function($doctor) { return [ 'id' => $doctor->id, 'name' => $doctor->user->full_name ?? 'Dokter (Nama tidak tersedia)' ]; });
+        $dayName = ucfirst(Carbon::now('Asia/Jakarta')->dayName);
+        $doctors = Doctor::where('poli_id', $poli_id)
+            ->whereHas('doctorSchedules' , function ($query) use ($dayName) { 
+                $query->where('day_of_week', $dayName)->where('is_active', true); 
+            })
+            ->with('user')
+            ->get()
+            ->map(function($doctor) { 
+                return [ 'id' => $doctor->id, 'name' => $doctor->user->full_name ?? 'Dokter (Nama tidak tersedia)' ]; 
+            });
         return response()->json($doctors);
     }
 }
