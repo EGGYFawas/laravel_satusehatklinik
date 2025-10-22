@@ -165,8 +165,7 @@
                                 <p><span class="font-semibold w-24 inline-block">Dokter</span>: {{ $riwayatBerobatTerakhir->doctor->user->full_name ?? 'N/A' }}</p>
                             </div>
                         @endif
-
-                        <a href="#" class="mt-4 inline-block bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg text-sm">Lihat Detail Riwayat</a>
+                        <a href="{{ route('pasien.riwayat.show', $riwayatBerobatTerakhir->patient_id) }}" class="mt-4 inline-block bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg text-sm">Lihat Detail Riwayat</a>
                     </div>
                 @else
                     <div class="text-center text-gray-500 py-8">
