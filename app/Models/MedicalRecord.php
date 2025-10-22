@@ -20,6 +20,14 @@ class MedicalRecord extends Model
         'doctor_id',
         'checkup_date',
         'doctor_notes',
+        // [PENAMBAHAN BARU]
+        // Mendaftarkan semua kolom baru agar bisa diisi melalui metode create() atau update()
+        'blood_pressure',
+        'heart_rate',
+        'respiratory_rate',
+        'temperature',
+        'oxygen_saturation',
+        'physical_examination_notes',
     ];
 
     /**

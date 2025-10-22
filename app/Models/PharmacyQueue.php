@@ -40,5 +40,27 @@ class PharmacyQueue extends Model
     {
         return $this->belongsTo(Prescription::class);
     }
-}
 
+    /**
+     * [PERBAIKAN] Menambahkan method statis yang hilang untuk membuat nomor antrean.
+     *
+     * Logika ini akan mencari nomor antrean apotek terbesar yang dibuat HARI INI,
+     * lalu menambahkannya dengan 1. Jika belum ada, akan dimulai dari 1.
+     */
+    public static function generateQueueNumber(): int
+    {
+        // 1. Dapatkan awal hari ini sesuai timezone aplikasi Anda
+        $today = now(config('app.timezone'))->startOfDay();
+
+        // 2. Cari nomor antrean TERBESAR yang dibuat HARI INI (berdasarkan created_at)
+        //    Jika Anda menggunakan 'entry_time' untuk pelacakan, Anda juga bisa memakai:
+        //    $lastQueueNumber = self::where('entry_time', '>=', $today)->max('pharmacy_queue_number');
+        
+        $lastQueueNumber = self::where('created_at', '>=', $today)
+                               ->max('pharmacy_queue_number');
+
+        // 3. Tambahkan 1 ke nomor terakhir, atau mulai dari 1 jika belum ada.
+        //    (int) null akan menjadi 0, jadi 0 + 1 = 1.
+        return (int)$lastQueueNumber + 1;
+    }
+}

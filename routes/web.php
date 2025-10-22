@@ -14,6 +14,7 @@ use App\Http\Controllers\Pasien\CheckInController;
 use App\Http\Controllers\PetugasLoket\DashboardController as PetugasLoketDashboardController;
 // PENAMBAHAN: Import controller baru untuk antrean offline
 use App\Http\Controllers\PetugasLoket\AntreanOfflineController;
+use App\Http\Controllers\Pasien\ProfileController as PasienProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -49,6 +50,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/check-in/{clinic_uuid}', [CheckInController::class, 'processCheckInAjax'])->name('checkin.ajax');
 
         Route::post('/antrean/apotek/{pharmacyQueueId}/konfirmasi', [PasienDashboardController::class, 'konfirmasiPenerimaanObat'])->name('antrean.apotek.konfirmasi');
+    
+        
+        // [MODIFIKASI] Route untuk fitur profil pasien diperbaiki
+        Route::get('/profil', [PasienProfileController::class, 'show'])->name('profil.show');
+        Route::put('/profil', [PasienProfileController::class, 'update'])->name('profil.update'); // Method diubah ke PUT
+        Route::get('/profil/edit', [PasienProfileController::class, 'edit'])->name('profil.edit'); // Method diubah ke GET dan URL disesuaikan
+
     });
 
     // --- GRUP ROUTE UNTUK DOKTER ---
@@ -78,3 +86,4 @@ Route::middleware(['auth'])->group(function () {
     });
 
 });
+
