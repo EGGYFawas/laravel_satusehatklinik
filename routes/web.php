@@ -61,6 +61,9 @@ Route::middleware(['auth'])->group(function () {
 
         // [PENAMBAHAN BARU] Route untuk Jadwal Dokter (Pasien)
         Route::get('/jadwal-dokter', [PasienScheduleController::class, 'index'])->name('jadwal.index');
+        Route::get('/artikel', [PasienArticleController::class, 'index'])->name('artikel.index'); // Daftar artikel (dengan search)
+        Route::get('/artikel/{article:slug}', [PasienArticleController::class, 'show'])->name('artikel.show'); // Detail artikel (menggunakan slug)
+
     });
 
     // --- GRUP ROUTE UNTUK DOKTER ---

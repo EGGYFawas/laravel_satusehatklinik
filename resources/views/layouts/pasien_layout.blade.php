@@ -17,14 +17,17 @@
             background-image: url('https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=2070&auto=format&fit=crop');
             background-size: cover; background-position: center;
         }
-        .content-wrapper { position: relative; z-index: 2; }
+        /* [MODIFIKASI] Mengubah z-index agar konten utama di atas overlay */
+        .content-wrapper { position: relative; z-index: 10; } /* Sebelumnya z-index: 2 */
+        .backdrop-overlay { position: absolute; inset: 0; z-index: 5; } /* z-index lebih rendah */
         [x-cloak] { display: none !important; }
     </style>
     
     @stack('styles')
 
 </head>
-<body class="bg-gray-100" x-data="{ sidebarOpen: window.innerWidth > 1024 }" @resize.window="sidebarOpen = window.innerWidth > 1024" x-cloak>
+{{-- [MODIFIKASI] Menghapus bg-gray-100 dari body --}}
+<body x-data="{ sidebarOpen: window.innerWidth > 1024 }" @resize.window="sidebarOpen = window.innerWidth > 1024" x-cloak>
     <div class="flex h-screen overflow-hidden">
         <!-- Backdrop for mobile sidebar -->
         <div x-show="sidebarOpen" class="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden" @click="sidebarOpen = false"></div>
@@ -51,13 +54,10 @@
                     @php
                     function menu_item($route, $name, $icon) {
                         $isActive = request()->routeIs($route) || request()->routeIs($route . '.*');
-                        
                         $baseClasses = 'flex items-center p-3 rounded-lg w-full text-left transition-colors duration-200';
                         $activeClasses = 'bg-[#24306E] text-white shadow-md';
                         $inactiveClasses = 'text-gray-600 hover:bg-gray-900/5 hover:text-[#24306E]';
-                        
                         $linkClasses = $baseClasses . ' ' . ($isActive ? $activeClasses : $inactiveClasses);
-                        
                         $url = Route::has($route) ? route($route) : '#';
                         $disabledTooltip = !Route::has($route) ? 'title="Halaman belum tersedia"' : '';
 
@@ -74,12 +74,13 @@
                     @endphp
 
                     {!! menu_item('pasien.dashboard', 'Dashboard', '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>') !!}
-                    {{-- [MODIFIKASI] Mengubah nama route riwayat --}}
                     {!! menu_item('pasien.riwayat.index', 'Riwayat Kunjungan', '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>') !!}
-                    {!! menu_item('pasien.jadwal.index', 'Jadwal Dokter', '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>') !!}                </ul>
+                    {!! menu_item('pasien.jadwal.index', 'Jadwal Dokter', '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>') !!} 
+                    {!! menu_item('pasien.artikel.index', 'Artikel Kesehatan', '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 12h6M7 8h6"></path></svg>') !!}
+                </ul>
             </nav>
             <div class="px-4 pb-4 mt-auto flex-shrink-0">
-             {!! menu_item('pasien.profil.show', 'Profil Saya', '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>') !!}
+                 {!! menu_item('pasien.profil.show', 'Profil Saya', '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>') !!}
             </div>
         </aside>
 
@@ -98,7 +99,11 @@
             </header>
 
             <main class="flex-1 overflow-x-hidden overflow-y-auto bg-clinic relative">
-                <div class="absolute inset-0 bg-gray-100/80 backdrop-blur-sm"></div>
+                {{-- [MODIFIKASI] Menghapus bg-gray-100/80 dari overlay --}}
+                {{-- Menambahkan class backdrop-overlay untuk z-index --}}
+                <div class="backdrop-overlay backdrop-blur-sm"></div>
+                
+                {{-- Konten utama sekarang berada di atas overlay karena z-index --}}
                 <div class="content-wrapper p-6 md:p-8">
                     @yield('content')
                 </div>
