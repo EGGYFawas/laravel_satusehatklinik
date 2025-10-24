@@ -62,6 +62,7 @@ class AuthController extends Controller
             // 4. Buat entri di tabel 'patients'
             Patient::create([
                 'user_id' => $user->id,
+                'full_name' => strtoupper($validatedData['full_name']),
                 'nik' => $validatedData['nik'],
                 'gender' => $validatedData['gender'],
                 'date_of_birth' => $validatedData['date_of_birth'],

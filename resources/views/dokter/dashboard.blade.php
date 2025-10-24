@@ -8,28 +8,22 @@
     {{-- CDN untuk Select2 --}}
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
-        /* Style kustom untuk Select2 agar sesuai tema */
-        .select2-container .select2-selection--multiple {
-            border-color: #d1d5db; /* border-gray-300 */
-            border-radius: 0.375rem; /* rounded-md */
-            padding: 0.3rem;
-            min-height: 42px;
+        .select2-container .select2-selection--single { height: 42px; border-color: #d1d5db; border-radius: 0.375rem; }
+        .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 42px; padding-left: 0.75rem; }
+        .select2-container--default .select2-selection--single .select2-selection__arrow { height: 40px; }
+        .select2-dropdown { border-color: #d1d5db; border-radius: 0.375rem; }
+        /* Style untuk modal */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 40;
         }
-        .select2-container--default .select2-selection--multiple .select2-selection__choice {
-            background-color: #059669; /* bg-emerald-600 */
-            border-color: #047857;
-            color: white;
-            padding: 2px 8px;
-        }
-        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
-            color: rgba(255, 255, 255, 0.7);
-            margin-right: 5px;
-        }
-        .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
-            color: white;
-        }
-        .select2-container .select2-search--inline .select2-search__field {
-            margin-top: 0.5rem;
+        .modal-content {
+            z-index: 50;
         }
     </style>
 @endpush
@@ -59,23 +53,25 @@
             <div class="bg-white rounded-xl shadow-lg p-6">
                 <h2 class="text-2xl font-bold text-gray-800 border-b pb-3 mb-4">Area Pemeriksaan Pasien</h2>
                 
-                @if($pasienSedangDipanggil)
+                @php $pasienAktif = $pasienSedangDipanggil ?? $pasienBerikutnya; @endphp
+
+                @if($pasienAktif)
                     @php
-                        $patient = $pasienSedangDipanggil->patient;
+                        $patient = $pasienAktif->patient;
                         $isNewHistory = empty($patient->blood_type) && empty($patient->known_allergies) && empty($patient->chronic_diseases);
                     @endphp
                     <div x-data="{ isNewHistory: {{ $isNewHistory ? 'true' : 'false' }} }">
                         <!-- Informasi Pasien -->
                         <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4 mb-6">
-                            <div class="flex items-center justify-between">
+                            <div class="flex items-start justify-between">
                                 <div>
-                                    <p class="text-sm text-emerald-700">Pasien Saat Ini:</p>
+                                    <p class="text-sm text-emerald-700">{{ $pasienSedangDipanggil ? 'Pasien Saat Ini:' : 'Pasien Berikutnya (Siap Dipanggil):' }}</p>
                                     <p class="text-xl font-bold text-emerald-900">{{ $patient->full_name }} ({{ \Carbon\Carbon::parse($patient->date_of_birth)->age }} thn)</p>
-                                    <p class="text-sm text-gray-600">No. Antrean: <span class="font-semibold">{{ $pasienSedangDipanggil->queue_number }}</span></p>
+                                    <p class="text-sm text-gray-600">No. Antrean: <span class="font-semibold">{{ $pasienAktif->queue_number }}</span></p>
                                 </div>
-                                <div class="text-right">
+                                <div class="text-right flex-shrink-0 ml-4">
                                     <p class="text-sm text-emerald-700">Keluhan Utama:</p>
-                                    <p class="font-semibold text-emerald-900">{{ $pasienSedangDipanggil->chief_complaint }}</p>
+                                    <p class="font-semibold text-emerald-900 max-w-xs">{{ $pasienAktif->chief_complaint }}</p>
                                 </div>
                             </div>
                         </div>
@@ -85,35 +81,31 @@
                             @csrf
                             <input type="hidden" name="patient_id" value="{{ $patient->id }}">
                             
-                            <!-- Form Riwayat Pasien Baru (Conditional) -->
-                            <div x-show="isNewHistory" x-transition class="mb-6 border border-yellow-300 bg-yellow-50 p-4 rounded-lg">
-                                <h3 class="text-lg font-semibold text-yellow-800 mb-3">
-                                    <i class="fas fa-exclamation-triangle mr-2"></i>Pasien Baru Terdeteksi
-                                </h3>
+                            @if($isNewHistory)
+                            <div class="mb-6 border border-yellow-300 bg-yellow-50 p-4 rounded-lg">
+                                <h3 class="text-lg font-semibold text-yellow-800 mb-3">Pasien Baru Terdeteksi</h3>
                                 <p class="text-sm text-yellow-700 mb-4">Harap lengkapi data riwayat kesehatan pasien berikut ini.</p>
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
                                         <label for="blood_type" class="block text-sm font-medium text-gray-700">Golongan Darah</label>
-                                        <select name="blood_type" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" :required="isNewHistory">
+                                        <select name="blood_type" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" required>
                                             <option value="">Pilih...</option>
-                                            <option value="A">A</option>
-                                            <option value="B">B</option>
-                                            <option value="AB">AB</option>
-                                            <option value="O">O</option>
+                                            <option value="A">A</option> <option value="B">B</option>
+                                            <option value="AB">AB</option> <option value="O">O</option>
                                         </select>
                                     </div>
                                     <div class="md:col-span-2">
                                         <label for="known_allergies" class="block text-sm font-medium text-gray-700">Alergi yang Diketahui</label>
-                                        <input type="text" name="known_allergies" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" placeholder="Contoh: Paracetamol, Udang" :required="isNewHistory">
+                                        <input type="text" name="known_allergies" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" placeholder="Contoh: Paracetamol, Udang" required>
                                     </div>
                                     <div class="md:col-span-3">
                                         <label for="chronic_diseases" class="block text-sm font-medium text-gray-700">Penyakit Kronis</label>
-                                        <input type="text" name="chronic_diseases" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" placeholder="Contoh: Hipertensi, Diabetes" :required="isNewHistory">
+                                        <input type="text" name="chronic_diseases" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" placeholder="Contoh: Hipertensi, Diabetes" required>
                                     </div>
                                 </div>
                             </div>
+                            @endif
 
-                            <!-- Catatan Dokter & Diagnosis -->
                             <div class="mb-6">
                                 <label for="doctor_notes" class="block text-lg font-semibold text-gray-700 mb-2">Hasil Pemeriksaan & Catatan Dokter</label>
                                 <textarea name="doctor_notes" rows="5" class="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500" placeholder="Tuliskan hasil pemeriksaan subjektif, objektif, dan asesmen di sini..." required></textarea>
@@ -121,52 +113,35 @@
                             <div class="mb-6">
                                 <label for="diagnosis_tags" class="block text-lg font-semibold text-gray-700 mb-2">Diagnosis</label>
                                 <select name="diagnosis_tags[]" id="diagnosis_tags" class="w-full" multiple="multiple">
-                                    @if($diagnosisTags)
-                                        @foreach($diagnosisTags as $tag)
-                                            <option value="{{ $tag->tag_name }}">{{ $tag->tag_name }}</option>
-                                        @endforeach
-                                    @endif
+                                    @if($diagnosisTags) @foreach($diagnosisTags as $tag) <option value="{{ $tag->tag_name }}">{{ $tag->tag_name }}</option> @endforeach @endif
                                 </select>
                                 <p class="text-xs text-gray-500 mt-1">Pilih diagnosis yang ada atau ketik untuk membuat diagnosis baru.</p>
                             </div>
-
-                            <!-- Resep Obat (Dikelola Alpine.js) -->
-                            <div x-data="prescriptionHandler()">
+                            
+                            <!-- ========================================================= -->
+                            <!-- == BAGIAN BARU: TOMBOL MODAL & LIST OBAT == -->
+                            <!-- ========================================================= -->
+                            <div class="mb-6">
                                 <h3 class="text-lg font-semibold text-gray-700 mb-3">Resep Obat</h3>
-                                <template x-for="(med, index) in medicines" :key="index">
-                                    <div class="grid grid-cols-12 gap-3 mb-3 p-3 bg-gray-50 rounded-lg border">
-                                        <div class="col-span-12 sm:col-span-4">
-                                            <label class="text-sm font-medium text-gray-700">Nama Obat</label>
-                                            <select :name="`medicines[${index}][id]`" class="w-full p-2 mt-1 border border-gray-300 rounded-md medicine-select" @change="updateMaxStock($event, index)" required>
-                                                <option value="">Pilih Obat</option>
-                                                @if($medicines)
-                                                    @foreach($medicines as $medicine)
-                                                    <option value="{{ $medicine->id }}" data-stock="{{ $medicine->stock }}">{{ $medicine->name }} (Stok: {{ $medicine->stock }})</option>
-                                                    @endforeach
-                                                @endif
-                                            </select>
-                                        </div>
-                                        <div class="col-span-6 sm:col-span-2">
-                                            <label class="text-sm font-medium text-gray-700">Jumlah</label>
-                                            <input type="number" :name="`medicines[${index}][quantity]`" x-model.number="med.quantity" class="w-full p-2 mt-1 border border-gray-300 rounded-md" min="1" :max="med.maxStock" required>
-                                        </div>
-                                        <div class="col-span-6 sm:col-span-4">
-                                            <label class="text-sm font-medium text-gray-700">Dosis / Aturan Pakai</label>
-                                            <input type="text" :name="`medicines[${index}][dosage]`" class="w-full p-2 mt-1 border border-gray-300 rounded-md" placeholder="Cth: 3x1 sesudah makan" required>
-                                        </div>
-                                        <div class="col-span-12 sm:col-span-2 flex items-end">
-                                            <button type="button" @click="removeMedicine(index)" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-3 rounded-md w-full mt-1 sm:mt-0">Hapus</button>
-                                        </div>
-                                    </div>
-                                </template>
-                                <button type="button" @click="addMedicine" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md">+ Tambah Obat</button>
-                            </div>
-
-                            <!-- Tombol Aksi -->
-                            <div class="mt-8 border-t pt-6 flex justify-end">
-                                <button type="submit" form="formPemeriksaan" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition duration-300">
-                                    Selesaikan Pemeriksaan & Simpan
+                                <!-- Tombol untuk membuka modal -->
+                                <button type="button" id="showObatModalBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md transition duration-300 ease-in-out transform hover:scale-105">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" /></svg>
+                                    Tambah & Pilih Obat
                                 </button>
+                                
+                                <!-- Area untuk menampilkan list obat yang sudah dipilih -->
+                                <div id="resep-obat-list" class="mt-4 space-y-2">
+                                    {{-- List obat akan muncul di sini via JavaScript --}}
+                                </div>
+                            </div>
+                            
+                            <!-- Container tersembunyi untuk input data obat yang akan di-submit -->
+                            <div id="hidden-medicine-inputs"></div>
+                            
+                            <!-- ========================================================= -->
+
+                            <div class="mt-8 border-t pt-6 flex justify-end">
+                                <button type="submit" form="formPemeriksaan" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-lg shadow-md transition duration-300">Selesaikan Pemeriksaan & Simpan</button>
                             </div>
                         </form>
                     </div>
@@ -175,33 +150,52 @@
                     <div class="text-center text-gray-500 py-16">
                         <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
                         <h3 class="text-xl font-semibold">Tidak ada pasien yang sedang diperiksa.</h3>
-                        <p class="mt-2">Silakan panggil pasien dari daftar antrean di samping.</p>
+                        <p class="mt-2">Panggil pasien yang sudah check-in dari daftar di samping.</p>
                     </div>
                 @endif
             </div>
         </div>
 
-        {{-- Kolom Kanan: Daftar Antrean --}}
+        {{-- Kolom Kanan: Daftar Antrean (Tidak ada perubahan di sini) --}}
         <div>
+            <!-- Antrean Hadir (Siap Dipanggil) -->
             <div class="bg-white rounded-xl shadow-lg mb-8">
-                <h3 class="text-lg font-bold text-gray-800 border-b p-4">Antrean Menunggu</h3>
+                <h3 class="text-lg font-bold text-gray-800 border-b p-4 bg-green-50 text-green-800">Antrean Hadir (Siap Dipanggil)</h3>
                 <div class="p-4 max-h-64 overflow-y-auto">
                     @forelse($antreanMenunggu as $index => $antrean)
                         <div class="flex items-center justify-between p-3 rounded-md {{ $loop->first ? 'bg-blue-50 border border-blue-200' : 'border-b' }}">
                             <div>
                                 <p class="font-bold text-xl text-gray-800">{{ $antrean->queue_number }}</p>
-                                <p class="text-sm text-gray-600">{{ $antrean->patient->full_name }}</p>
+                                <p class="text-sm text-gray-600">{{ $antrean->patient->user->full_name ?? $antrean->patient->full_name }}</p>
                             </div>
                             <div>
-                                @if($loop->first && !$pasienSedangDipanggil)
+                                @if(!$pasienSedangDipanggil)
                                 <form action="{{ route('dokter.antrean.panggil', $antrean->id) }}" method="POST">
                                     @csrf
                                     <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg text-sm">Panggil</button>
                                 </form>
                                 @else
-                                <span class="text-xs text-gray-400">Menunggu giliran</span>
+                                <span class="text-xs text-gray-400">Menunggu</span>
                                 @endif
                             </div>
+                        </div>
+                    @empty
+                        <p class="text-center text-gray-500 py-6">Belum ada pasien yang check-in.</p>
+                    @endforelse
+                </div>
+            </div>
+
+            <!-- Antrean Menunggu (Belum Check-In) -->
+            <div class="bg-white rounded-xl shadow-lg mb-8">
+                <h3 class="text-lg font-bold text-gray-800 border-b p-4 bg-gray-50">Antrean Menunggu (Belum Check-In)</h3>
+                <div class="p-4 max-h-64 overflow-y-auto">
+                    @forelse($antreanMenunggu as $antrean)
+                        <div class="flex items-center justify-between p-3 border-b">
+                            <div>
+                                <p class="font-bold text-xl text-gray-500">{{ $antrean->queue_number }}</p>
+                                <p class="text-sm text-gray-500">{{ $antrean->patient->full_name }}</p>
+                            </div>
+                            <span class="text-xs font-semibold px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">Belum Check-in</span>
                         </div>
                     @empty
                         <p class="text-center text-gray-500 py-6">Tidak ada pasien dalam antrean.</p>
@@ -215,8 +209,8 @@
                      @forelse($antreanSelesai as $antrean)
                         <div class="flex items-center justify-between p-3 border-b">
                             <div>
-                                <p class="font-semibold text-gray-700">{{ $antrean->queue_number }} - {{ $antrean->patient->full_name }}</p>
-                                <p class="text-xs text-gray-500">Selesai pada: {{ \Carbon\Carbon::parse($antrean->finish_time)->format('H:i') }} WIB</p>
+                                <p class="font-semibold text-gray-700">{{ $antrean->queue_number }} - {{ $antrean->patient->user->full_name ?? $antrean->patient->full_name }}</p>
+                                <p class="text-xs text-gray-500">Selesai pada: {{ $antrean->finish_time ? $antrean->finish_time->format('H:i') : '-' }} WIB</p>
                             </div>
                             <span class="text-xs font-semibold px-2 py-1 rounded-full {{ $antrean->status == 'SELESAI' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
                                 {{ ucwords(strtolower($antrean->status)) }}
@@ -229,78 +223,260 @@
             </div>
         </div>
     </div>
+
+<!-- ========================================================= -->
+<!-- == MODAL UNTUK TAMBAH RESEP OBAT == -->
+<!-- ========================================================= -->
+@if($pasienSedangDipanggil)
+<div id="obatModal" class="fixed inset-0 flex items-center justify-center hidden">
+    <div class="modal-backdrop" id="modalBackdrop"></div>
+    <div class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-3xl m-4 max-h-[90vh] flex flex-col">
+        <!-- Header Modal -->
+        <div class="flex justify-between items-center p-5 border-b">
+            <h3 class="text-2xl font-bold text-gray-800">Formulir Resep Obat</h3>
+            <button id="closeModalBtn" class="text-gray-400 hover:text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+        <!-- Body Modal -->
+        <div class="p-6 overflow-y-auto">
+            <div id="medicine-rows-container" class="space-y-4">
+                {{-- Baris input obat akan ditambahkan di sini oleh JavaScript --}}
+            </div>
+            <button type="button" id="add-medicine-row-btn" class="mt-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-md text-sm w-full border border-gray-300">
+                + Tambah Baris Obat
+            </button>
+        </div>
+        <!-- Footer Modal -->
+        <div class="flex justify-end items-center p-5 border-t bg-gray-50 rounded-b-xl">
+            <button type="button" id="cancelModalBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg mr-3">Batal</button>
+            <button type="button" id="save-resep-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg">Simpan Resep</button>
+        </div>
+    </div>
+</div>
+@endif
 @endsection
 
 @push('scripts')
-    {{-- CDN untuk jQuery dan Select2 --}}
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Inisialisasi Select2 untuk diagnosis
-            $('#diagnosis_tags').select2({
-                tags: true, // Memungkinkan membuat tag baru
-                placeholder: "Pilih atau ketik diagnosis",
-                tokenSeparators: [',']
+    // =========================================================
+    // == SKRIP BARU UNTUK MODAL RESEP OBAT ==
+    // =========================================================
+    document.addEventListener('DOMContentLoaded', function () {
+        // Inisialisasi Select2 untuk diagnosis
+        $('#diagnosis_tags').select2({
+            tags: true, // Memungkinkan membuat tag baru
+            placeholder: "Pilih atau ketik diagnosis",
+            tokenSeparators: [',']
+        });
+
+        const formPemeriksaan = document.getElementById('formPemeriksaan');
+        if(!formPemeriksaan) return; // Keluar jika form tidak ada
+        
+        // --- DATA OBAT (diambil dari PHP) ---
+        const medicinesData = {!! Illuminate\Support\Js::from($medicines ?? []) !!};
+        let medicineRowCounter = 0;
+
+        // --- ELEMEN DOM MODAL ---
+        const modal = $('#obatModal');
+        const showModalBtn = $('#showObatModalBtn');
+        const closeModalBtn = $('#closeModalBtn');
+        const cancelModalBtn = $('#cancelModalBtn');
+        const modalBackdrop = $('#modalBackdrop');
+        const addMedicineRowBtn = $('#add-medicine-row-btn');
+        const medicineRowsContainer = $('#medicine-rows-container');
+        const saveResepBtn = $('#save-resep-btn');
+
+        // --- FUNGSI UNTUK MODAL ---
+        const openModal = () => modal.removeClass('hidden');
+        const closeModal = () => modal.addClass('hidden');
+
+        // --- FUNGSI UNTUK MENAMBAH BARIS OBAT DI MODAL ---
+        const addMedicineRow = () => {
+            medicineRowCounter++;
+            let medOptionsHtml = '<option value="">Pilih Obat</option>';
+            medicinesData.forEach(med => {
+                medOptionsHtml += `<option value="${med.id}" data-stock="${med.stock}">${med.name} (Stok: ${med.stock})</option>`;
             });
 
-            // Inisialisasi Select2 untuk pilihan obat
-            // Perlu diinisialisasi ulang setiap kali baris baru ditambahkan
-            function initializeMedicineSelect() {
-                $('.medicine-select:not(.select2-hidden-accessible)').select2({
-                    placeholder: "Pilih Obat",
-                });
-            }
-            initializeMedicineSelect();
-            
-            // Logika Alpine.js untuk resep
-            window.prescriptionHandler = function() {
-                return {
-                    medicines: [], // Mulai dengan resep kosong
-                    addMedicine() {
-                        this.medicines.push({ id: '', quantity: 1, dosage: '', maxStock: 999 });
-                        this.$nextTick(() => {
-                            initializeMedicineSelect(); // Inisialisasi ulang Select2 untuk baris baru
-                        });
-                    },
-                    removeMedicine(index) {
-                        this.medicines.splice(index, 1);
-                    },
-                    updateMaxStock(event, index) {
-                        const selectedOption = event.target.options[event.target.selectedIndex];
-                        const stock = selectedOption.dataset.stock;
-                        this.medicines[index].maxStock = stock ? parseInt(stock) : 999;
-                        // Reset kuantitas jika melebihi stok
-                        if (this.medicines[index].quantity > this.medicines[index].maxStock) {
-                            this.medicines[index].quantity = this.medicines[index].maxStock;
-                        }
-                    }
-                }
-            }
+            // [MODIFIKASI] Opsi untuk dropdown dosis
+            const dosageOptions = [
+                "1x1 sehari sesudah makan", "2x1 sehari sesudah makan", "3x1 sehari sesudah makan",
+                "1x1 sehari sebelum makan", "2x1 sehari sebelum makan", "3x1 sehari sebelum makan",
+                "Jika perlu", "Oleskan", "Teteskan", "Lainnya..."
+            ];
+            let dosageOptionsHtml = dosageOptions.map(opt => `<option value="${opt}">${opt}</option>`).join('');
 
-            // Konfirmasi sebelum submit form
-            const formPemeriksaan = document.getElementById('formPemeriksaan');
-            if(formPemeriksaan) {
-                formPemeriksaan.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    Swal.fire({
-                        title: 'Konfirmasi Penyimpanan',
-                        text: "Anda yakin ingin menyelesaikan pemeriksaan dan menyimpan data ini? Tindakan ini tidak dapat diubah.",
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#10B981', // emerald-500
-                        cancelButtonColor: '#d33',
-                        confirmButtonText: 'Ya, Simpan!',
-                        cancelButtonText: 'Batal'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            formPemeriksaan.submit();
-                        }
-                    });
-                });
+            const newRowHtml = `
+                <div class="grid grid-cols-12 gap-3 p-3 bg-gray-50 rounded-lg border medicine-row" data-row-id="${medicineRowCounter}">
+                    <div class="col-span-12 sm:col-span-4">
+                        <label class="text-sm font-medium text-gray-700">Nama Obat</label>
+                        <select class="w-full p-2 mt-1 border border-gray-300 rounded-md medicine-select" required>${medOptionsHtml}</select>
+                    </div>
+                    <div class="col-span-6 sm:col-span-2">
+                        <label class="text-sm font-medium text-gray-700">Jumlah</label>
+                        <input type="number" class="w-full p-2 mt-1 border border-gray-300 rounded-md quantity-input" min="1" required>
+                    </div>
+                    <div class="col-span-6 sm:col-span-4">
+                        <label class="text-sm font-medium text-gray-700">Dosis / Aturan Pakai</label>
+                        <select class="w-full p-2 mt-1 border border-gray-300 rounded-md dosage-select">${dosageOptionsHtml}</select>
+                        <input type="text" class="w-full p-2 mt-1 border border-gray-300 rounded-md dosage-text-input hidden" placeholder="Tulis dosis kustom..." >
+                    </div>
+                    <div class="col-span-12 sm:col-span-2 flex items-end">
+                        <button type="button" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-3 rounded-md w-full mt-1 sm:mt-0 remove-row-btn">Hapus</button>
+                    </div>
+                </div>
+            `;
+            medicineRowsContainer.append(newRowHtml);
+            
+            // Inisialisasi Select2 pada select yang baru dibuat
+            $(`.medicine-row[data-row-id="${medicineRowCounter}"] .medicine-select`).select2({
+                 placeholder: "Pilih Obat",
+                 dropdownParent: modal,
+                 width: '100%'
+            });
+        };
+        
+        // --- EVENT LISTENERS ---
+        showModalBtn.on('click', () => {
+            if(medicineRowsContainer.is(':empty')){
+                addMedicineRow();
+            }
+            openModal();
+        });
+
+        [closeModalBtn, cancelModalBtn, modalBackdrop].forEach(el => el.on('click', closeModal));
+        addMedicineRowBtn.on('click', addMedicineRow);
+
+        medicineRowsContainer.on('click', '.remove-row-btn', function() {
+            $(this).closest('.medicine-row').remove();
+        });
+
+        medicineRowsContainer.on('change', '.medicine-select', function() {
+            const selectedOption = $(this).find('option:selected');
+            const stock = selectedOption.data('stock');
+            const quantityInput = $(this).closest('.medicine-row').find('.quantity-input');
+            if (stock) {
+                quantityInput.attr('max', stock);
+                if (parseInt(quantityInput.val()) > stock) {
+                    quantityInput.val(stock);
+                }
+            } else {
+                quantityInput.removeAttr('max');
             }
         });
+
+        // [MODIFIKASI] Event listener untuk dropdown dosis hibrida
+        medicineRowsContainer.on('change', '.dosage-select', function() {
+            const textInput = $(this).siblings('.dosage-text-input');
+            if ($(this).val() === 'Lainnya...') {
+                textInput.removeClass('hidden');
+                textInput.prop('required', true); // Jadikan wajib isi jika 'Lainnya' dipilih
+            } else {
+                textInput.addClass('hidden');
+                textInput.prop('required', false);
+            }
+        });
+
+        // --- LOGIKA SIMPAN RESEP DARI MODAL ---
+        saveResepBtn.on('click', function() {
+            let isValid = true;
+            let firstError = null;
+
+            medicineRowsContainer.find('.medicine-row').each(function() {
+                const row = $(this);
+                if (!row.find('.medicine-select').val()) isValid = false;
+                if (!row.find('.quantity-input').val()) isValid = false;
+                
+                // [MODIFIKASI] Validasi dosis
+                const dosageSelect = row.find('.dosage-select');
+                const dosageTextInput = row.find('.dosage-text-input');
+                if (dosageSelect.val() === 'Lainnya...' && !dosageTextInput.val()) {
+                    isValid = false;
+                    if (!firstError) firstError = 'Harap isi dosis kustom jika memilih "Lainnya...".';
+                }
+            });
+
+            if (!isValid) {
+                Swal.fire('Data Tidak Lengkap', firstError || 'Harap isi semua kolom untuk setiap baris obat.', 'error');
+                return;
+            }
+
+            Swal.fire({
+                title: 'Konfirmasi Resep',
+                text: "Anda yakin ingin menyimpan resep ini? Data yang lama akan diganti.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#10B981',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, Simpan!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $('#hidden-medicine-inputs').empty();
+                    $('#resep-obat-list').empty();
+
+                    medicineRowsContainer.find('.medicine-row').each(function(index) {
+                        const row = $(this);
+                        const medId = row.find('.medicine-select').val();
+                        const medName = row.find('option:selected').text();
+                        const quantity = row.find('.quantity-input').val();
+                        
+                        // [MODIFIKASI] Logika pengambilan nilai dosis
+                        let dosage;
+                        const dosageSelect = row.find('.dosage-select');
+                        if (dosageSelect.val() === 'Lainnya...') {
+                            dosage = row.find('.dosage-text-input').val();
+                        } else {
+                            dosage = dosageSelect.val();
+                        }
+
+                        const hiddenInputsHtml = `
+                            <input type="hidden" name="medicines[${index}][id]" value="${medId}">
+                            <input type="hidden" name="medicines[${index}][quantity]" value="${quantity}">
+                            <input type="hidden" name="medicines[${index}][dosage]" value="${dosage}">
+                        `;
+                        $('#hidden-medicine-inputs').append(hiddenInputsHtml);
+
+                        const displayListHtml = `
+                            <div class="flex justify-between items-center p-3 bg-emerald-50 border border-emerald-200 rounded-md">
+                                <div>
+                                    <p class="font-semibold text-emerald-800">${medName.replace(/\s\(Stok: \d+\)$/, '')}</p>
+                                    <p class="text-sm text-gray-600">Jumlah: ${quantity} | Dosis: ${dosage}</p>
+                                </div>
+                            </div>
+                        `;
+                        $('#resep-obat-list').append(displayListHtml);
+                    });
+
+                    closeModal();
+                    Swal.fire('Berhasil!', 'Resep telah ditambahkan ke pemeriksaan.', 'success');
+                }
+            });
+        });
+        
+        // --- KONFIRMASI SUBMIT FORM UTAMA ---
+        formPemeriksaan.addEventListener('submit', function(e) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Konfirmasi Penyimpanan',
+                text: "Anda yakin ingin menyelesaikan pemeriksaan dan menyimpan data ini? Tindakan ini tidak dapat diubah.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#10B981',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, Simpan!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    formPemeriksaan.submit();
+                }
+            });
+        });
+    });
     </script>
 @endpush
 
