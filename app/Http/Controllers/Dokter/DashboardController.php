@@ -108,6 +108,7 @@ class DashboardController extends Controller
      */
     public function simpanPemeriksaan(Request $request, ClinicQueue $antrean)
     {
+        // [PERBAIKAN KUNCI] Logika otorisasi disamakan dengan method panggilPasien
         $user = Auth::user();
         $doctor = Doctor::where('user_id', $user->id)->firstOrFail();
 
@@ -115,6 +116,7 @@ class DashboardController extends Controller
             return redirect()->route('dokter.dashboard')->with('error', 'Anda tidak berwenang menangani pasien ini.');
         }
 
+        // Validasi yang solid dipertahankan
         $validatedData = $request->validate([
             'patient_id' => 'required|exists:patients,id',
             'blood_pressure_systolic' => 'required|integer|min:0',
@@ -140,6 +142,7 @@ class DashboardController extends Controller
         try {
             $patient = Patient::findOrFail($validatedData['patient_id']);
 
+            // 1. Update data riwayat medis pasien jika ada
             if ($request->filled('blood_type') || $request->filled('known_allergies') || $request->filled('chronic_diseases')) {
                 $patient->update([
                     'blood_type' => $request->blood_type,
@@ -148,11 +151,12 @@ class DashboardController extends Controller
                 ]);
             }
 
+            // 2. Buat Rekam Medis (MedicalRecord)
             $medicalRecord = MedicalRecord::create([
                 'clinic_queue_id' => $antrean->id,
                 'patient_id' => $patient->id,
                 'doctor_id' => $antrean->doctor_id,
-                'checkup_date' => now(),
+                'checkup_date' => now(), // Menggunakan nama kolom 'checkup_date'
                 'doctor_notes' => $validatedData['doctor_notes'],
                 'blood_pressure' => $validatedData['blood_pressure_systolic'] . '/' . $validatedData['blood_pressure_diastolic'],
                 'heart_rate' => $validatedData['heart_rate'],
@@ -162,6 +166,7 @@ class DashboardController extends Controller
                 'physical_examination_notes' => $validatedData['physical_examination_notes'],
             ]);
 
+            // 3. Simpan diagnosis menggunakan relasi Many-to-Many
             $tagIds = [];
             foreach ($validatedData['diagnosis_tags'] as $tagName) {
                 $tag = DiagnosisTag::firstOrCreate(['tag_name' => trim($tagName)]);
@@ -169,6 +174,7 @@ class DashboardController extends Controller
             }
             $medicalRecord->diagnosisTags()->sync($tagIds);
 
+            // 4. Jika ada resep, buat antrean apotek dan detail resepnya
             if (!empty($validatedData['medicines'])) {
                 $prescription = Prescription::create([
                     'medical_record_id' => $medicalRecord->id,
@@ -190,19 +196,16 @@ class DashboardController extends Controller
                     $medicine->decrement('stock', $med['quantity']);
                 }
                 
-                // [MODIFIKASI UTAMA] Mengembalikan logika pemformatan nomor antrean apotek
-                $nextQueueNumberInt = PharmacyQueue::generateQueueNumber(); // Dapatkan angka berikutnya (misal: 1, 2, 3)
-                $formattedQueueNumber = 'APT-' . str_pad($nextQueueNumberInt, 3, '0', STR_PAD_LEFT); // Format menjadi APT-001, APT-002, dst.
-
                 PharmacyQueue::create([
                     'clinic_queue_id' => $antrean->id,
                     'prescription_id' => $prescription->id,
-                    'pharmacy_queue_number' => $formattedQueueNumber, // Gunakan nomor yang sudah diformat
+                    'pharmacy_queue_number' => PharmacyQueue::generateQueueNumber(),
                     'status' => 'DALAM_ANTREAN',
                     'entry_time' => now(),
                 ]);
             }
 
+            // 5. Selesaikan antrean klinik
             $antrean->update([
                 'finish_time' => now(),
                 'status' => 'SELESAI',
@@ -212,11 +215,12 @@ class DashboardController extends Controller
             return redirect()->route('dokter.dashboard')->with('success', 'Pemeriksaan selesai dan rekam medis berhasil disimpan.');
 
         } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error("Gagal menyimpan pemeriksaan: {$e->getMessage()}");
-             // Tampilkan pesan error yang sebenarnya untuk debugging
-             return redirect()->back()->withInput()->with('error', 'DEBUG: ' . $e->getMessage());
-        }
+    DB::rollBack();
+    
+    // Tampilkan pesan error yang sebenarnya ke layar untuk debugging
+    // Ini akan memberitahu Anda model mana dan field mana yang bermasalah
+    return redirect()->back()->withInput()->with('error', 'DEBUG: ' . $e->getMessage()); 
+}
     }
 }
 
