@@ -25,9 +25,9 @@ class DashboardRedirectController extends Controller
             return redirect()->route('dokter.dashboard');
         }
 
-        if ($user->hasRole('petugas loket apotek')) {
+        if ($user->hasRole('petugas loket')) {
              // Anda perlu mendefinisikan rute dengan nama 'apotek.dashboard'
-            return redirect()->route('apotek.dashboard');
+            return redirect()->route('petugas-loket.dashboard');
         }
 
         if ($user->hasRole('pasien')) {
