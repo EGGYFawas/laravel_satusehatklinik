@@ -20,6 +20,7 @@ use App\Http\Controllers\Dokter\PatientHistoryController as DokterPatientHistory
 use App\Http\Controllers\Pasien\ScheduleController as PasienScheduleController;
 use App\Http\Controllers\Dokter\ScheduleController as DokterScheduleController;
 
+use App\Http\Controllers\Pasien\ArticleController as PasienArticleController;
 
 /*
 |--------------------------------------------------------------------------
