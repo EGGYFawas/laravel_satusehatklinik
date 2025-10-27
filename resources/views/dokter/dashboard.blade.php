@@ -30,8 +30,12 @@
         <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-md shadow-md" role="alert">
             <p class="font-bold">Terjadi Kesalahan</p>
             <ul>
-                @if(session('error')) <li>{{ session('error') }}</li> @endif
-                @foreach ($errors->all() as $error) <li class="list-disc ml-4">{{ $error }}</li> @endforeach
+                @if(session('error'))
+                    <li>{{ session('error') }}</li>
+                @endif
+                @foreach ($errors->all() as $error)
+                    <li class="list-disc ml-4">{{ $error }}</li>
+                @endforeach
             </ul>
         </div>
     @endif
@@ -49,7 +53,7 @@
                         $patient = $pasienAktif->patient;
                         $isNewHistory = empty($patient->blood_type) && empty($patient->known_allergies) && empty($patient->chronic_diseases);
                     @endphp
-                    <div>
+                    <div x-data="{ isNewHistory: {{ $isNewHistory ? 'true' : 'false' }} }">
                         <!-- Informasi Pasien -->
                         <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4 mb-6">
                             <div class="flex items-start justify-between">
@@ -208,8 +212,8 @@
             <div class="bg-white rounded-xl shadow-lg mb-8">
                 <h3 class="text-lg font-bold text-gray-800 border-b p-4 bg-green-50 text-green-800">Antrean Hadir Berikutnya</h3>
                 <div class="p-4 max-h-64 overflow-y-auto">
-                    @forelse($antreanHadir as $antrean)
-                        <div class="flex items-center justify-between p-3 rounded-md border-b">
+                    @forelse($antreanMenunggu as $index => $antrean)
+                        <div class="flex items-center justify-between p-3 rounded-md {{ $loop->first ? 'bg-blue-50 border border-blue-200' : 'border-b' }}">
                             <div>
                                 <p class="font-bold text-xl text-gray-800">{{ $antrean->queue_number }}</p>
                                 <p class="text-sm text-gray-600">{{ $antrean->patient->user->full_name ?? $antrean->patient->full_name }}</p>
@@ -242,7 +246,7 @@
             <div class="bg-white rounded-xl shadow-lg">
                 <h3 class="text-lg font-bold text-gray-800 border-b p-4">Riwayat Selesai Hari Ini</h3>
                 <div class="p-4 max-h-80 overflow-y-auto">
-                    @forelse($antreanSelesai as $antrean)
+                     @forelse($antreanSelesai as $antrean)
                         <div class="flex items-center justify-between p-3 border-b">
                             <div>
                                 <p class="font-semibold text-gray-700">{{ $antrean->queue_number }} - {{ $antrean->patient->user->full_name ?? $antrean->patient->full_name }}</p>

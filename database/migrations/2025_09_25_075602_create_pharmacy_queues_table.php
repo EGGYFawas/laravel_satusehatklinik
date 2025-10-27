@@ -6,18 +6,36 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
     public function up(): void
     {
         Schema::create('pharmacy_queues', function (Blueprint $table) {
-            $table->id(); // Sesuai ERD: bigIncrements PK
+            $table->id();
             $table->unsignedBigInteger('clinic_queue_id')->unique();
             $table->unsignedBigInteger('prescription_id')->unique();
             $table->string('pharmacy_queue_number', 20);
-            $table->enum('status', ['MENUNGGU_RACIK', 'DIRACIK', 'SELESAI_RACIK', 'DIAMBIL', 'BATAL']);
+            
+            // [FINAL] Daftar status yang lengkap dan sesuai dengan alur
+            $table->enum('status', [
+                'MENUNGGU_RACIK', 
+                'DIRACIK', 
+                'SELESAI_RACIK', 
+                'DIAMBIL', 
+                'DITERIMA_PASIEN', // Status baru untuk konfirmasi pasien
+                'BATAL'
+            ]);
+
+            // Kolom waktu untuk setiap tahapan
             $table->timestamp('entry_time');
             $table->timestamp('start_racik_time')->nullable();
             $table->timestamp('finish_racik_time')->nullable();
             $table->timestamp('taken_time')->nullable();
+            // [BARU] Kolom waktu untuk menandai kapan pasien mengkonfirmasi
+            $table->timestamp('patient_confirmed_time')->nullable(); 
             $table->timestamps();
 
             // Definisi relasi
@@ -26,9 +44,13 @@ return new class extends Migration
         });
     }
 
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
     public function down(): void
     {
         Schema::dropIfExists('pharmacy_queues');
     }
 };
-
