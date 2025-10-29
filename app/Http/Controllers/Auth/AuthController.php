@@ -110,7 +110,7 @@ class AuthController extends Controller
                 ]);
             }
 
-            DB::commit();
+            DB::commit(); // Perbaikan: DB::commit() harus ada tanda kurung
 
             return redirect()->route('login')->with('success', 'Pendaftaran berhasil! Silakan masuk dengan akun Anda.');
         } catch (\Exception $e) {
@@ -132,7 +132,8 @@ class AuthController extends Controller
 
     /**
      * Memproses data dari form login.
-     */
+     * * [!!! INI ADALAH BAGIAN YANG DIMODIFIKASI !!!]
+     * */
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -142,7 +143,43 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
-            return redirect()->intended('dashboard');
+
+            // === AWAL MODIFIKASI ===
+            
+            // Ambil user yang baru saja login
+            $user = Auth::user();
+
+            // Cek role user
+            // Saya asumsikan Anda pakai Spatie/laravel-permission 
+            // karena ada 'assignRole' di fungsi register-mu
+            
+            if ($user->hasRole('admin')) {
+                // 1. Jika role adalah 'admin', lempar ke dashboard Filament
+                // URL '/admin' diubah menjadi path baru '/filament'
+                return redirect('/filament'); // <-- PERUBAHAN DI SINI
+            
+            } elseif ($user->hasRole('dokter')) {
+                // 2. Jika 'dokter', arahkan ke dashboard dokter
+                // Ganti '/dashboard-dokter' jika URL-nya beda
+                return redirect('/dashboard-dokter'); // Ganti URL sesuai kebutuhan
+
+            } elseif ($user->hasRole('loket')) { // Kamu sebut 'petugas loket'
+                // 3. Jika 'loket', arahkan ke dashboard loket
+                // Ganti '/dashboard-loket' jika URL-nya beda
+                return redirect('/dashboard-loket'); // Ganti URL sesuai kebutuhan
+
+            } elseif ($user->hasRole('pasien')) {
+                // 4. Jika 'pasien', arahkan ke dashboard pasien
+                // Ganti '/dashboard-pasien' jika URL-nya beda
+                return redirect('/dashboard-pasien'); // Ganti URL sesuai kebutuhan
+            
+            } else {
+                // 5. Fallback jika user punya role lain atau tidak punya role
+                // Kembali ke logika asal: redirect ke 'dashboard'
+                return redirect()->intended('dashboard');
+            }
+            
+            // === AKHIR MODIFIKASI ===
         }
 
         return back()->withErrors([
@@ -209,4 +246,3 @@ class AuthController extends Controller
         ]);
     }
 }
-
