@@ -7,7 +7,10 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DashboardRedirectController;
 
 // Import untuk Controller Role Spesifik dengan Alias
-use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+// === AWAL PENGHAPUSAN ===
+// Menghapus AdminDashboardController karena sudah ditangani Filament
+// use App\Http\Controllers\Admin\DashboardController as AdminDashboardController; 
+// === AKHIR PENGHAPUSAN ===
 use App\Http\Controllers\Pasien\DashboardController as PasienDashboardController;
 use App\Http\Controllers\Dokter\DashboardController as DokterDashboardController;
 use App\Http\Controllers\Pasien\CheckInController;
@@ -83,10 +86,13 @@ Route::middleware(['auth'])->group(function () {
         // Nanti bisa ditambahkan route POST/PUT untuk update jadwal jika diperlukan
        });
 
+    // === AWAL PENGHAPUSAN ===
     // --- GRUP ROUTE UNTUK ADMIN ---
-    Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
-        Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-    });
+    // GRUP INI DIHAPUS KARENA FILAMENT SUDAH MENG-HANDLE-NYA SECARA OTOMATIS
+    // Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    //     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+    // });
+    // === AKHIR PENGHAPUSAN ===
 
     // --- GRUP ROUTE UNTUK PETUGAS LOKET ---
     Route::middleware(['role:petugas loket'])->prefix('petugas-loket')->name('petugas-loket.')->group(function () {
@@ -102,4 +108,3 @@ Route::middleware(['auth'])->group(function () {
     });
 
 });
-

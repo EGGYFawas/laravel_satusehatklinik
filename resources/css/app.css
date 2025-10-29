@@ -1,3 +1,16 @@
+/* === AWAL MODIFIKASI === */
+/*
+ * SEMUA baris @import kita HAPUS dari sini
+ * karena sudah di-handle langsung oleh vite.config.js
+ * untuk menghindari error path di Windows.
+*/
+/* === AKHIR MODIFIKASI === */
+
+
+/* Standar Tailwind Directives (Milik Anda) */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Style kustom 3 role-mu bisa ditambahkan di bawah ini jika ada */
+

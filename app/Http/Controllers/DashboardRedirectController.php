@@ -17,7 +17,8 @@ class DashboardRedirectController extends Controller
         // Gunakan hasRole() dari Spatie untuk memeriksa peran pengguna
         if ($user->hasRole('admin')) {
             // BENAR: Menggunakan nama rute 'admin.dashboard'
-            return redirect()->route('admin.dashboard');
+                        return redirect('/admin'); 
+
         }
 
         if ($user->hasRole('dokter')) {

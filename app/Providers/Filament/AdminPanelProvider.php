@@ -10,14 +10,18 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
-use Filament\Widgets\AccountWidget;
-use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+
+// === INI ADALAH IMPORT DARI BATTLE PLAN KITA ===
+// KITA HANYA MENG-IMPORT WIDGET STATISTIK DASAR
+use App\Filament\Widgets\DashboardStats;
+// === KITA HAPUS 'KepuasanPasienChart' DARI 'use' ===
+// (karena kita sepakat skip fitur kunjungan)
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -26,21 +30,42 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
-            ->path('filament')
-            ->login()
+            ->path('admin') // Path sudah kembali ke /admin
+            
+            // === MODIFIKASI KUNCI ===
+            ->login(false) // Nonaktifkan login page Filament, kita pakai AuthController
+            
+            // === THEMING LOGO, WARNA, FONT (DARI REFERENSI) ===
+            ->brandLogo(asset('assets/img/logo_login.png'))
+            ->brandLogoHeight('3.5rem') 
+            ->font('Poppins')
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => '#4F46E5', // Warna dari layout lama
+                'gray' => Color::Slate, // Ganti "slate-100" jadi Slate
             ])
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
-            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
+            
+            // === IKON SUDAH KEMBALI KE DEFAULT (HEROICONS) ===
+            // Tidak ada 'plugin' atau 'defaultIconPack'
+            
+            // === PENDAFTARAN HALAMAN & RESOURCE ===
+            // Ini akan otomatis menemukan semua Resource-mu
+            // (Patient, Doctor, Petugas, Obat, Article, DoctorSchedule)
+            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
+            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
                 Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
+            
+            // === PENDAFTARAN WIDGET KUSTOM (FOKUS) ===
+            // Kita hanya mendaftarkan widget statistik dasar
+            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                AccountWidget::class,
-                FilamentInfoWidget::class,
+                DashboardStats::class,
+                // === 'KepuasanPasienChart' DIHAPUS DARI SINI ===
+                // (sesuai permintaanmu untuk skip fitur kunjungan)
             ])
+
+            // === MIDDLEWARE (DARI FILE-MU, INI PENTING) ===
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -57,3 +82,4 @@ class AdminPanelProvider extends PanelProvider
             ]);
     }
 }
+

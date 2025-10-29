@@ -156,7 +156,7 @@ class AuthController extends Controller
             if ($user->hasRole('admin')) {
                 // 1. Jika role adalah 'admin', lempar ke dashboard Filament
                 // URL '/admin' diubah menjadi path baru '/filament'
-                return redirect('/filament'); // <-- PERUBAHAN DI SINI
+                return redirect('/admin'); // <-- PERUBAHAN DI SINI
             
             } elseif ($user->hasRole('dokter')) {
                 // 2. Jika 'dokter', arahkan ke dashboard dokter
