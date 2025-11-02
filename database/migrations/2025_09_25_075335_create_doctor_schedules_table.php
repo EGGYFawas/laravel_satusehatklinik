@@ -17,7 +17,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
-            // Definisi relasi
+            // Definisi realasi
             $table->foreign('doctor_id')->references('id')->on('doctors')->onDelete('cascade');
         });
     }

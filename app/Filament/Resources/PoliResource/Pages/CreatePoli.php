@@ -1,18 +1,18 @@
 <?php
 
-namespace App\Filament\Resources\ArticleResource\Pages;
+namespace App\Filament\Resources\PoliResource\Pages;
 
-use App\Filament\Resources\ArticleResource;
+use App\Filament\Resources\PoliResource;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 
-class CreateArticle extends CreateRecord
+class CreatePoli extends CreateRecord
 {
-    protected static string $resource = ArticleResource::class;
+    protected static string $resource = PoliResource::class;
 
     protected function getCreatedNotificationTitle(): ?string
     {
-        return 'Artikel Berhasil Dibuat';
+        return 'Data Poli Berhasil Ditambahkan';
     }
 
     protected function getRedirectUrl(): string

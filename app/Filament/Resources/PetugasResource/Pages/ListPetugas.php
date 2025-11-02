@@ -13,7 +13,9 @@ class ListPetugas extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->label('Buat Petugas Baru'), // Label kustom
         ];
     }
 }
+

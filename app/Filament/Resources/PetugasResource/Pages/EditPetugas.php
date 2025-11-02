@@ -14,6 +14,14 @@ class EditPetugas extends EditRecord
     {
         return [
             Actions\DeleteAction::make(),
+            Actions\ViewAction::make(), // Tambahkan tombol View
         ];
     }
+
+    // Notifikasi kustom
+    protected function getSavedNotificationTitle(): ?string
+    {
+        return 'Data Petugas Berhasil Diperbarui';
+    }
 }
+

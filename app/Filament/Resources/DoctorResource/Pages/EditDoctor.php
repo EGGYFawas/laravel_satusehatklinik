@@ -13,7 +13,20 @@ class EditDoctor extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            Actions\ViewAction::make(), // Tambahkan tombol View di header
+            Actions\DeleteAction::make(), // Tambahkan tombol Delete di header
         ];
+    }
+
+    // Notifikasi kustom setelah berhasil update
+    protected function getSavedNotificationTitle(): ?string
+    {
+        return 'Data Dokter Berhasil Diperbarui';
+    }
+
+    // Redirect kembali ke halaman index setelah update
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
     }
 }

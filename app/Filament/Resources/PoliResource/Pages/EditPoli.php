@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Filament\Resources\ArticleResource\Pages;
+namespace App\Filament\Resources\PoliResource\Pages;
 
-use App\Filament\Resources\ArticleResource;
+use App\Filament\Resources\PoliResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
-class EditArticle extends EditRecord
+class EditPoli extends EditRecord
 {
-    protected static string $resource = ArticleResource::class;
+    protected static string $resource = PoliResource::class;
 
     protected function getHeaderActions(): array
     {
@@ -20,6 +20,6 @@ class EditArticle extends EditRecord
 
     protected function getSavedNotificationTitle(): ?string
     {
-        return 'Artikel Berhasil Diperbarui';
+        return 'Data Poli Berhasil Diperbarui';
     }
 }

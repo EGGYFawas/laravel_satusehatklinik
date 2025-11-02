@@ -13,7 +13,16 @@ class ListDoctors extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+                ->label('Tambah Dokter Baru'), // Ubah label tombol
+        ];
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            // Anda bisa menambahkan widget statistik di sini jika perlu
+            // Contoh: DoctorResource\Widgets\DoctorStatsOverview::class,
         ];
     }
 }

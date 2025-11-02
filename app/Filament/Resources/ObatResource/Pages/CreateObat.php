@@ -1,12 +1,26 @@
 <?php
 
-namespace App\Filament\Resources\ObatResource\Pages;
+// 1. Sesuaikan namespace
+namespace App\Filament\Resources\ObatResource\Pages; 
 
-use App\Filament\Resources\ObatResource;
+// 2. Sesuaikan 'use'
+use App\Filament\Resources\ObatResource; 
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 
-class CreateObat extends CreateRecord
+// 3. Sesuaikan nama class
+class CreateObat extends CreateRecord 
 {
-    protected static string $resource = ObatResource::class;
+    // 4. Sesuaikan resource
+    protected static string $resource = ObatResource::class; 
+
+    protected function getCreatedNotificationTitle(): ?string
+    {
+        return 'Data Obat Berhasil Disimpan';
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }
