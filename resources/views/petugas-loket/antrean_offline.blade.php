@@ -5,6 +5,37 @@
 @push('styles')
     {{-- CDN untuk SweetAlert2 --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* [BARU] Style untuk NIK-loader */
+        .nik-status-indicator {
+            position: absolute;
+            right: 0.75rem; /* 12px */
+            top: 50%;
+            transform: translateY(-50%);
+            display: none; /* Sembunyi by default */
+        }
+        .nik-status-indicator.loading {
+            display: inline-block;
+            border: 3px solid #f3f3f3; /* Light grey */
+            border-top: 3px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        .nik-status-indicator.success {
+            display: inline-block;
+            color: #10B981; /* green-500 */
+        }
+         .nik-status-indicator.error {
+            display: inline-block;
+            color: #EF4444; /* red-500 */
+        }
+        @keyframes spin {
+            0% { transform: translateY(-50%) rotate(0deg); }
+            100% { transform: translateY(-50%) rotate(360deg); }
+        }
+    </style>
 @endpush
 
 @section('content')
@@ -29,7 +60,7 @@
     @endif
 
     {{-- Bagian Pendaftaran Pasien Offline --}}
-    <div x-data="{ open: true, nikInput: '' }" class="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300">
+    <div x-data="{ open: true }" class="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300">
         <div @click="open = !open" class="p-4 bg-gray-50 border-b cursor-pointer flex justify-between items-center">
             <h2 class="text-xl font-bold text-gray-700">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -45,28 +76,39 @@
                 @csrf
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 border-b border-gray-200 pb-6">
                     <h4 class="md:col-span-2 text-lg font-semibold text-gray-700">Data Pasien</h4>
-                    <div>
-                        <label for="new_patient_name" class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap Pasien <span class="text-red-500">*</span></label>
-                        <input type="text" name="new_patient_name" value="{{ old('new_patient_name') }}" class="w-full p-2 border border-gray-300 rounded-md" required @input="event.target.value = event.target.value.toUpperCase()">
+                    
+                    {{-- [MODIFIKASI PERMINTAAN 1: NIK] --}}
+                    <div class="relative">
+                        <label for="new_patient_nik" class="block text-sm font-medium text-gray-700 mb-1">NIK (16 Digit) <span class="text-red-500">*</span></label>
+                        {{-- Tambahkan id="new_patient_nik" --}}
+                        <input type="text" id="new_patient_nik" name="new_patient_nik" value="{{ old('new_patient_nik') }}" class="w-full p-2 border border-gray-300 rounded-md" required maxlength="16" x-model="nikInput" @input="nikInput = nikInput.replace(/\D/g, '')">
+                        <p x-show="nikInput.length > 0 && nikInput.length !== 16" class="text-xs text-red-600 mt-1">NIK harus terdiri dari 16 digit angka.</p>
+                        
+                        {{-- Indikator loading/success/error --}}
+                        <div id="nik_status_indicator" class="nik-status-indicator"></div>
+                        <p id="nik_message" class="text-xs text-blue-600 mt-1 hidden"></p>
                     </div>
                     <div>
-                        <label for="new_patient_nik" class="block text-sm font-medium text-gray-700 mb-1">NIK (16 Digit) <span class="text-red-500">*</span></label>
-                        <input type="text" name="new_patient_nik" value="{{ old('new_patient_nik') }}" class="w-full p-2 border border-gray-300 rounded-md" required maxlength="16" x-model="nikInput" @input="nikInput = nikInput.replace(/\D/g, '')">
-                        <p x-show="nikInput.length > 0 && nikInput.length !== 16" class="text-xs text-red-600 mt-1">NIK harus terdiri dari 16 digit angka.</p>
+                        <label for="new_patient_name" class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap Pasien <span class="text-red-500">*</span></label>
+                         {{-- Tambahkan id="new_patient_name" --}}
+                        <input type="text" id="new_patient_name" name="new_patient_name" value="{{ old('new_patient_name') }}" class="w-full p-2 border border-gray-300 rounded-md bg-gray-50" required @input="event.target.value = event.target.value.toUpperCase()">
                     </div>
                     <div>
                         <label for="new_patient_dob" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Lahir <span class="text-red-500">*</span></label>
-                        <input type="date" name="new_patient_dob" value="{{ old('new_patient_dob') }}" class="w-full p-2 border border-gray-300 rounded-md" required>
+                         {{-- Tambahkan id="new_patient_dob" --}}
+                        <input type="date" id="new_patient_dob" name="new_patient_dob" value="{{ old('new_patient_dob') }}" class="w-full p-2 border border-gray-300 rounded-md bg-gray-50" required>
                     </div>
                     <div>
                         <label for="new_patient_gender" class="block text-sm font-medium text-gray-700 mb-1">Jenis Kelamin <span class="text-red-500">*</span></label>
-                        <select name="new_patient_gender" class="w-full p-2 border border-gray-300 rounded-md" required>
+                         {{-- Tambahkan id="new_patient_gender" --}}
+                        <select id="new_patient_gender" name="new_patient_gender" class="w-full p-2 border border-gray-300 rounded-md bg-gray-50" required>
                             <option value="" disabled selected>-- Pilih Jenis Kelamin --</option>
                             <option value="Laki-laki" @if(old('new_patient_gender') == 'Laki-laki') selected @endif>Laki-laki</option>
                             <option value="Perempuan" @if(old('new_patient_gender') == 'Perempuan') selected @endif>Perempuan</option>
                         </select>
                     </div>
                 </div>
+                
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                      <h4 class="md:col-span-2 text-lg font-semibold text-gray-700">Detail Pendaftaran</h4>
                     <div>
@@ -86,7 +128,6 @@
                     </div>
                     <div class="md:col-span-2">
                         <label for="keluhan" class="block text-sm font-medium text-gray-700 mb-1">Keluhan <span class="text-red-500">*</span></label>
-                        {{-- [PERBAIKAN] Menambahkan id="keluhan" agar cocok dengan label 'for' --}}
                         <textarea id="keluhan" name="chief_complaint" rows="3" class="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" placeholder="Tuliskan keluhan utama pasien..." required>{{ old('chief_complaint') }}</textarea>
                     </div>
                 </div>
@@ -114,19 +155,33 @@
             </div>
             <hr>
             <div>
-                <h4 class="font-semibold text-gray-700 mb-2">Daftar Pasien Aktif:</h4>
-                <div class="space-y-3 max-h-60 overflow-y-auto pr-2">
+                <h4 class="font-semibold text-gray-700 mb-2">Daftar Pasien Hari Ini:</h4>
+                {{-- [MODIFIKASI PERMINTAAN 2: Optimalkan Kartu] Tambah max-h-96 --}}
+                <div class="space-y-3 max-h-96 overflow-y-auto pr-2">
                     @forelse ($daftarAntreanBerobat as $antrean)
                     @php
                         $bgColor = ''; $statusText = '';
+                        // [MODIFIKASI PERMINTAAN 2] Tambah status lengkap
                         switch($antrean->status) {
                             case 'MENUNGGU':
-                                $bgColor = 'bg-yellow-50';
-                                $statusText = 'Menunggu Check-in';
+                                $bgColor = 'bg-yellow-50 border-l-4 border-yellow-400';
+                                $statusText = 'Menunggu';
                                 break;
                             case 'HADIR':
-                                $bgColor = 'bg-green-50';
-                                $statusText = 'Sudah Hadir';
+                                $bgColor = 'bg-green-50 border-l-4 border-green-400';
+                                $statusText = 'Hadir';
+                                break;
+                            case 'DIPANGGIL':
+                                $bgColor = 'bg-blue-50 border-l-4 border-blue-400';
+                                $statusText = 'Dipanggil';
+                                break;
+                            case 'SELESAI':
+                                $bgColor = 'bg-gray-100 border-l-4 border-gray-400 text-gray-500';
+                                $statusText = 'Selesai';
+                                break;
+                            case 'BATAL':
+                                $bgColor = 'bg-red-50 border-l-4 border-red-400 text-red-600';
+                                $statusText = 'Batal';
                                 break;
                         }
                     @endphp
@@ -136,25 +191,45 @@
                             <p class="text-sm text-gray-500">Poli: {{ $antrean->poli->name }} | <span class="font-semibold">{{ $statusText }}</span></p>
                         </div>
                         
-                        {{-- [MODIFIKASI] Logika Aksi Langsung Disatukan di Sini --}}
-                        <div>
+                        {{-- [MODIFIKASI PERMINTAAN 3: Batasi Check-in] --}}
+                        <div class="w-28 text-center">
                             @if ($antrean->status == 'MENUNGGU')
-                                <form action="{{ route('petugas-loket.antrean-offline.checkin', $antrean->id) }}" method="POST" class="checkin-form">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button type="submit" class="px-4 py-2 bg-green-500 text-white text-sm font-semibold rounded-lg hover:bg-green-600 transition checkin-btn">
-                                        Check-in
-                                    </button>
-                                </form>
+                                @if ($antrean->registered_by_user_id != null)
+                                    {{-- Ini adalah antrean walk-in, BISA check-in --}}
+                                    <form action="{{ route('petugas-loket.antrean-offline.checkin', $antrean->id) }}" method="POST" class="checkin-form">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="px-4 py-2 bg-green-500 text-white text-sm font-semibold rounded-lg hover:bg-green-600 transition checkin-btn w-full">
+                                            Check-in
+                                        </button>
+                                    </form>
+                                @else
+                                    {{-- Ini adalah antrean online, TIDAK BISA check-in manual --}}
+                                    <div class="px-2 py-1 bg-yellow-200 text-yellow-800 text-xs font-bold rounded-full">
+                                        Menunggu<br>Check-in QR
+                                    </div>
+                                @endif
                             @elseif ($antrean->status == 'HADIR')
                                 <div class="px-3 py-1 bg-green-200 text-green-800 text-sm font-bold rounded-full">
                                     Hadir
+                                </div>
+                            @elseif ($antrean->status == 'DIPANGGIL')
+                                <div class="px-3 py-1 bg-blue-200 text-blue-800 text-sm font-bold rounded-full">
+                                    Dipanggil
+                                </div>
+                            @elseif ($antrean->status == 'SELESAI')
+                                <div class="px-3 py-1 bg-gray-200 text-gray-800 text-sm font-bold rounded-full">
+                                    Selesai
+                                </div>
+                            @elseif ($antrean->status == 'BATAL')
+                                <div class="px-3 py-1 bg-red-200 text-red-800 text-sm font-bold rounded-full">
+                                    Batal
                                 </div>
                             @endif
                         </div>
                     </div>
                     @empty
-                    <p class="text-center text-gray-500 py-4">Tidak ada pasien dalam antrean aktif.</p>
+                    <p class="text-center text-gray-500 py-4">Tidak ada pasien dalam antrean hari ini.</p>
                     @endforelse
                 </div>
             </div>
@@ -174,21 +249,24 @@
             <hr>
             <div>
                  <h4 class="font-semibold text-gray-700 mb-2">Daftar Antrean Resep:</h4>
-                 <div class="space-y-3 max-h-60 overflow-y-auto pr-2">
+                 {{-- [MODIFIKASI PERMINTAAN 2: Optimalkan Kartu] Tambah max-h-96 --}}
+                 <div class="space-y-3 max-h-96 overflow-y-auto pr-2">
                     @forelse ($daftarAntreanApotek as $antrean)
                     @php
-                        $statusTextApotek = ''; $textColorApotek = '';
+                        $statusTextApotek = ''; $bgColorApotek = '';
+                        // [MODIFIKASI PERMINTAAN 2] Tambah status lengkap
                         switch ($antrean->status) {
-                            case 'DALAM_ANTREAN': $statusTextApotek = 'Dalam Antrean'; $textColorApotek = 'text-cyan-800'; break;
-                            case 'SEDANG_DIRACIK': $statusTextApotek = 'Obat Disiapkan'; $textColorApotek = 'text-orange-800'; break;
-                            case 'SIAP_DIAMBIL': $statusTextApotek = 'Siap Diambil'; $textColorApotek = 'text-yellow-800 font-bold'; break;
-                            case 'DISERAHKAN': $statusTextApotek = 'Siap Diserahkan'; $textColorApotek = 'text-purple-800 font-bold'; break;
-                            default: $statusTextApotek = 'Selesai'; $textColorApotek = 'text-gray-500'; break;
+                            case 'DALAM_ANTREAN': $statusTextApotek = 'Dalam Antrean'; $bgColorApotek = 'bg-cyan-100'; break;
+                            case 'SEDANG_DIRACIK': $statusTextApotek = 'Obat Disiapkan'; $bgColorApotek = 'bg-orange-100'; break;
+                            case 'SIAP_DIAMBIL': $statusTextApotek = 'Siap Diambil'; $bgColorApotek = 'bg-yellow-100 font-semibold'; break;
+                            case 'DISERAHKAN': $statusTextApotek = 'Diserahkan'; $bgColorApotek = 'bg-purple-100 font-semibold'; break;
+                            case 'SELESAI': $statusTextApotek = 'Selesai'; $bgColorApotek = 'bg-gray-100 text-gray-500'; break;
+                            default: $statusTextApotek = $antrean->status; $bgColorApotek = 'bg-gray-50'; break;
                         }
                     @endphp
-                    <div class="bg-gray-50 p-3 rounded-lg shadow-sm flex justify-between items-center">
+                    <div class="{{ $bgColorApotek }} p-3 rounded-lg shadow-sm flex justify-between items-center">
                         <p class="font-bold text-gray-800">{{ $antrean->pharmacy_queue_number }} - {{ $antrean->patient_name }}</p>
-                        <p class="text-sm font-semibold {{ $textColorApotek }}">{{ $statusTextApotek }}</p>
+                        <p class="text-sm font-semibold">{{ $statusTextApotek }}</p>
                     </div>
                     @empty
                     <p class="text-center text-gray-500 py-4">Belum ada resep yang masuk antrean.</p>
@@ -201,7 +279,6 @@
 @endsection
 
 @push('scripts')
-{{-- Script tidak berubah, sudah benar --}}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const poliSelect = document.getElementById('poli');
@@ -209,6 +286,122 @@ document.addEventListener('DOMContentLoaded', function () {
     const antreanForm = document.getElementById('antreanOfflineForm');
     const checkinForms = document.querySelectorAll('.checkin-form');
 
+    // [BARU - PERMINTAAN 1: NIK Auto-fill]
+    const nikInput = document.getElementById('new_patient_nik');
+    const nameInput = document.getElementById('new_patient_name');
+    const dobInput = document.getElementById('new_patient_dob');
+    const genderSelect = document.getElementById('new_patient_gender');
+    const nikStatusIndicator = document.getElementById('nik_status_indicator');
+    const nikMessage = document.getElementById('nik_message');
+    let fetchNikTimer; // Timer untuk debounce
+
+    // Fungsi untuk mengunci/membuka form data pasien
+    function setPatientFormReadOnly(isReadOnly) {
+        nameInput.readOnly = isReadOnly;
+        dobInput.readOnly = isReadOnly;
+        genderSelect.disabled = isReadOnly;
+        
+        // Ubah tampilan agar terlihat terkunci/terbuka
+        [nameInput, dobInput, genderSelect].forEach(el => {
+            if (isReadOnly) {
+                el.classList.add('bg-gray-200', 'text-gray-500');
+                el.classList.remove('bg-gray-50');
+            } else {
+                el.classList.remove('bg-gray-200', 'text-gray-500');
+                el.classList.add('bg-gray-50');
+            }
+        });
+    }
+
+    // Fungsi untuk mereset form data pasien
+    function resetPatientForm() {
+        nameInput.value = '';
+        dobInput.value = '';
+        genderSelect.value = '';
+        nikMessage.classList.add('hidden');
+        nikMessage.textContent = '';
+        setPatientFormReadOnly(false); // Buka kunci form
+    }
+
+    // Set form ke non-readonly saat halaman dimuat
+    setPatientFormReadOnly(false);
+    // Jika ada old-data (setelah validation error), isi dan biarkan terbuka
+    if (nameInput.value) {
+         setPatientFormReadOnly(false);
+    }
+
+    nikInput.addEventListener('input', function() {
+        clearTimeout(fetchNikTimer); // Hapus timer sebelumnya
+        const nik = this.value;
+
+        // Reset status
+        nikStatusIndicator.className = 'nik-status-indicator';
+        nikMessage.classList.add('hidden');
+
+        if (nik.length !== 16) {
+            // Jika NIK belum 16 digit, reset form (jika sebelumnya terisi)
+            if (nameInput.readOnly) {
+                 resetPatientForm();
+            }
+            return; // Jangan lakukan fetch
+        }
+
+        // Mulai loading
+        nikStatusIndicator.className = 'nik-status-indicator loading';
+        setPatientFormReadOnly(true); // Kunci form sementara loading
+
+        // Debounce: tunggu 500ms setelah user berhenti mengetik
+        fetchNikTimer = setTimeout(() => {
+            fetch(`{{ url('/petugas-loket/check-patient-nik') }}/${nik}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Respon server tidak baik.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.found) {
+                        // NIK Ditemukan
+                        nikStatusIndicator.className = 'nik-status-indicator success';
+                        nikStatusIndicator.innerHTML = '&#10003;'; // Checkmark
+                        
+                        nikMessage.textContent = 'Data pasien ditemukan.';
+                        nikMessage.classList.remove('hidden', 'text-red-600');
+                        nikMessage.classList.add('text-blue-600');
+
+                        nameInput.value = data.full_name;
+                        dobInput.value = data.date_of_birth;
+                        genderSelect.value = data.gender;
+                        
+                        setPatientFormReadOnly(true); // Kunci form karena data ada
+                    } else {
+                        // NIK Tidak Ditemukan
+                        nikStatusIndicator.className = 'nik-status-indicator error';
+                        nikStatusIndicator.innerHTML = '&#10005;'; // X mark
+                        
+                        nikMessage.textContent = 'NIK tidak ditemukan. Silakan isi data pasien baru.';
+                        nikMessage.classList.remove('hidden', 'text-blue-600');
+                        nikMessage.classList.add('text-red-600');
+
+                        resetPatientForm();
+                        setPatientFormReadOnly(false); // Buka kunci form
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch Error:', error);
+                    nikStatusIndicator.className = 'nik-status-indicator error';
+                    nikStatusIndicator.innerHTML = '&#10005;'; // X mark
+                    
+                    nikMessage.textContent = 'Gagal mengambil data. Coba lagi.';
+                    nikMessage.classList.remove('hidden');
+                    nikMessage.classList.add('text-red-600');
+                    
+                    setPatientFormReadOnly(false); // Buka kunci form
+                });
+        }, 500);
+    });
+
+    // Logika Poli -> Dokter (Tidak berubah)
     poliSelect.addEventListener('change', function() {
         const poliId = this.value;
         doctorSelect.innerHTML = '<option value="">Memuat dokter...</option>';
@@ -237,6 +430,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    // Konfirmasi Pendaftaran (Tidak berubah)
     if (antreanForm) {
         antreanForm.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -251,16 +445,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 cancelButtonText: 'Periksa Lagi'
             }).then((result) => {
                 if (result.isConfirmed) {
+                    // Disable tombol submit untuk mencegah double-click
+                    antreanForm.querySelector('button[type="submit"]').disabled = true;
+                    antreanForm.querySelector('button[type="submit"]').textContent = 'Mendaftarkan...';
                     antreanForm.submit();
                 }
             });
         });
     }
 
+    // Konfirmasi Check-in (Tidak berubah)
     if (checkinForms) {
         checkinForms.forEach(form => {
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
+                const currentForm = this; // Simpan 'this' (form)
                 Swal.fire({
                     title: 'Konfirmasi Kehadiran',
                     text: "Anda akan melakukan check-in untuk pasien ini.",
@@ -272,7 +471,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     cancelButtonText: 'Batal'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        form.submit();
+                         // Disable tombol submit untuk mencegah double-click
+                        currentForm.querySelector('button[type="submit"]').disabled = true;
+                        currentForm.querySelector('button[type="submit"]').textContent = '...';
+                        currentForm.submit();
                     }
                 });
             });
@@ -281,4 +483,3 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 @endpush
-
