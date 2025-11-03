@@ -17,11 +17,11 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
-// === INI ADALAH IMPORT DARI BATTLE PLAN KITA ===
-// KITA HANYA MENG-IMPORT WIDGET STATISTIK DASAR
+// [MODIFIKASI] Impor 2 widget BARU kita
 use App\Filament\Widgets\DashboardStats;
-// === KITA HAPUS 'KepuasanPasienChart' DARI 'use' ===
-// (karena kita sepakat skip fitur kunjungan)
+use App\Filament\Widgets\LatestQueuesWidget; // Widget Tabel Baru
+use App\Filament\Widgets\LatestPharmacyQueuesWidget; // <-- TAMBAHKAN INI
+use App\Filament\Widgets\ServiceTimeStatsWidget; // <-- TAMBAHKAN INI
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -30,42 +30,34 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
-            ->path('admin') // Path sudah kembali ke /admin
+            ->path('admin') 
+            ->login(false) 
             
-            // === MODIFIKASI KUNCI ===
-            ->login(false) // Nonaktifkan login page Filament, kita pakai AuthController
-            
-            // === THEMING LOGO, WARNA, FONT (DARI REFERENSI) ===
             ->brandLogo(asset('assets/img/logo_login.png'))
             ->brandLogoHeight('3.5rem') 
             ->font('Poppins')
             ->colors([
-                'primary' => '#4F46E5', // Warna dari layout lama
-                'gray' => Color::Slate, // Ganti "slate-100" jadi Slate
+                'primary' => '#4F46E5', 
+                'gray' => Color::Slate, 
             ])
             
-            // === IKON SUDAH KEMBALI KE DEFAULT (HEROICONS) ===
-            // Tidak ada 'plugin' atau 'defaultIconPack'
-            
-            // === PENDAFTARAN HALAMAN & RESOURCE ===
-            // Ini akan otomatis menemukan semua Resource-mu
-            // (Patient, Doctor, Petugas, Obat, Article, DoctorSchedule)
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
                 Dashboard::class,
             ])
             
-            // === PENDAFTARAN WIDGET KUSTOM (FOKUS) ===
-            // Kita hanya mendaftarkan widget statistik dasar
+            // [MODIFIKASI] Mendaftarkan widget yang sudah bersih
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                DashboardStats::class,
-                // === 'KepuasanPasienChart' DIHAPUS DARI SINI ===
-                // (sesuai permintaanmu untuk skip fitur kunjungan)
+                ServiceTimeStatsWidget::class, // <-- TAMBAHKAN INI (Tampilkan di paling atas)
+                DashboardStats::class, // Widget statistik kita yang sudah bersih
+                LatestQueuesWidget::class, // Widget tabel baru (Fase 1)
+                LatestPharmacyQueuesWidget::class, // <-- TAMBAHKAN INI
+                
+                // 'KepuasanPasienChart' sudah resmi dihapus
             ])
 
-            // === MIDDLEWARE (DARI FILE-MU, INI PENTING) ===
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -82,4 +74,3 @@ class AdminPanelProvider extends PanelProvider
             ]);
     }
 }
-

@@ -22,3 +22,7 @@ yarn-error.log
 /.zed
 /draft.yaml
 /.blueprint
+
+**/caddy
+frankenphp
+frankenphp-worker.php
