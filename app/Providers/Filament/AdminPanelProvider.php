@@ -22,6 +22,7 @@ use App\Filament\Widgets\DashboardStats;
 use App\Filament\Widgets\LatestQueuesWidget; // Widget Tabel Baru
 use App\Filament\Widgets\LatestPharmacyQueuesWidget; // <-- TAMBAHKAN INI
 use App\Filament\Widgets\ServiceTimeStatsWidget; // <-- TAMBAHKAN INI
+use App\Filament\Widgets\ClinicVisitsChart;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -52,6 +53,7 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 ServiceTimeStatsWidget::class, // <-- TAMBAHKAN INI (Tampilkan di paling atas)
                 DashboardStats::class, // Widget statistik kita yang sudah bersih
+                ClinicVisitsChart::class,
                 LatestQueuesWidget::class, // Widget tabel baru (Fase 1)
                 LatestPharmacyQueuesWidget::class, // <-- TAMBAHKAN INI
                 
