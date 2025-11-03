@@ -1,16 +1,58 @@
-/* === AWAL MODIFIKASI === */
 /*
- * SEMUA baris @import kita HAPUS dari sini
- * karena sudah di-handle langsung oleh vite.config.js
- * untuk menghindari error path di Windows.
+ * 1. IMPOR DASAR TAILWIND
+ * Ini akan otomatis mem-build style 3-role DAN style Filament
+ * (karena 'preset' di tailwind.config.js).
 */
-/* === AKHIR MODIFIKASI === */
-
-
-/* Standar Tailwind Directives (Milik Anda) */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Style kustom 3 role-mu bisa ditambahkan di bawah ini jika ada */
+/*
+ * 2. "SUNTIKAN" TEMA KUSTOM FILAMENT
+ * Ini adalah kode dari 'filament-theme.css' yang kita pindahkan ke sini.
+ * Kode ini HANYA akan menargetkan class Filament (seperti .fi-sidebar)
+ * sehingga TIDAK AKAN merusak Landing Page-mu.
+*/
 
+/* --- Gradasi Sidebar & Teks Putih --- */
+.fi-sidebar {
+    /* Gradasi Sidebar (diambil dari referensi layout-mu) */
+    background: linear-gradient(to bottom, #4F46E5, #0F172A) !important;
+}
+
+/* Teks menu sidebar */
+.fi-sidebar-item-label, 
+.fi-sidebar-item-icon {
+    color: #ffffff !important;
+}
+
+/* Teks grup menu (Master Data, dll) */
+.fi-sidebar-group-label {
+    /* Warna abu-abu terang (slate-300) */
+    color: #cbd5e1 !important; 
+}
+
+/* --- Warna hover/aktif di Sidebar --- */
+.fi-sidebar-item-active .fi-sidebar-item-label,
+.fi-sidebar-item-active .fi-sidebar-item-icon {
+    /* Teks tetap putih saat aktif */
+    color: #ffffff !important; 
+}
+
+.fi-sidebar-item-active {
+    /* Efek hover/aktif putih transparan */
+    background-color: rgba(255, 255, 255, 0.1) !important; 
+}
+
+/* --- Logo di Sidebar --- */
+.fi-logo {
+    /* Paksa tinggi logo sesuai settingan provider */
+    height: 5rem !important;
+}
+
+/* --- Teks User Menu (Logout) --- */
+/* (Opsional, jika teksnya masih hitam) */
+.fi-user-menu-button .fi-user-menu-item-label {
+    /* Warna teks di dropdown user */
+    color: #ffffff !important;
+}

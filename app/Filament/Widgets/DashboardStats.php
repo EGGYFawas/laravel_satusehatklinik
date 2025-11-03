@@ -11,7 +11,6 @@ use App\Models\Doctor;
 
 class DashboardStats extends BaseWidget
 {
-    // [OPTIMASI PILAR 2] LAZY LOADING
     protected static bool $isLazy = true;
     protected static ?int $sort = 2; // Di bawah ServiceTimeStats
 
@@ -24,23 +23,28 @@ class DashboardStats extends BaseWidget
         $totalPetugas = User::role('petugas loket')->count(); 
         $kunjunganHariIni = ClinicQueue::whereDate('registration_time', today())->count();
 
+        // [MODIFIKASI] Kodemu sudah bagus dan berwarna-warni!
+        // Kita hanya pastikan warnanya konsisten dan formal.
         return [
             Stat::make('Total Pasien', $totalPasien)
                 ->description('Semua pasien terdaftar')
                 ->descriptionIcon('heroicon-o-users')
-                ->color('info'),
+                ->color('info'), // Biru (Info)
+
             Stat::make('Total Dokter', $totalDokter)
                 ->description('Dokter aktif')
                 ->descriptionIcon('heroicon-o-user-group') 
-                ->color('success'),
+                ->color('success'), // Hijau (Success)
+
             Stat::make('Total Petugas', $totalPetugas)
                 ->description('Petugas loket terdaftar')
                 ->descriptionIcon('heroicon-o-shield-check')
-                ->color('warning'),
+                ->color('warning'), // Kuning (Warning)
+
             Stat::make('Kunjungan Hari Ini', $kunjunganHariIni)
                 ->description('Antrean klinik hari ini')
                 ->descriptionIcon('heroicon-o-queue-list') 
-                ->color('primary'),
+                ->color('primary'), // Biru Primary (sesuai tema)
         ];
     }
 }
