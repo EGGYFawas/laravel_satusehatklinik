@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\PermissionRegistrar;
+use Spatie\Permission\Models\Role; // <-- PASTIKAN ANDA IMPORT INI
 
 class RoleSeeder extends Seeder
 {
@@ -14,13 +14,18 @@ class RoleSeeder extends Seeder
     public function run(): void
     {
         // Reset cached roles and permissions
-        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Create roles
-        Role::firstOrCreate(['name' => 'admin']);
-        Role::firstOrCreate(['name' => 'dokter']);
-        Role::firstOrCreate(['name' => 'petugas loket apotek']);
-        Role::firstOrCreate(['name' => 'pasien']);
+        // 1. Buat role Admin
+        Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
+        
+        // 2. Buat role Dokter
+        Role::firstOrCreate(['name' => 'dokter', 'guard_name' => 'web']);
+
+        // 3. Buat role Pasien
+        Role::firstOrCreate(['name' => 'pasien', 'guard_name' => 'web']);
+
+        // 4. Buat role Petugas Loket (INI YANG HILANG!)
+        Role::firstOrCreate(['name' => 'petugas loket', 'guard_name' => 'web']);
     }
 }
-

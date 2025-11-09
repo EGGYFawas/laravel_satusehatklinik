@@ -17,11 +17,12 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
-// [MODIFIKASI] Impor 2 widget BARU kita
+// Impor Widget
 use App\Filament\Widgets\DashboardStats;
-use App\Filament\Widgets\LatestQueuesWidget; // Widget Tabel Baru
-use App\Filament\Widgets\LatestPharmacyQueuesWidget; // <-- TAMBAHKAN INI
-use App\Filament\Widgets\ServiceTimeStatsWidget; // <-- TAMBAHKAN INI
+use App\Filament\Widgets\LatestQueuesWidget; 
+use App\Filament\Widgets\LatestPharmacyQueuesWidget;
+use App\Filament\Widgets\ServiceTimeStatsWidget;
+use App\Filament\Widgets\ClinicVisitsChart;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -33,13 +34,30 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin') 
             ->login(false) 
             
+            // === MODIFIKASI BRANDING & TEMA ===
             ->brandLogo(asset('assets/img/logo_login.png'))
-            ->brandLogoHeight('3.5rem') 
+            ->brandLogoHeight('5rem') // Logo lebih besar
             ->font('Poppins')
             ->colors([
-                'primary' => '#4F46E5', 
-                'gray' => Color::Slate, 
+                'primary' => '#4F46E5', // Warna primer dari referensi
+                'gray' => Color::Slate, // Warna gray yang lebih formal
             ])
+            // === AKHIR MODIFIKASI BRANDING ===
+
+            // === [FIXED] FITUR BARU: SIDEBAR BUKA-TUTUP ===
+            ->sidebarCollapsibleOnDesktop(true) 
+            ->sidebarWidth('18rem') // Lebar sidebar (opsional)
+            // === AKHIR PERBAIKAN ===
+
+            // === [PERBAIKAN ERROR] FITUR BARU: TOMBOL LOGOUT ===
+            ->profile(isSimple: false) // Menampilkan dropdown user lengkap
+            
+            // === [DIHAPUS] SEMUA BLOK userMenuItems DIHAPUS ===
+            
+            // === [PENGHAPUSAN STRATEGI C] ===
+            // HAPUS baris ->viteTheme(...) dari sini
+            // ->viteTheme('resources/css/filament-theme.css') 
+            // === AKHIR PENGHAPUSAN ===
             
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
@@ -50,12 +68,11 @@ class AdminPanelProvider extends PanelProvider
             // [MODIFIKASI] Mendaftarkan widget yang sudah bersih
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                ServiceTimeStatsWidget::class, // <-- TAMBAHKAN INI (Tampilkan di paling atas)
-                DashboardStats::class, // Widget statistik kita yang sudah bersih
-                LatestQueuesWidget::class, // Widget tabel baru (Fase 1)
-                LatestPharmacyQueuesWidget::class, // <-- TAMBAHKAN INI
-                
-                // 'KepuasanPasienChart' sudah resmi dihapus
+                ServiceTimeStatsWidget::class, 
+                DashboardStats::class, 
+                ClinicVisitsChart::class,
+                LatestQueuesWidget::class, 
+                LatestPharmacyQueuesWidget::class,
             ])
 
             ->middleware([

@@ -7,10 +7,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DashboardRedirectController;
 
 // Import untuk Controller Role Spesifik dengan Alias
-// === AWAL PENGHAPUSAN ===
-// Menghapus AdminDashboardController karena sudah ditangani Filament
-// use App\Http\Controllers\Admin\DashboardController as AdminDashboardController; 
-// === AKHIR PENGHAPUSAN ===
+// use App\Http\Controllers\Admin\DashboardController as AdminDashboardController; // Dihapus karena Filament
 use App\Http\Controllers\Pasien\DashboardController as PasienDashboardController;
 use App\Http\Controllers\Dokter\DashboardController as DokterDashboardController;
 use App\Http\Controllers\Pasien\CheckInController;
@@ -19,10 +16,8 @@ use App\Http\Controllers\PetugasLoket\AntreanOfflineController;
 use App\Http\Controllers\Pasien\ProfileController as PasienProfileController;
 use App\Http\Controllers\Pasien\HistoryController as PasienHistoryController;
 use App\Http\Controllers\Dokter\PatientHistoryController as DokterPatientHistoryController;
-// [PENAMBAHAN BARU] Import Schedule Controllers
 use App\Http\Controllers\Pasien\ScheduleController as PasienScheduleController;
 use App\Http\Controllers\Dokter\ScheduleController as DokterScheduleController;
-
 use App\Http\Controllers\Pasien\ArticleController as PasienArticleController;
 
 /*
@@ -31,10 +26,9 @@ use App\Http\Controllers\Pasien\ArticleController as PasienArticleController;
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', function () {
-    return view('landing');
-})->name('landing');
+use App\Http\Controllers\LandingPageController; // <--- TAMBAHKAN INI di bagian atas
 
+Route::get('/', [LandingPageController::class, 'index'])->name('landing');
 
 // == GRUP UNTUK PENGGUNA YANG BELUM LOGIN (GUEST) ==
 Route::middleware('guest')->group(function () {
@@ -42,8 +36,6 @@ Route::middleware('guest')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
     Route::get('register', [AuthController::class, 'showRegisterForm'])->name('register');
     Route::post('register', [AuthController::class, 'register']);
-
-    // [MODIFIKASI] Rute baru untuk cek NIK pasien via AJAX (Publik)
     Route::get('/check-patient-nik-public/{nik}', [AuthController::class, 'checkPatientPublic'])->name('check-patient-nik-public');
 });
 
@@ -65,34 +57,25 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/profil/edit', [PasienProfileController::class, 'edit'])->name('profil.edit');
         Route::get('/riwayat', [PasienHistoryController::class, 'index'])->name('riwayat.index');
         Route::get('/riwayat/{patient}', [PasienHistoryController::class, 'show'])->name('riwayat.show');
-
-        // [PENAMBAHAN BARU] Route untuk Jadwal Dokter (Pasien)
         Route::get('/jadwal-dokter', [PasienScheduleController::class, 'index'])->name('jadwal.index');
-        Route::get('/artikel', [PasienArticleController::class, 'index'])->name('artikel.index'); // Daftar artikel (dengan search)
-        Route::get('/artikel/{article:slug}', [PasienArticleController::class, 'show'])->name('artikel.show'); // Detail artikel (menggunakan slug)
-
+        Route::get('/artikel', [PasienArticleController::class, 'index'])->name('artikel.index');
+        Route::get('/artikel/{article:slug}', [PasienArticleController::class, 'show'])->name('artikel.show');
     });
 
     // --- GRUP ROUTE UNTUK DOKTER ---
     Route::middleware(['role:dokter'])->prefix('dokter')->name('dokter.')->group(function () {
         Route::get('/dashboard', [DokterDashboardController::class, 'index'])->name('dashboard');
         Route::post('/antrean/{antrean}/panggil', [DokterDashboardController::class, 'panggilPasien'])->name('antrean.panggil');
-        Route::post('/antrean/{antrean}/simpan-pemeriksaan', [DokterDashboardController::class, 'simpanPemeriksaan'])->name('antrean.simpanPamemeriksaan'); // [CATATAN] Sepertinya ada typo disini, mungkin 'simpanPemeriksaan' ? Saya biarkan sesuai aslinya.
+        
+        // [MODIFIKASI UTAMA] Memperbaiki typo 'simpanPamemeriksaan'
+        Route::post('/antrean/{antrean}/simpan-pemeriksaan', [DokterDashboardController::class, 'simpanPemeriksaan'])->name('antrean.simpanPemeriksaan');
+        
         Route::get('/riwayat-pasien', [DokterPatientHistoryController::class, 'index'])->name('riwayat-pasien.index');
         Route::get('/riwayat-pasien/{patient}', [DokterPatientHistoryController::class, 'show'])->name('riwayat-pasien.show');
-
-        // [PENAMBAHAN BARU] Route untuk Jadwal Saya (Dokter)
         Route::get('/jadwal-saya', [DokterScheduleController::class, 'index'])->name('jadwal.index');
-        // Nanti bisa ditambahkan route POST/PUT untuk update jadwal jika diperlukan
        });
 
-    // === AWAL PENGHAPUSAN ===
-    // --- GRUP ROUTE UNTUK ADMIN ---
-    // GRUP INI DIHAPUS KARENA FILAMENT SUDAH MENG-HANDLE-NYA SECARA OTOMATIS
-    // Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
-    //     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-    // });
-    // === AKHIR PENGHAPUSAN ===
+    // Grup Admin dihapus karena sudah ditangani oleh Filament
 
     // --- GRUP ROUTE UNTUK PETUGAS LOKET ---
     Route::middleware(['role:petugas loket'])->prefix('petugas-loket')->name('petugas-loket.')->group(function () {
@@ -102,9 +85,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/antrean-offline', [AntreanOfflineController::class, 'store'])->name('antrean-offline.store');
         Route::patch('/antrean-offline/{antrean}/check-in', [AntreanOfflineController::class, 'checkIn'])->name('antrean-offline.checkin');
         Route::get('/doctors-by-poli/{poli}', [AntreanOfflineController::class, 'getDoctorsByPoli'])->name('doctors.by.poli');
-
-        // [MODIFIKASI] Rute baru untuk cek NIK pasien via AJAX
         Route::get('/check-patient-nik/{nik}', [AntreanOfflineController::class, 'checkPatientByNIK'])->name('check-patient-nik');
     });
 
 });
+

@@ -1,492 +1,638 @@
-@extends('layouts.guest')
-
-@section('title', 'Klinik Sehat - Landing Page')
-
-@push('styles')
-<style>
-    /* Custom styles can be added here if needed */
-    .bg-brand-background {
-        background-color: #f8f9fa;
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Klinik Sehat - Layanan Kesehatan Terpercaya</title>
+    
+    <!-- Impor Font Poppins dari Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    
+    <!-- Script Tailwind untuk mengaktifkan kelas kustom (seperti font-['Poppins'] dan bg-[rgba(...)]) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Konfigurasi Tailwind untuk menambahkan font Poppins
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'poppins': ['Poppins', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Gaya tambahan untuk memastikan font diterapkan dengan benar -->
+    <style>
+    body {
+        font-family: 'Poppins', sans-serif;
     }
-    .schedule-panel.hidden {
-        display: none;
-    }
-    .day-button.active {
-        background-color: #334155; /* slate-700 */
-        color: white;
+
+    /* --- PERUBAHAN: EFEK FADE ANTAR SECTION MENJADI LEBIH HALUS --- */
+    #beranda::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        /* Mengatur ketinggian efek fade agar lebih panjang dan halus */
+        height: 50px; /* Nilai ini bisa Anda sesuaikan (misal: 120px, 180px) */
+        /* Menggunakan rgba() untuk kontrol opacity pada warna putih di akhir gradient */
+        background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.95)); /* Mengurangi sedikit opacity putih */
+        pointer-events: none; /* Memastikan elemen ini tidak bisa di-klik */
+        z-index: 10; /* Memastikan di atas gambar hero */
     }
 </style>
-@endpush
+</head>
+<!-- Menambahkan kelas font-poppins untuk menerapkan font ke seluruh halaman -->
+<body class="bg-white text-gray-900 font-poppins">
+    
+    <!-- ========== NAVBAR ========== -->
+    <!-- 
+      Diperbarui: 
+      1. Menghapus 'bg-white'
+      2. Menambahkan 'bg-[rgba(226,219,219,0.7)]' untuk warna kustom Anda
+      3. Menambahkan 'backdrop-blur-md' untuk efek blur di belakang navbar
+    -->
+    <nav class="fixed top-0 left-0 right-0 bg-[rgba(226,219,219,0.7)] backdrop-blur-md shadow-sm z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <div class="flex items-center gap-3">
+                    <!-- Added logo image support with asset() helper -->
+                    <img src="{{ asset('assets/img/logo_login.png') }}" alt="Klinik Sehat Logo" class="h-20 w-auto"
+                         onerror="this.src='https://placehold.co/100x40/0284C7/FFFFFF?text=Logo'; this.onerror=null;">
+                </div>
 
-@section('content')
-<!-- Header -->
-<header class="bg-white py-4 sticky top-0 z-[1000] shadow-md transition-all duration-300 ease-in-out">
-    <!-- ... existing header code ... -->
-    <div class="max-w-7xl mx-auto px-6">
-        <nav class="flex justify-between items-center">
-            <a href="/" class="flex items-center gap-2 text-xl sm:text-2xl font-bold text-brand-primary no-underline">
-            {{-- SVG diganti dengan IMG --}}
-            <img src="{{ asset('assets/img/logo_login.png') }}" alt="Logo Klinik Sehat" class="w-7 h-7 sm:w-8 sm:h-8 object-contain">
-            Klinik Satu Sehat
-        </a>
-            <ul class="hidden lg:flex gap-10 list-none">
-                <li><a href="#beranda"
-                        class="text-text-grey font-medium no-underline relative transition-colors duration-300 ease-in-out hover:text-brand-primary after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-[-5px] after:left-1/2 after:bg-brand-primary after:transition-all after:duration-300 after:ease-in-out after:-translate-x-1/2 hover:after:w-full">Beranda</a>
-                </li>
-                <li><a href="#layanan"
-                        class="text-text-grey font-medium no-underline relative transition-colors duration-300 ease-in-out hover:text-brand-primary after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-[-5px] after:left-1/2 after:bg-brand-primary after:transition-all after:duration-300 after:ease-in-out after:-translate-x-1/2 hover:after:w-full">Layanan
-                        Kami</a></li>
-                <li><a href="#jadwal-dokter"
-                        class="text-text-grey font-medium no-underline relative transition-colors duration-300 ease-in-out hover:text-brand-primary after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-[-5px] after:left-1/2 after:bg-brand-primary after:transition-all after:duration-300 after:ease-in-out after:-translate-x-1/2 hover:after:w-full">Dokter</a>
-                </li>
-                <li><a href="#tentang"
-                        class="text-text-grey font-medium no-underline relative transition-colors duration-300 ease-in-out hover:text-brand-primary after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-[-5px] after:left-1/2 after:bg-brand-primary after:transition-all after:duration-300 after:ease-in-out after:-translate-x-1/2 hover:after:w-full">Tentang
-                        Kami</a></li>
-                <li><a href="#artikel"
-                        class="text-text-grey font-medium no-underline relative transition-colors duration-300 ease-in-out hover:text-brand-primary after:content-[''] after:absolute after:w-0 after:h-0.5 after:bottom-[-5px] after:left-1/2 after:bg-brand-primary after:transition-all after:duration-300 after:ease-in-out after:-translate-x-1/2 hover:after:w-full">Artikel
-                        Kesehatan</a></li>
-            </ul>
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex gap-8">
+                    <a href="#beranda" class="text-gray-600 hover:text-blue-600 transition">Beranda</a>
+                    <a href="#mengapa-kami" class="text-gray-600 hover:text-blue-600 transition">Mengapa Kami</a>
+                    <a href="#jadwal-dokter" class="text-gray-600 hover:text-blue-600 transition">Jadwal Dokter</a>
+                    <a href="#tentang-kami" class="text-gray-600 hover:text-blue-600 transition">Tentang Kami</a>
+                    <a href="#layanan" class="text-gray-600 hover:text-blue-600 transition">Layanan</a>
+                    <a href="#artikel" class="text-gray-600 hover:text-blue-600 transition">Artikel</a>
+                </div>
 
-            @auth
-            <div class="hidden lg:flex gap-4">
-                <a href="{{ route('dashboard') }}"
-                    class="inline-block text-center py-2.5 px-6 rounded-lg no-underline font-semibold transition-all duration-300 ease-in-out border border-transparent bg-brand-primary text-brand-text hover:opacity-90 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-none">Dashboard</a>
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit"
-                        class="inline-block text-center py-2.5 px-6 rounded-lg no-underline font-semibold transition-all duration-300 ease-in-out border bg-white text-brand-primary border-gray-300 hover:bg-gray-50 hover:border-brand-primary">Keluar</button>
-                </form>
+                <!-- Added Login and Register buttons with proper styling -->
+                <div class="hidden lg:flex gap-4">
+                  <a href="{{ route('login') }}"
+                     class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium">Masuk</a>
+                  <a href="{{ route('register') }}"
+                     class="border-2 border-blue-600 text-blue-600 px-6 py-2 rounded-lg hover:bg-blue-50 transition font-medium">Daftar</a>
+                </div>
+
+                <!-- Mobile Menu Toggle -->
+                <button id="mobile-menu-btn" class="md:hidden text-gray-600 hover:text-blue-600 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
             </div>
-            @else
-            <div class="hidden lg:flex gap-4">
-                <a href="{{ route('login') }}"
-                    class="inline-block text-center py-2.5 px-6 rounded-lg no-underline font-semibold transition-all duration-300 ease-in-out border border-transparent bg-brand-primary text-brand-text hover:opacity-90 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-none">Masuk</a>
-                <a href="{{ route('register') }}"
-                    class="inline-block text-center py-2.5 px-6 rounded-lg no-underline font-semibold transition-all duration-300 ease-in-out border bg-white text-brand-primary border-gray-300 hover:bg-gray-50 hover:border-brand-primary">Daftar</a>
-            </div>
-            @endauth
 
-            <div class="lg:hidden cursor-pointer z-[1010]" id="burger-menu">
-                <div class="w-6 h-0.5 bg-brand-primary m-1.5 transition-all duration-300 ease-in-out"></div>
-                <div class="w-6 h-0.5 bg-brand-primary m-1.5 transition-all duration-300 ease-in-out"></div>
-                <div class="w-6 h-0.5 bg-brand-primary m-1.5 transition-all duration-300 ease-in-out"></div>
-            </div>
-        </nav>
-    </div>
-</header>
-
-<!-- Mobile Navigation -->
-<!-- ... existing mobile nav code ... -->
-<div class="fixed top-0 h-screen w-[70%] bg-white shadow-lg z-[1005] transition-transform duration-400 ease-in-out flex flex-col items-center justify-center pt-20 -right-full"
-    id="mobile-nav">
-    <ul class="list-none w-full text-center">
-        <li class="my-5"><a href="#beranda" class="nav-link-mobile">Beranda</a></li>
-        <li class="my-5"><a href="#layanan" class="nav-link-mobile">Layanan Kami</a></li>
-        <li class="my-5"><a href="#jadwal-dokter" class="nav-link-mobile">Dokter</a></li>
-        <li class="my-5"><a href="#tentang" class="nav-link-mobile">Tentang Kami</a></li>
-        <li class="my-5"><a href="#artikel" class="nav-link-mobile">Artikel Kesehatan</a></li>
-    </ul>
-    <div class="mt-10 flex flex-col gap-4 w-4/5">
-        @auth
-        <a href="{{ route('dashboard') }}"
-            class="inline-block text-center py-2.5 px-6 rounded-lg no-underline font-semibold transition-all duration-300 ease-in-out border border-transparent bg-brand-primary text-brand-text">Dashboard</a>
-        <form method="POST" action="{{ route('logout') }}" class="w-full">
-            @csrf
-            <button type="submit"
-                class="w-full text-center py-2.5 px-6 rounded-lg no-underline font-semibold transition-all duration-300 ease-in-out border bg-white text-brand-primary border-gray-300">Keluar</button>
-        </form>
-        @else
-        <a href="{{ route('login') }}"
-            class="inline-block text-center py-2.5 px-6 rounded-lg no-underline font-semibold transition-all duration-300 ease-in-out border border-transparent bg-brand-primary text-brand-text">Masuk</a>
-        <a href="{{ route('register') }}"
-            class="inline-block text-center py-2.5 px-6 rounded-lg no-underline font-semibold transition-all duration-300 ease-in-out border bg-white text-brand-primary border-gray-300">Daftar</a>
-        @endauth
-    </div>
-</div>
-
-<main class="overflow-x-hidden bg-brand-background">
-    <!-- Hero Section -->
-    <!-- ... existing hero section code ... -->
-    <section id="beranda" class="relative min-h-[90vh] bg-cover bg-center flex items-center text-white"
-        style="background-image: url('https://images.unsplash.com/photo-1576091160550-2173dba999ef?q=80&w=2070&auto=format&fit=crop');">
-        <div class="absolute inset-0 bg-brand-primary/60"></div>
-        <div class="max-w-7xl mx-auto px-6 relative z-[1]">
-            <div class="max-w-xl text-center md:text-left">
-                <h1 class="text-4xl md:text-5xl lg:text-[56px] leading-tight font-bold mb-4">Kami Hadir untuk Anda.</h1>
-                <p class="text-base md:text-lg mb-8 max-w-md mx-auto md:mx-0">Kesehatan adalah fondasi utama untuk
-                    mencapai kebahagiaan dan kualitas hidup yang lebih baik. Dengan perawatan yang tepat sejak dini,
-                    Anda bisa menikmati hari-hari penuh energi dan produktivitas.</p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-                    <a href="{{ route('register') }}"
-                        class="inline-block text-center py-3 px-6 rounded-lg no-underline font-semibold transition-all duration-300 ease-in-out border-2 border-white bg-white text-brand-primary hover:bg-transparent hover:text-white hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-none text-lg">Buat
-                        Antrean Berobat</a>
-                    <a href="#panduan"
-                        class="inline-block text-center py-3 px-6 rounded-lg no-underline font-semibold transition-all duration-300 ease-in-out border-2 border-white bg-transparent text-white hover:bg-white hover:text-brand-primary hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-none text-lg">Panduan
-                        Penggunaan</a>
+            <!-- Mobile Menu -->
+            <div id="mobile-menu" class="md:hidden hidden border-t border-gray-200 py-4 space-y-2">
+                <a href="#beranda" class="block px-4 py-2 text-gray-600 hover:text-blue-600 transition">Beranda</a>
+                <a href="#mengapa-kami" class="block px-4 py-2 text-gray-600 hover:text-blue-600 transition">Mengapa Kami</a>
+                <a href="#jadwal-dokter" class="block px-4 py-2 text-gray-600 hover:text-blue-600 transition">Jadwal Dokter</a>
+                <a href="#tentang-kami" class="block px-4 py-2 text-gray-600 hover:text-blue-600 transition">Tentang Kami</a>
+                <a href="#layanan" class="block px-4 py-2 text-gray-600 hover:text-blue-600 transition">Layanan</a>
+                <a href="#artikel" class="block px-4 py-2 text-gray-600 hover:text-blue-600 transition">Artikel</a>
+                <!-- Added Login and Register buttons to mobile menu -->
+                <div class="flex gap-3 mt-4 px-4">
+                    <a href="{{ route('login') }}" class="flex-1 text-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium">
+                        Masuk
+                    </a>
+                    <a href="{{ route('register') }}" class="flex-1 text-center border-2 border-blue-600 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition font-medium">
+                        Daftar
+                    </a>
                 </div>
             </div>
         </div>
-    </section>
+    </nav>
 
-    <!-- Why Us Section -->
-    <!-- ... existing why us section code ... -->
-    <section id="layanan" class="py-16 md:py-20">
-        <div class="max-w-7xl mx-auto px-6">
-            <h2 class="text-center text-3xl md:text-4xl font-bold mb-4 text-text-dark">Mengapa Memilih Kami ?</h2>
-            <p class="text-center text-base md:text-lg text-text-grey max-w-3xl mx-auto mb-12">Kami merevolusi cara
-                Anda berobat, lupakan antrean panjang dan ketidakpastian. Dengan sistem kami, seluruh proses dari
-                pendaftaran hingga pengambilan obat kini ada dalam genggaman Anda, memberikan kenyamanan, kecepatan,
-                dan kendali penuh atas kesehatan Anda.</p>
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
-                <!-- Card 1 -->
-                <div
-                    class="p-8 rounded-2xl transition-all duration-300 ease-in-out flex flex-col text-left bg-white text-text-dark shadow-lg hover:-translate-y-2 hover:shadow-2xl border-l-4 border-brand-primary">
-                    <div class="text-5xl font-bold text-brand-primary mb-4">100%</div>
-                    <h3 class="text-xl font-semibold mb-3">Pendaftaran 100% Online & Real-time</h3>
-                    <p class="text-text-grey text-sm leading-relaxed">Daftar dari mana saja, kapan saja. Pantau nomor
-                        antrean Anda secara langsung dari ponsel, hilangkan waktu tunggu yang tidak perlu. Kami
-                        memastikan proses pendaftaran yang mudah, cepat, dan transparan.</p>
-                </div>
-                <!-- Card 2 -->
-                <div
-                    class="p-8 rounded-2xl transition-all duration-300 ease-in-out flex flex-col text-left bg-white text-text-dark shadow-lg hover:-translate-y-2 hover:shadow-2xl border-l-4 border-yellow-500">
-                    <div class="text-5xl font-bold text-yellow-500 mb-4">W</div>
-                    <h3 class="text-xl font-semibold mb-3">Waktu Fleksibel & Terkendali Sepenuhnya</h3>
-                    <p class="text-text-grey text-sm leading-relaxed">Pilih jadwal dokter dan waktu kunjungan yang
-                        paling sesuai dengan kesibukan Anda. Sistem kami memberikan notifikasi pengingat dan estimasi
-                        waktu panggilan, sehingga Anda bisa datang tepat waktu.</p>
-                </div>
-                <!-- Card 3 -->
-                <div
-                    class="p-8 rounded-2xl transition-all duration-300 ease-in-out flex flex-col text-left bg-white text-text-dark shadow-lg hover:-translate-y-2 hover:shadow-2xl border-l-4 border-green-500">
-                    <div class="text-5xl font-bold text-green-500 mb-4">RMD</div>
-                    <h3 class="text-xl font-semibold mb-3">Rekam Medis Digital & Terintegrasi</h3>
-                    <p class="text-text-grey text-sm leading-relaxed">Akses riwayat kesehatan, diagnosis, dan resep
-                        obat Anda aman dan terpusat. Dokter dapat melihat riwayat medis Anda dengan cepat untuk
-                        memberikan diagnosis yang lebih akurat dan perawatan yang lebih efektif.</p>
-                </div>
-            </div>
-        </div>
-    </section>
+    <!-- ========== HERO SECTION ========== -->
+     <!-- TAMBAHKAN 'relative' agar ::after bisa diposisikan -->
+     <section id="beranda" class="relative pt-32 pb-16 md:pt-40 md:pb-24 bg-cover bg-center" style="background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('{{ asset('assets/img/hero-doctor.jpg') }}')">
+         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+             <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                 <!-- Text Content -->
+                 <div class="space-y-6">
+                     <!-- PERUBAHAN: Mengganti 'text-gray-900' menjadi 'text-white' agar terbaca di atas gambar -->
+                     <h1 class="text-4xl md:text-5xl font-bold text-white leading-tight">
+                         Kesehatan Anda Adalah Prioritas Kami
+                     </h1>
+                     <!-- PERUBAHAN: Mengganti 'text-gray-600' menjadi 'text-gray-200' -->
+                     <p class="text-lg text-gray-200 leading-relaxed">
+                         Klinik Sehat menyediakan layanan kesehatan terpercaya dengan dokter berpengalaman dan fasilitas modern untuk menjaga kesehatan Anda dan keluarga.
+                     </p>
+                     <div class="flex flex-col sm:flex-row gap-4 pt-4">
+                         
+                         <!-- ========== PERUBAHAN DIMULAI DI SINI ========== -->
+                         
+                         <!-- Logika Tombol Buat Antrian -->
+                         @guest
+                             <!-- Jika pengguna BELUM LOGIN, arahkan ke halaman login -->
+                             <a href="{{ route('login') }}" class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition font-medium">
+                                 Buat Antrian Berobat
+                             </a>
+                         @else
+                             <!-- Jika pengguna SUDAH LOGIN, arahkan ke dashboard/halaman antrian -->
+                             <!-- Ganti 'dashboard' dengan route yang sesuai, misal: 'antrian.create' -->
+                             <a href="{{ route('dashboard') }}" class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition font-medium">
+                                 Buat Antrian Berobat
+                             </a>
+                         @endguest
+                         
+                         <!-- Tombol Panduan diubah dari <button> ke <a> agar bisa di-scroll -->
+                         <a href="#panduan" class="border-2 border-white text-white px-8 py-3 rounded-lg hover:bg-white/10 transition font-medium">
+                             Panduan Penggunaan
+                         </a>
+                         
+                         <!-- ========== PERUBAHAN SELESAI ========== -->
 
-    <!-- Doctor Schedule Section -->
-    <section id="jadwal-dokter" class="py-16 md:py-20 relative bg-slate-100 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3');">
-        <div class="absolute inset-0 bg-slate-100/80 backdrop-blur-sm"></div>
-        <div class="max-w-7xl mx-auto px-6 relative z-10">
-            <h2 class="text-center text-3xl md:text-4xl font-bold mb-4 text-slate-800">Jadwal Dokter Klinik Sehat</h2>
-            <p class="text-center text-slate-600 mb-12 max-w-2xl mx-auto">Temukan jadwal dokter kami dan rencanakan kunjungan Anda. Klik pada hari untuk melihat dokter yang tersedia.</p>
+                     </div>
+                 </div>
+             </div>
+         </div>
+     </section>
 
-            <div class="flex justify-center mb-12">
-                <div id="day-buttons" class="flex flex-wrap justify-center items-center gap-2 md:gap-4 bg-slate-200/50 p-2 rounded-lg">
-                    <button data-day="senin" class="day-button px-4 py-2 text-sm md:text-base font-semibold rounded-md transition-colors duration-300">Senin</button>
-                    <button data-day="selasa" class="day-button px-4 py-2 text-sm md:text-base font-semibold rounded-md transition-colors duration-300">Selasa</button>
-                    <button data-day="rabu" class="day-button px-4 py-2 text-sm md:text-base font-semibold rounded-md transition-colors duration-300">Rabu</button>
-                    <button data-day="kamis" class="day-button px-4 py-2 text-sm md:text-base font-semibold rounded-md transition-colors duration-300">Kamis</button>
-                    <button data-day="jumat" class="day-button px-4 py-2 text-sm md:text-base font-semibold rounded-md transition-colors duration-300">Jumat</button>
-                    <button data-day="sabtu" class="day-button px-4 py-2 text-sm md:text-base font-semibold rounded-md transition-colors duration-300">Sabtu</button>
-                </div>
-            </div>
-
-            <div id="schedule-panels">
-                <!-- Senin -->
-                <div id="senin" class="schedule-panel grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <div class="bg-slate-800 text-white p-5 rounded-xl shadow-lg flex items-center gap-4 transition-transform duration-300 hover:transform hover:-translate-y-1">
-                        <div class="flex-shrink-0 w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div>
-                        <div>
-                            <h3 class="font-bold text-lg">Poli Umum</h3>
-                            <p class="text-sm text-slate-300">dr. Anisa Pujianti</p>
-                            <div class="flex items-center text-sm mt-2 text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>08:00 - 12:00 WIB</div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Selasa -->
-                <div id="selasa" class="schedule-panel grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                     <div class="bg-slate-800 text-white p-5 rounded-xl shadow-lg flex items-center gap-4 transition-transform duration-300 hover:transform hover:-translate-y-1">
-                        <div class="flex-shrink-0 w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div>
-                        <div>
-                            <h3 class="font-bold text-lg">Poli Umum</h3>
-                            <p class="text-sm text-slate-300">dr. Anisa Pujianti</p>
-                            <div class="flex items-center text-sm mt-2 text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>08:00 - 12:00 WIB</div>
-                        </div>
-                    </div>
-                     <div class="bg-slate-800 text-white p-5 rounded-xl shadow-lg flex items-center gap-4 transition-transform duration-300 hover:transform hover:-translate-y-1">
-                        <div class="flex-shrink-0 w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div>
-                        <div>
-                            <h3 class="font-bold text-lg">Poli Ibu dan Anak</h3>
-                            <p class="text-sm text-slate-300">dr. Budi Santoso</p>
-                            <div class="flex items-center text-sm mt-2 text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>12:00 - 15:00 WIB</div>
-                        </div>
-                    </div>
-                     <div class="bg-slate-800 text-white p-5 rounded-xl shadow-lg flex items-center gap-4 transition-transform duration-300 hover:transform hover:-translate-y-1">
-                        <div class="flex-shrink-0 w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div>
-                        <div>
-                            <h3 class="font-bold text-lg">Poli Gigi</h3>
-                            <p class="text-sm text-slate-300">dr. Amelia Lestari</p>
-                            <div class="flex items-center text-sm mt-2 text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>13:00 - 17:00 WIB</div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Rabu -->
-                <div id="rabu" class="schedule-panel grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                     <div class="bg-slate-800 text-white p-5 rounded-xl shadow-lg flex items-center gap-4 transition-transform duration-300 hover:transform hover:-translate-y-1">
-                        <div class="flex-shrink-0 w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div>
-                        <div>
-                            <h3 class="font-bold text-lg">Poli Gigi</h3>
-                            <p class="text-sm text-slate-300">dr. Amelia Lestari</p>
-                            <div class="flex items-center text-sm mt-2 text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>09:00 - 13:00 WIB</div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Kamis -->
-                <div id="kamis" class="schedule-panel grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <div class="bg-slate-800 text-white p-5 rounded-xl shadow-lg flex items-center gap-4 transition-transform duration-300 hover:transform hover:-translate-y-1">
-                        <div class="flex-shrink-0 w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div>
-                        <div>
-                            <h3 class="font-bold text-lg">Poli Ibu dan Anak</h3>
-                            <p class="text-sm text-slate-300">dr. Budi Santoso</p>
-                            <div class="flex items-center text-sm mt-2 text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>14:00 - 18:00 WIB</div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Jumat -->
-                <div id="jumat" class="schedule-panel grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    <div class="bg-slate-800 text-white p-5 rounded-xl shadow-lg flex items-center gap-4 transition-transform duration-300 hover:transform hover:-translate-y-1">
-                        <div class="flex-shrink-0 w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div>
-                        <div>
-                            <h3 class="font-bold text-lg">Poli Umum</h3>
-                            <p class="text-sm text-slate-300">dr. Anisa Pujianti</p>
-                            <div class="flex items-center text-sm mt-2 text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>08:00 - 12:00 WIB</div>
-                        </div>
-                    </div>
-                     <div class="bg-slate-800 text-white p-5 rounded-xl shadow-lg flex items-center gap-4 transition-transform duration-300 hover:transform hover:-translate-y-1">
-                        <div class="flex-shrink-0 w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div>
-                        <div>
-                            <h3 class="font-bold text-lg">Poli Gigi</h3>
-                            <p class="text-sm text-slate-300">dr. Amelia Lestari</p>
-                            <div class="flex items-center text-sm mt-2 text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>13:00 - 17:00 WIB</div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Sabtu -->
-                <div id="sabtu" class="schedule-panel">
-                    <div class="col-span-full text-center bg-white/80 p-8 rounded-lg shadow-md">
-                        <h3 class="text-xl font-semibold text-slate-700">Tidak Ada Jadwal Dokter</h3>
-                        <p class="text-slate-500 mt-2">Layanan klinik pada hari Sabtu hanya untuk pengambilan obat atau administrasi.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- About Section -->
-    <!-- ... existing about section code ... -->
-    <section id="tentang" class="py-16 md:py-20 bg-brand-background">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="flex flex-col lg:flex-row items-center gap-10 lg:gap-16">
-                <div class="flex-1">
-                    <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2070&auto=format&fit=crop"
-                        alt="Tentang Klinik Sehat" class="w-full rounded-2xl shadow-xl">
-                </div>
-                <div class="flex-1">
-                    <h2 class="text-center lg:text-left text-3xl md:text-4xl font-bold mb-6 text-text-dark">Tentang
-                        Kami</h2>
-                    <p class="text-text-grey leading-loose text-justify">Klinik Sehat lahir dari sebuah gagasan untuk
-                        memodernisasi dan menyederhanakan akses layanan kesehatan primer di Indonesia. Kami percaya
-                        bahwa setiap orang berhak mendapatkan perawatan kesehatan berkualitas tanpa harus mengorbankan
-                        waktu dan kenyamanan. Visi kami adalah menjadi pionir dalam digitalisasi layanan klinik, di
-                        mana setiap pasien dapat mengelola kesehatannya dengan kendali penuh di ujung jari mereka.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Guide Section -->
-    <!-- ... existing guide section code ... -->
-    <section id="panduan" class="py-16 md:py-20 bg-white">
-        <div class="max-w-7xl mx-auto px-6">
-            <h2 class="text-center text-3xl md:text-4xl font-bold mb-12 text-text-dark">Panduan Penggunaan Website</h2>
-            <div class="text-center">
-                   <h3 class="text-2xl font-semibold mb-4 text-text-dark">Cara Menggunakan Website Klinik Sehat</h3>
-                   <p class="text-text-grey max-w-2xl mx-auto">Kami telah menyusun panduan langkah-demi-langkah yang mudah diikuti untuk memastikan Anda dapat memanfaatkan semua fitur website kami secara maksimal. Mulai dari pendaftaran pasien baru, membuat janji temu, hingga mengakses rekam medis digital Anda.</p>
-                   <a href="#" class="mt-8 inline-block text-center py-3 px-8 rounded-lg no-underline font-semibold transition-all duration-300 ease-in-out border-2 border-brand-primary bg-brand-primary text-white hover:bg-transparent hover:text-brand-primary">Lihat Panduan Lengkap</a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Articles Section -->
-    <!-- ... existing articles section code ... -->
-    <section id="artikel" class="py-16 md:py-20 bg-brand-background">
-        <div class="max-w-7xl mx-auto px-6">
-            <h2 class="text-center text-3xl md:text-4xl font-bold mb-12 text-text-dark">Artikel Kesehatan</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Article Card 1 -->
-                <div class="bg-white rounded-lg shadow-lg overflow-hidden group">
-                    <img src="https://plus.unsplash.com/premium_photo-1661769750558-4e1b5c47a505?q=80&w=2070&auto=format&fit=crop" alt="Pentingnya Pemeriksaan Rutin" class="w-full h-48 object-cover">
-                    <div class="p-6">
-                        <h3 class="font-bold text-lg mb-2 text-text-dark">Pentingnya Pemeriksaan Rutin</h3>
-                        <p class="text-sm text-text-grey mb-4">Penjelasan mengenai manfaat melakukan pemeriksaan kesehatan secara berkala untuk deteksi dini penyakit.</p>
-                        <a href="#" class="font-semibold text-brand-primary hover:underline text-sm">Baca Selengkapnya</a>
-                    </div>
-                </div>
-                <!-- Article Card 2 -->
-                <div class="bg-white rounded-lg shadow-lg overflow-hidden group">
-                    <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=2120&auto=format&fit=crop" alt="Tips Menjaga Kesehatan Fisik dan Mental" class="w-full h-48 object-cover">
-                    <div class="p-6">
-                        <h3 class="font-bold text-lg mb-2 text-text-dark">Tips Menjaga Kesehatan Fisik dan Mental</h3>
-                        <p class="text-sm text-text-grey mb-4">Panduan untuk menjaga keseimbangan kesehatan fisik dan mental dalam kehidupan sehari-hari.</p>
-                        <a href="#" class="font-semibold text-brand-primary hover:underline text-sm">Baca Selengkapnya</a>
-                    </div>
-                </div>
-                <!-- Article Card 3 -->
-                <div class="bg-white rounded-lg shadow-lg overflow-hidden group">
-                    <img src="https://images.unsplash.com/photo-1540420773420-2850a26b0f51?q=80&w=2070&auto=format&fit=crop" alt="Makanan Sehat" class="w-full h-48 object-cover">
-                    <div class="p-6">
-                        <h3 class="font-bold text-lg mb-2 text-text-dark">Makanan Sehat</h3>
-                        <p class="text-sm text-text-grey mb-4">Pentingnya makanan dan diet yang seimbang untuk menjaga fungsi tubuh dan mendukung kesehatan mental.</p>
-                        <a href="#" class="font-semibold text-brand-primary hover:underline text-sm">Baca Selengkapnya</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-</main>
-
-<!-- Footer -->
-<!-- ... existing footer code ... -->
-<footer class="bg-brand-primary text-brand-text pt-16 pb-8">
-    <div class="max-w-7xl mx-auto px-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 text-center md:text-left">
-            <div>
-                <h4 class="text-lg font-semibold mb-4">Lokasi</h4>
-                <p class="text-sm opacity-80 leading-relaxed">Jl. Ir. H. Soekarno No.345, <br>Tangerang, Indonesia.
+    <!-- ========== MENGAPA KAMI ========== -->
+    <!-- PERUBAHAN: Mengganti bg-white dengan gambar, padding, dan overlay putih transparan -->
+    <section id="mengapa-kami" class="pt-32 pb-16 md:pt-40 md:pb-24 bg-cover bg-center" style="background-image: linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), url('{{ asset('assets/img/why-us1.jpg') }}')">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <!-- Teks (text-gray-900) ini akan terlihat jelas di atas overlay putih -->
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Mengapa Memilih Klinik Sehat?</h2>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                    Kami merevolusi cara Anda berobat. Lupakan antrean panjang dan ketidakpastian. Dengan sistem kami, 
+seluruh proses dari pendaftaran hingga pengambilan obat kini ada dalam genggaman Anda, 
+memberikan kenyamanan, kecepatan, dan kendali penuh atas kesehatan Anda.
                 </p>
             </div>
-            <div>
-                <h4 class="text-lg font-semibold mb-4">Navigasi</h4>
-                <ul class="list-none space-y-2 text-sm">
-                    <li><a href="#beranda" class="opacity-80 hover:opacity-100 transition-opacity">Beranda</a></li>
-                    <li><a href="#layanan" class="opacity-80 hover:opacity-100 transition-opacity">Layanan Kami</a></li>
-                    
-                    <li><a href="#tentang" class="opacity-80 hover:opacity-100 transition-opacity">Tentang</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4 class="text-lg font-semibold mb-4">Hubungi Kami</h4>
-                <ul class="list-none space-y-2 text-sm opacity-80">
-                    <li>kliniksehat@email.com</li>
-                    <li>(021) 123-4567</li>
-                </ul>
-            </div>
-            <div>
-                <h4 class="text-lg font-semibold mb-4">Ikuti Kami</h4>
-                <div class="flex justify-center md:justify-start space-x-4">
-                    <a href="#" class="opacity-80 hover:opacity-100 transition-opacity">
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path fill-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clip-rule="evenodd" />
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Feature 1 -->
+                <div class="bg-blue-50 p-8 rounded-lg hover:shadow-lg transition">
+                    <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mb-4 mx-auto">
+                        <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"></path>
                         </svg>
-                    </a>
-                    <a href="#" class="opacity-80 hover:opacity-100 transition-opacity">
-                         <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path fill-rule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.024.06 1.378.06 3.808s-.012 2.784-.06 3.808c-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.024.048-1.378.06-3.808.06s-2.784-.012-3.808-.06c-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.048-1.024-.06-1.378-.06-3.808s.012-2.784.06-3.808c.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 016.08 2.525c.636-.247 1.363-.416 2.427.465C9.53 2.013 9.884 2 12.315 2zM12 7a5 5 0 100 10 5 5 0 000-10zm0-2a7 7 0 110 14 7 7 0 010-14zm6.406-2.186a1.2 1.2 0 100 2.4 1.2 1.2 0 000-2.4z" clip-rule="evenodd" />
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3 text-center">Pendaftaran 100% Online & Real-time</h3>
+                    <p class="text-gray-600 text-center">Sistem kami memungkinkan Anda untuk mendaftarkan diri sendiri atau keluarga dan mendapatkan nomor antrean secara instan melalui website. Pantau pergerakan antrean secara real-time dari ponsel Anda dan datanglah ke klinik hanya saat giliran Anda sudah dekat. Tidak ada lagi waktu yang terbuang untuk menunggu.</p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="bg-blue-50 p-8 rounded-lg hover:shadow-lg transition">
+                    <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mb-4 mx-auto">
+                        <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 3.062v6.757a1 1 0 01-.940 1.017 48.993 48.993 0 01-5.674 0 1 1 0 01-.94-1.017V6.517c0-1.667.341-3.252.975-4.62zM6 12a1 1 0 100-2 1 1 0 000 2zm6 0a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path>
                         </svg>
-                    </a>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3 text-center">Waktu Fleksibel & Terkendali Sepenuhnya</h3>
+                    <p class="text-gray-600 text-center">Lihat jadwal dokter yang tersedia dan pilih waktu kunjungan yang paling sesuai dengan kesibukan Anda. Perlu membatalkan karena ada urusan mendadak? Lakukan pembatalan dengan mudah melalui dashboard Anda, memberikan slot bagi pasien lain. Sistem kami dirancang untuk beradaptasi dengan hidup Anda, bukan sebaliknya.</p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="bg-blue-50 p-8 rounded-lg hover:shadow-lg transition">
+                    <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mb-4 mx-auto">
+                        <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3 text-center">Rekam Medis Digital & Terintegrasi</h3>
+                    <p class="text-gray-600 text-center">Riwayat Kesehatan Anda Aman dan Selalu Tersedia.
+Setiap kunjungan, diagnosis, dan resep obat akan tercatat secara otomatis dan aman dalam riwayat rekam medis digital Anda. Dokter dapat dengan mudah melihat riwayat kesehatan Anda pada kunjungan berikutnya untuk memberikan perawatan yang lebih akurat dan personal. Akses riwayat kesehatan Anda kapan pun dibutuhkan, langsung dari profil Anda.</p>
                 </div>
             </div>
         </div>
-        <div class="text-center mt-10 pt-5 border-t border-white/20 text-xs opacity-70">
-            <p>&copy; {{ date('Y') }} Klinik Sehat. All Rights Reserved.</p>
-        </div>
+    </section>
+
+    <!-- ========== JADWAL DOKTER ========== -->
+    <section id="jadwal-dokter" class="py-16 md:py-24 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Jadwal Dokter</h2>
+                <p class="text-lg text-gray-600">Pilih hari untuk melihat jadwal dokter spesialis kami</p>
+            </div>
+
+            <!-- Day Tabs -->
+            <div class="flex flex-wrap gap-3 justify-center mb-12">
+                <button class="day-tab active px-6 py-2 rounded-lg bg-blue-600 text-white font-medium transition" data-day="senin">
+                    Senin
+                </button>
+                <button class="day-tab px-6 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium hover:bg-blue-600 hover:text-white transition" data-day="selasa">
+                    Selasa
+                </button>
+                <button class="day-tab px-6 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium hover:bg-blue-600 hover:text-white transition" data-day="rabu">
+                    Rabu
+                </button>
+                <button class="day-tab px-6 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium hover:bg-blue-600 hover:text-white transition" data-day="kamis">
+                    Kamis
+                </button>
+                <button class="day-tab px-6 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium hover:bg-blue-600 hover:text-white transition" data-day="jumat">
+                    Jumat
+                </button>
+            </div>
+
+            <!-- Doctor Schedule Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+    @foreach ($doctors as $doctor)
+        
+        @foreach ($doctor->doctorSchedules->groupBy('day_of_week') as $day => $schedulesOnDay)
+            
+            <div class="doctor-card bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition" 
+                 data-day="{{ Str::lower($day) }}">
+                 
+                <div class="flex items-center gap-4 mb-4">
+                    <img src="{{ $doctor->user->photo_url ?? 'https://placehold.co/80x80/E0E7FF/3B82F6?text=Dr' }}"
+                         alt="{{ $doctor->user->name }}" class="w-16 h-16 rounded-full">
+                    
+                    <div>
+                        <h3 class="font-bold text-gray-900">{{ $doctor->user->name }}</h3>
+                        
+                        <p class="text-sm text-blue-600">{{ $doctor->specialization }}</p>
+                    </div>
+                </div>
+                
+                <div class="flex gap-2 flex-wrap">
+                    @foreach ($schedulesOnDay as $schedule)
+                        <span class="bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-full">
+                            {{ \Carbon\Carbon::parse($schedule->start_time)->format('H:i') }} - 
+                            {{ \Carbon\Carbon::parse($schedule->end_time)->format('H:i') }}
+                        </span>
+                    @endforeach
+                </div>
+            </div>
+
+        @endforeach
+    @endforeach
+    
     </div>
-</footer>
+    </section>
 
-@push('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // ... existing script for burger menu and smooth scroll ...
-        const burgerMenu = document.getElementById('burger-menu');
-        const mobileNav = document.getElementById('mobile-nav');
-        const navLinks = document.querySelectorAll('.nav-link-mobile');
-        const mainNavLinks = document.querySelectorAll('nav a[href^="#"], #mobile-nav a[href^="#"]');
+    <!-- ========== TENTANG KAMI ========== -->
+    <section id="tentang-kami" class="py-16 md:py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+                <!-- Image -->
+                <div class="hidden md:block">
+                    <img src="https://placehold.co/500x400/E0E7FF/3B82F6?text=Interior+Klinik" 
+                         alt="Clinic interior" class="rounded-lg shadow-lg w-full">
+                </div>
 
-        burgerMenu.addEventListener('click', () => {
-            mobileNav.classList.toggle('-right-full');
-            mobileNav.classList.toggle('right-0');
-            document.body.classList.toggle('overflow-hidden');
+                <!-- Content -->
+                <div class="space-y-6">
+                    <h2 class="text-3xl md:text-4xl font-bold text-gray-900">Tentang Klinik Sehat</h2>
+                    <p class="text-gray-600 leading-relaxed">
+                        Visi kami adalah menjadi pionir dalam digitalisasi layanan klinik di Indonesia, di mana setiap pasien dapat mengelola kesehatannya dengan kendali penuh di ujung jari mereka. Kami menyediakan solusi kesehatan terintegrasi yang mudah diakses, didukung oleh teknologi terkini dan tim medis profesional.
+                    </p>
+                    <p class="text-gray-600 leading-relaxed">
+                        Dengan tim dokter spesialis yang berpengalaman dan fasilitas medis modern, Klinik Sehat siap memberikan pelayanan kesehatan terbaik. Kami juga terus berinovasi untuk meningkatkan kualitas layanan.
+                    </p>
+
+                    <div class="grid grid-cols-3 gap-4 pt-4">
+                        <div class="text-center">
+                            <p class="text-3xl font-bold text-blue-600">500+</p>
+                            <p class="text-gray-600 text-sm">Pasien Per Bulan</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-3xl font-bold text-blue-600">10+</p>
+                            <p class="text-gray-600 text-sm">Dokter Spesialis</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-3xl font-bold text-blue-600">14</p>
+                            <p class="text-gray-600 text-sm">Tahun Berdiri</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== LAYANAN ========== -->
+    <section id="layanan" class="py-16 md:py-24 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Layanan Kami</h2>
+                <p class="text-lg text-gray-600">Berbagai layanan kesehatan komprehensif untuk kebutuhan Anda</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Service 1 -->
+                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
+                    <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1.5A4.5 4.5 0 017.5 15h5a4.5 4.5 0 014.5 4.5V21zm4-6h-4v-4h4v4z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">Poli Umum</h3>
+                    <p class="text-gray-600">Pemeriksaan kesehatan rutin dan konsultasi dengan dokter umum berpengalaman</p>
+                </div>
+
+                <!-- Service 2 -->
+                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
+                    <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">Poli Ibu & Anak</h3>
+                    <p class="text-gray-600">Layanan pemeriksaan kesehatan dan konsultasi dengan dokter spesialis anak dan kebidanan berpengalaman</p>
+                </div>
+
+                <!-- Service 3 -->
+                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
+                    <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">Poli Gigi</h3>
+                    <p class="text-gray-600">Pemeriksaan laboratorium lengkap dengan hasil akurat dan cepat</p>
+                </div>
+
+                <!-- Service 4 -->
+                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
+                    <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">Radiologi</h3>
+                    <p class="text-gray-600">Pemeriksaan radiologi dengan teknologi CT Scan dan X-Ray modern</p>
+                </div>
+
+                <!-- Service 5 -->
+                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
+                    <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-2m-4-1v8m0 0l3-3m-3 3L9 8m-5 5h.01M17 13h.01"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">Vaksinasi</h3>
+                    <p class="text-gray-600">Program vaksinasi lengkap untuk anak-anak dan dewasa</p>
+                </div>
+
+                <!-- Service 6 -->
+                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
+                    <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">Telemedicine</h3>
+                    <p class="text-gray-600">Konsultasi online dengan dokter dari kenyamanan rumah Anda</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== PANDUAN PESAN JANJI ========== -->
+    <section id="panduan" class="py-16 md:py-24 bg-blue-600 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">Cara Pesan Janji Temu</h2>
+                <p class="text-lg text-blue-100">Ikuti langkah-langkah mudah berikut untuk membuat janji temu dengan dokter</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <!-- Step 1 -->
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-white text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+                        1
+                    </div>
+                    <h3 class="text-lg font-bold mb-2">Daftar/Login</h3>
+                    <p class="text-blue-100">Buat akun atau login ke aplikasi Klinik Sehat</p>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-white text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+                        2
+                    </div>
+                    <h3 class="text-lg font-bold mb-2">Pilih Dokter</h3>
+                    <p class="text-blue-100">Pilih dokter spesialis sesuai kebutuhan Anda</p>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-white text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+                        3
+                    </div>
+                    <h3 class="text-lg font-bold mb-2">Pilih Jadwal</h3>
+                    <p class="text-blue-100">Tentukan tanggal dan waktu yang sesuai dengan Anda</p>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="text-center">
+                    <div class="w-16 h-16 bg-white text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+                        4
+                    </div>
+                    <h3 class="text-lg font-bold mb-2">Konfirmasi</h3>
+                    <p class="text-blue-100">Selesaikan proses booking dan tunggu konfirmasi</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== ARTIKEL ========== -->
+    <section id="artikel" class="py-16 md:py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Artikel Kesehatan</h2>
+                <p class="text-lg text-gray-600">Informasi dan tips kesehatan terkini dari para ahli</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Article 1 -->
+                <article class="bg-white rounded-lg shadow-md hover:shadow-lg transition overflow-hidden">
+                    <img src="https://placehold.co/400x200/E0E7FF/3B82F6?text=Artikel+1" 
+                         alt="Article thumbnail" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <span class="inline-block bg-blue-100 text-blue-600 text-xs px-3 py-1 rounded-full mb-3">Gaya Hidup</span>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Tips Hidup Sehat untuk Keseharian</h3>
+                        <p class="text-gray-600 mb-4">Pelajari cara-cara sederhana untuk meningkatkan kualitas hidup Anda setiap hari dengan kebiasaan sehat.</p>
+                        <a href="#" class="text-blue-600 font-medium hover:text-blue-700">Baca Selengkapnya →</a>
+                    </div>
+                </article>
+
+                <!-- Article 2 -->
+                <article class="bg-white rounded-lg shadow-md hover:shadow-lg transition overflow-hidden">
+                    <img src="https://placehold.co/400x200/E0E7FF/3B82F6?text=Artikel+2" 
+                         alt="Article thumbnail" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <span class="inline-block bg-blue-100 text-blue-600 text-xs px-3 py-1 rounded-full mb-3">Nutrisi</span>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Pentingnya Nutrisi Seimbang</h3>
+                        <p class="text-gray-600 mb-4">Memahami kebutuhan nutrisi tubuh dan bagaimana cara mencukupi kebutuhan nutrisi harian Anda.</p>
+                        <a href="#" class="text-blue-600 font-medium hover:text-blue-700">Baca Selengkapnya →</a>
+                    </div>
+                </article>
+
+                <!-- Article 3 -->
+                <article class="bg-white rounded-lg shadow-md hover:shadow-lg transition overflow-hidden">
+                    <img src="https://placehold.co/400x200/E0E7FF/3B82F6?text=Artikel+3" 
+                         alt="Article thumbnail" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <span class="inline-block bg-blue-100 text-blue-600 text-xs px-3 py-1 rounded-full mb-3">Kesehatan Mental</span>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Menjaga Kesehatan Mental Anda</h3>
+                        <p class="text-gray-600 mb-4">Strategi efektif untuk menjaga kesehatan mental dan mengatasi stress dalam kehidupan sehari-hari.</p>
+                        <a href="#" class="text-blue-600 font-medium hover:text-blue-700">Baca Selengkapnya →</a>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== FOOTER ========== -->
+    <footer class="bg-gray-900 text-gray-300 py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                <!-- Company Info -->
+                <div>
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold">KS</span>
+                        </div>
+                        <span class="font-bold text-white">Klinik Sehat</span>
+                    </div>
+                    <p class="text-gray-400 text-sm">Layanan kesehatan terpercaya untuk Anda dan keluarga</p>
+                </div>
+
+                <!-- Quick Links -->
+                <div>
+                    <h4 class="font-bold text-white mb-4">Tautan Cepat</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#beranda" class="text-gray-400 hover:text-blue-400 transition">Beranda</a></li>
+                        <li><a href="#layanan" class="text-gray-400 hover:text-blue-400 transition">Layanan</a></li>
+                        <li><a href="#tentang-kami" class="text-gray-400 hover:text-blue-400 transition">Tentang Kami</a></li>
+                        <li><a href="#artikel" class="text-gray-400 hover:text-blue-400 transition">Artikel</a></li>
+                    </ul>
+                </div>
+
+                <!-- Contact Info -->
+                <div>
+                    <h4 class="font-bold text-white mb-4">Hubungi Kami</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li class="flex items-center gap-2">
+                            <span>📞</span>
+                            <span class="text-gray-400">(021) 1234-5678</span>
+                        </li>
+                        <li class="flex items-center gap-2">
+                            <span>✉️</span>
+                            <span class="text-gray-400">info@klinikehat.id</span>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <span>📍</span>
+                            <span class="text-gray-400">Jl. Kesehatan No. 123, Jakarta</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Social Media -->
+                <div>
+                    <h4 class="font-bold text-white mb-4">Ikuti Kami</h4>
+                    <div class="flex gap-4">
+                        <a href="#" class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition">
+                            <span class="text-white">f</span>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition">
+                            <span class="text-white">𝕏</span>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition">
+                            <span class="text-white">📸</span>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition">
+                            <span class="text-white">▶</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Divider -->
+            <div class="border-t border-gray-700 pt-8 text-center text-sm text-gray-400">
+                <p>&copy; 2025 Klinik Sehat. Hak cipta dilindungi. Semua hak reservasi.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ========== SCRIPTS ========== -->
+    <script>
+        // Mobile Menu Toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
         });
 
-        navLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                mobileNav.classList.add('-right-full');
-                mobileNav.classList.remove('right-0');
-                document.body.classList.remove('overflow-hidden');
+        // Day Tabs - Schedule Filter
+        const dayTabs = document.querySelectorAll('.day-tab');
+        const doctorCards = document.querySelectorAll('.doctor-card');
+
+        dayTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const selectedDay = tab.getAttribute('data-day');
+
+                // Update active tab
+                dayTabs.forEach(t => {
+                    t.classList.remove('bg-blue-600', 'text-white');
+                    t.classList.add('bg-gray-200', 'text-gray-700');
+                });
+                tab.classList.remove('bg-gray-200', 'text-gray-700');
+                tab.classList.add('bg-blue-600', 'text-white');
+
+                // Filter doctor cards
+                doctorCards.forEach(card => {
+                    if (card.getAttribute('data-day') === selectedDay) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
             });
         });
 
-        mainNavLinks.forEach(anchor => {
+        // Initialize - Show Monday doctors by default
+        doctorCards.forEach(card => {
+            if (card.getAttribute('data-day') !== 'senin') {
+                card.style.display = 'none';
+            }
+        });
+
+        // Smooth Scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
-                const targetId = this.getAttribute('href');
-                const targetElement = document.querySelector(targetId);
-                if (targetElement) {
-                    targetElement.scrollIntoView({
-                        behavior: 'smooth'
-                    });
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    // Tutup menu mobile setelah mengklik link
+                    if (!mobileMenu.classList.contains('hidden')) {
+                         mobileMenu.classList.add('hidden');
+                    }
                 }
             });
         });
 
-        // --- UPDATED SCRIPT FOR DOCTOR SCHEDULE ---
-        const dayButtons = document.querySelectorAll('.day-button');
-        const schedulePanels = document.querySelectorAll('.schedule-panel');
-
-        function activateDay(day) {
-            // Deactivate all buttons by removing the 'active' class
-            dayButtons.forEach(button => {
-                button.classList.remove('active');
-                 button.classList.add('text-slate-600', 'hover:bg-slate-300');
-            });
-
-            // Hide all panels
-            schedulePanels.forEach(panel => {
-                panel.classList.add('hidden');
-            });
-
-            // Activate the target button and panel
-            const activeButton = document.querySelector(`.day-button[data-day="${day}"]`);
-            const activePanel = document.getElementById(day);
-
-            if (activeButton) {
-                activeButton.classList.add('active');
-                activeButton.classList.remove('text-slate-600', 'hover:bg-slate-300');
-            }
-            if (activePanel) {
-                activePanel.classList.remove('hidden');
-            }
-        }
-
-        dayButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const day = button.getAttribute('data-day');
-                activateDay(day);
+        // Mengganti placeholder gambar yang rusak
+        document.addEventListener('DOMContentLoaded', (event) => {
+            document.querySelectorAll('img').forEach(function(img) {
+                img.onerror = function() {
+                    const width = img.getAttribute('width') || img.clientWidth || 100;
+                    const height = img.getAttribute('height') || img.clientHeight || 100;
+                    this.src = `https://placehold.co/${width}x${height}/E0E7FF/3B82F6?text=Image`;
+                    this.onerror = null; // Mencegah loop tak terbatas jika placeholder juga gagal
+                };
             });
         });
-
-        // Set the default active day
-        // Day mapping from English to Indonesian for the script
-        const dayMap = {
-            'monday': 'senin',
-            'tuesday': 'selasa',
-            'wednesday': 'rabu',
-            'thursday': 'kamis',
-            'friday': 'jumat',
-            'saturday': 'sabtu',
-            'sunday': 'senin' // Default to Monday if it's Sunday
-        };
-        const today = new Date().toLocaleString('en-US', { weekday: 'long' }).toLowerCase();
-        const todayIndonesian = dayMap[today] || 'senin';
-
-        activateDay(todayIndonesian);
-    });
-</script>
-@endpush
-@endsection
+    </script>
+</body>
+</html>

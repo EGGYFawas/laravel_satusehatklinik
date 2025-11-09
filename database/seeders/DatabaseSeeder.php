@@ -42,6 +42,12 @@ class DatabaseSeeder extends Seeder
             // =================================================================
             DoctorScheduleSeeder::class, // Membutuhkan data Dokter yang sudah ada
             ArticleSeeder::class,        // Membutuhkan User Admin sebagai penulis
+            
+            // --- [PENAMBAHAN BARU] ---
+            // Seeder untuk mengisi sample data antrean klinik
+            // Ini diletakkan di paling akhir TAHAP 3 karena membutuhkan data
+            // Pasien, Dokter, Poli, dan Admin/Petugas.
+            ClinicQueueSeeder::class,
         ]);
     }
 }
