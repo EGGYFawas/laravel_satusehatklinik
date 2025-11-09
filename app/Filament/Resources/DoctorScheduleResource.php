@@ -2,10 +2,13 @@
 
 namespace App\Filament\Resources;
 
+// Import Model yang kita perlukan
 use App\Filament\Resources\DoctorScheduleResource\Pages;
-use App\Filament\Resources\DoctorScheduleResource\RelationManagers;
 use App\Models\DoctorSchedule;
-use App\Models\Doctor; // <-- 1. Import model Doctor
+use App\Models\Doctor;
+use App\Models\User;
+
+// Import komponen Filament
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -14,42 +17,37 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-// 2. Import komponen form dan tabel yang akan kita gunakan
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TimePicker;
-use Filament\Forms\Components\Toggle;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Grouping\Group;
-
 class DoctorScheduleResource extends Resource
 {
     protected static ?string $model = DoctorSchedule::class;
 
-    protected static ?string $navigationLabel = 'Jadwal Dokter';
-    protected static ?string $pluralModelLabel = 'Jadwal Dokter';
     protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
+    
+    // (Opsional) Mengganti nama di sidebar
+    protected static ?string $modelLabel = 'Jadwal Dokter';
+    protected static ?string $pluralModelLabel = 'Jadwal Dokter';
+
+    // (Opsional) Mengelompokkan di navigasi sidebar
+    protected static ?string $navigationGroup = 'Manajemen Klinik';
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                // 3. Dropdown untuk memilih dokter
-                Select::make('doctor_id')
+                // 1. Pilih Dokter
+                // Ini akan mencari nama di relasi 'user'
+                Forms\Components\Select::make('doctor_id')
                     ->label('Dokter')
-                    ->required()
-                    // 4. Ambil semua dokter, tampilkan nama & polinya
-                    ->options(Doctor::with(['user', 'poli'])->get()->mapWithKeys(fn ($doctor) => [
-                        $doctor->id => $doctor->user->full_name . ' (Poli: ' . $doctor->poli->name . ')'
-                    ]))
+                    ->options(
+                        Doctor::with('user')->get()->pluck('user.name', 'id')
+                    )
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->required(),
                 
-                // 5. Dropdown untuk hari
-                Select::make('day_of_week')
+                // 2. Pilih Hari (sesuai ENUM di migrasi Anda)
+                Forms\Components\Select::make('day_of_week')
                     ->label('Hari')
-                    ->required()
                     ->options([
                         'Senin' => 'Senin',
                         'Selasa' => 'Selasa',
@@ -59,101 +57,84 @@ class DoctorScheduleResource extends Resource
                         'Sabtu' => 'Sabtu',
                         'Minggu' => 'Minggu',
                     ])
-                    ->searchable(),
+                    ->required(),
                 
-                // 6. Input jam
-                TimePicker::make('start_time')
+                // 3. Jam Mulai
+                Forms\Components\TimePicker::make('start_time')
                     ->label('Jam Mulai')
-                    ->required()
-                    ->seconds(false) // Sembunyikan detik
-                    ->displayFormat('H:i'),
+                    ->required(),
                 
-                TimePicker::make('end_time')
+                // 4. Jam Selesai
+                Forms\Components\TimePicker::make('end_time')
                     ->label('Jam Selesai')
-                    ->required()
-                    ->seconds(false)
-                    ->displayFormat('H:i')
-                    ->after('start_time'), // Validasi: harus setelah jam mulai
-
-                // 7. Toggle status aktif
-                Toggle::make('is_active')
-                    ->label('Status Aktif')
-                    ->default(true),
+                    ->required(),
+                
+                // 5. Status Aktif
+                Forms\Components\Toggle::make('is_active')
+                    ->label('Aktif')
+                    ->default(true)
+                    ->required(),
             ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
-            // 8. KUNCI UTAMA: Kelompokkan berdasarkan nama dokter
-            ->defaultGroup('doctor.user.full_name')
             ->columns([
-                // 9. Tampilkan data relasi
-                TextColumn::make('doctor.user.full_name')
+                // 1. Tampilkan Nama Dokter (dari relasi)
+                // Kita memberitahu Filament untuk melihat relasi 'doctor', lalu 'user', lalu ambil 'name'
+                Tables\Columns\TextColumn::make('doctor.user.name')
                     ->label('Nama Dokter')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('doctor.poli.name')
-                    ->label('Poli')
-                    ->badge(),
-                TextColumn::make('day_of_week')
+                
+                // 2. Tampilkan Hari
+                Tables\Columns\TextColumn::make('day_of_week')
                     ->label('Hari')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('start_time')
+                
+                // 3. Tampilkan Jam
+                Tables\Columns\TextColumn::make('start_time')
                     ->label('Jam Mulai')
                     ->time('H:i') // Format jam
                     ->sortable(),
-                TextColumn::make('end_time')
+                Tables\Columns\TextColumn::make('end_time')
                     ->label('Jam Selesai')
-                    ->time('H:i')
+                    ->time('H:i') // Format jam
                     ->sortable(),
-                IconColumn::make('is_active')
+                
+                // 4. Tampilkan Status
+                Tables\Columns\IconColumn::make('is_active')
                     ->label('Aktif')
                     ->boolean(),
+                
+                // (Opsional) Tampilkan kapan dibuat, bisa disembunyikan
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                // 10. Filter untuk memilih dokter spesifik
-                SelectFilter::make('doctor')
-                    ->label('Filter Dokter')
-                    ->relationship('doctor', 'id')
-                    ->getOptionLabelFromRecordUsing(fn (Doctor $record) => $record->user->full_name . ' (' . $record->poli->name . ')')
-                    ->searchable()
-                    ->preload()
+                // (Kita bisa tambahkan filter hari di sini nanti jika perlu)
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\DeleteAction::make(), // Tambahkan aksi Hapus
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ])
-            // 11. Opsi grouping
-            ->groups([
-                Group::make('doctor.user.full_name')
-                    ->label('Nama Dokter'),
-                Group::make('day_of_week')
-                    ->label('Hari'),
             ]);
     }
     
-    public static function getRelations(): array
-    {
-        return [
-            //
-        ];
-    }
-    
+    // Filament sudah mengatur halaman-halaman ini secara otomatis
     public static function getPages(): array
     {
         return [
             'index' => Pages\ListDoctorSchedules::route('/'),
             'create' => Pages\CreateDoctorSchedule::route('/create'),
-            // 12. Daftarkan halaman view
-            'view' => Pages\ViewDoctorSchedule::route('/{record}'), 
             'edit' => Pages\EditDoctorSchedule::route('/{record}/edit'),
         ];
     }    

@@ -13,13 +13,7 @@ class EditDoctorSchedule extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\ViewAction::make(), // Tambahkan tombol View
             Actions\DeleteAction::make(),
         ];
-    }
-
-    protected function getSavedNotificationTitle(): ?string
-    {
-        return 'Jadwal Dokter Berhasil Diperbarui';
     }
 }

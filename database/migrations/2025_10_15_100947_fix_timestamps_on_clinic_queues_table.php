@@ -16,8 +16,11 @@ return new class extends Migration
     {
         Schema::table('clinic_queues', function (Blueprint $table) {
             // Mengubah kolom agar bisa NULL dan menghapus nilai DEFAULT
-            // Perintah DB::statement digunakan untuk kompatibilitas yang lebih luas antar database
-            DB::statement("ALTER TABLE clinic_queues MODIFY COLUMN `check_in_time` DATETIME NULL DEFAULT NULL");
+            
+            // (SUDAH DIPERBAIKI)
+            DB::statement("ALTER TABLE clinic_queues MODIFY COLUMN `registration_time` DATETIME NULL DEFAULT NULL");
+            
+            // (Ini sudah benar)
             DB::statement("ALTER TABLE clinic_queues MODIFY COLUMN `call_time` DATETIME NULL DEFAULT NULL");
             DB::statement("ALTER TABLE clinic_queues MODIFY COLUMN `finish_time` DATETIME NULL DEFAULT NULL");
         });
@@ -31,9 +34,10 @@ return new class extends Migration
     public function down()
     {
         Schema::table('clinic_queues', function (Blueprint $table) {
-            // Perintah ini mungkin tidak akan mengembalikan ke state yang sama persis
-            // jika sebelumnya ada default value yang kompleks, tapi ini adalah rollback standar.
-            $table->dateTime('check_in_time')->nullable(false)->change();
+            // (SUDAH DIPERBAIKI)
+            $table->dateTime('registration_time')->nullable(false)->change();
+            
+            // (Ini sudah benar)
             $table->dateTime('call_time')->nullable(false)->change();
             $table->dateTime('finish_time')->nullable(false)->change();
         });

@@ -26,10 +26,9 @@ use App\Http\Controllers\Pasien\ArticleController as PasienArticleController;
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', function () {
-    return view('landing');
-})->name('landing');
+use App\Http\Controllers\LandingPageController; // <--- TAMBAHKAN INI di bagian atas
 
+Route::get('/', [LandingPageController::class, 'index'])->name('landing');
 
 // == GRUP UNTUK PENGGUNA YANG BELUM LOGIN (GUEST) ==
 Route::middleware('guest')->group(function () {
