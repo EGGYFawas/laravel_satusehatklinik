@@ -6,24 +6,18 @@ use Filament\Widgets\ChartWidget;
 use Carbon\Carbon;
 use App\Models\ClinicQueue;
 use Illuminate\Support\Facades\DB;
-// [PERBAIKAN] Impor Fasad Cache untuk 'Cache::remember()'
 use Illuminate\Support\Facades\Cache;
 
 class ClinicVisitsChart extends ChartWidget
 {
     protected static ?string $heading = 'Kunjungan Klinik (7 Hari Terakhir)';
-    protected static ?int $sort = 3; // Atur urutan, misal setelah 2 Stats Widget
+    protected static ?int $sort = 3; 
 
-    // [OPTIMASI PILAR 2] LAZY LOADING
-    // Halaman dashboard akan dimuat instan, widget ini akan menyusul.
     protected static bool $isLazy = true;
 
     protected function getData(): array
     {
-        // [OPTIMASI PILAR 2] CACHING
-        // Kita cache chart ini selama 10 menit (600 detik)
         $data = Cache::remember('clinic_visits_chart_7_days', 600, function () {
-            // Ambil data 6 hari lalu + hari ini (total 7 hari)
             $startDate = Carbon::now()->subDays(6)->startOfDay();
             
             return ClinicQueue::query()
@@ -37,9 +31,8 @@ class ClinicVisitsChart extends ChartWidget
                 ->get();
         });
 
-        // Siapkan data untuk chart
         $labels = $data->pluck('tanggal')->map(function ($date) {
-            return Carbon::parse($date)->format('d M'); // Format label (misal: "03 Nov")
+            return Carbon::parse($date)->format('d M'); 
         })->toArray();
         
         $dataset = $data->pluck('jumlah')->toArray();
@@ -49,8 +42,18 @@ class ClinicVisitsChart extends ChartWidget
                 [
                     'label' => 'Jumlah Kunjungan',
                     'data' => $dataset,
-                    'backgroundColor' => 'rgba(79, 70, 229, 0.5)', // Warna primary-mu (dibuat sedikit transparan)
+                    // [MODIFIKASI] Warna gradasi yang lebih cantik untuk Bar Chart
+                    'backgroundColor' => [
+                        'rgba(79, 70, 229, 0.2)', // primary-200
+                        'rgba(79, 70, 229, 0.3)',
+                        'rgba(79, 70, 229, 0.4)',
+                        'rgba(79, 70, 229, 0.5)',
+                        'rgba(79, 70, 229, 0.6)',
+                        'rgba(79, 70, 229, 0.7)',
+                        'rgba(79, 70, 229, 0.8)', // primary-800
+                    ],
                     'borderColor' => '#4F46E5', // Warna primary-mu
+                    'borderWidth' => 1,
                 ],
             ],
             'labels' => $labels,
@@ -59,14 +62,15 @@ class ClinicVisitsChart extends ChartWidget
 
     protected function getType(): string
     {
-        // [PERUBAHAN KUNCI] Diubah dari 'line' menjadi 'bar'
-        return 'bar'; // Tampilkan sebagai Bar Chart (Diagram Batang)
+        return 'bar'; 
     }
 
     /**
-     * [PERBAIKAN] Menambahkan method ini untuk mengatur opsi Chart.js
-     *
-     * @return array
+     * [JAWABAN UNTUKMU]
+     * Bro, kodemu ini SUDAH SEMPURNA.
+     * Bagian 'plugins' -> 'tooltip' -> 'callbacks' di bawah ini
+     * adalah "magic" yang kamu minta untuk menampilkan "angka pasti"
+     * saat di-hover. Tidak perlu diubah!
      */
     protected function getOptions(): array
     {
@@ -74,24 +78,18 @@ class ClinicVisitsChart extends ChartWidget
             'scales' => [
                 'y' => [
                     'beginAtZero' => true,
-                    // [PERBAIKAN Y-AXIS "KOCAK"]
-                    // Memaksa sumbu Y untuk hanya menampilkan angka bulat.
-                    // Tidak akan ada lagi 0.5, 1.5, dst.
                     'ticks' => [
                         'precision' => 0
                     ],
                 ],
             ],
-            // [BONUS] Ini akan membuat tooltip (saat di-hover) lebih jelas
+            // [MODIFIKASI] Kodemu sudah benar, ini hanya format ulang
+            // KODE INI YANG MENJAWAB PERMINTAAN "ANGKA PASTI" SAAT HOVER
             'plugins' => [
                 'tooltip' => [
                     'callbacks' => [
-                        // Mengubah "Jumlah Kunjungan: 1" menjadi "1 Kunjungan"
                         'label' => 'js:function(context) {
-                            let label = context.dataset.label || "";
-                            if (label) {
-                                label = "Total: ";
-                            }
+                            let label = "Total: ";
                             if (context.parsed.y !== null) {
                                 label += context.parsed.y + " Kunjungan";
                             }
@@ -103,4 +101,3 @@ class ClinicVisitsChart extends ChartWidget
         ];
     }
 }
-

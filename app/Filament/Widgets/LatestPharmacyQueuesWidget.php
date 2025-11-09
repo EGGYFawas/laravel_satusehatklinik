@@ -11,9 +11,7 @@ use Filament\Tables\Columns\BadgeColumn;
 
 class LatestPharmacyQueuesWidget extends BaseWidget
 {
-    // [OPTIMASI PILAR 2] LAZY LOADING
     protected static bool $isLazy = true;
-    
     protected static ?int $sort = 4; // Di paling bawah
     protected int | string | array $columnSpan = 'full'; 
 
@@ -32,10 +30,11 @@ class LatestPharmacyQueuesWidget extends BaseWidget
             )
             ->columns([
                 TextColumn::make('clinicQueue.patient.full_name')
-                    ->label('Nama Pasien'),
+                    ->label('Nama Pasien')
+                    ->weight('medium'), // [MODIFIKASI] Buat nama lebih tebal
                 TextColumn::make('pharmacy_queue_number')
-                    ->label('No. Antrean Apotek'),
-                // Gunakan status migrasi TERBARU Anda
+                    ->label('No. Antrean Apotek')
+                    ->weight('bold'), // [MODIFIKASI] Buat No. Antrean menonjol
                 BadgeColumn::make('status')
                     ->label('Status Resep')
                     ->colors([
@@ -52,4 +51,3 @@ class LatestPharmacyQueuesWidget extends BaseWidget
             ]);
     }
 }
-

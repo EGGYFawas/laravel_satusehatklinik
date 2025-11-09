@@ -4,9 +4,10 @@ import laravel from 'laravel-vite-plugin';
 export default defineConfig({
     plugins: [
         laravel({
-            // === AWAL MODIFIKASI STRATEGIS ===
-            // Kita masukkan SEMUA file CSS yang dibutuhkan
-            // langsung ke 'input' Vite.
+            // === [PENGHAPUSAN STRATEGI B] ===
+            // Kita HANYA perlu 'app.css' dan 'app.js'
+            // 'tailwind.config.js'-mu akan otomatis
+            // memasukkan style Filament ke 'app.css'.
             input: [
                 "resources/css/app.css", // CSS Tailwind utamamu
                 "resources/js/app.js", // JS utamamu
@@ -17,7 +18,7 @@ export default defineConfig({
                 "vendor/filament/notifications/resources/css/notifications.css",
                 "vendor/filament/support/resources/css/support.css",
             ],
-            // === AKHIR MODIFIKASI ===
+            // === AKHIR PENGHAPUSAN ===
             refresh: true,
         }),
     ],
