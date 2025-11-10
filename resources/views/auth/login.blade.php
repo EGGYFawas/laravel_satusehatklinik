@@ -19,7 +19,7 @@
             <div class="flex items-center gap-4 w-full justify-center">
                 {{-- Tombol untuk membuat akun baru --}}
                 <a href="{{ route('register') }}" 
-                   class="w-1/2 bg-gray-400 text-white font-semibold py-3 px-6 rounded-full hover:bg-gray-500 transition-colors duration-300 text-center">
+                   class="w-1/2 bg-blue-400 text-black font-semibold py-3 px-6 rounded-full hover:bg-gray-500 transition-colors duration-300 text-center">
                    Buat Akun
                 </a>
                 {{-- Tombol untuk men-submit form login di sebelah kanan --}}

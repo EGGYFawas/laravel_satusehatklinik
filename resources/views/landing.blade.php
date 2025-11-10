@@ -51,40 +51,40 @@
 </head>
 <!-- Menambahkan kelas font-poppins untuk menerapkan font ke seluruh halaman -->
 <body class="bg-white text-gray-900 font-poppins">
-    
-    <!-- ========== NAVBAR ========== -->
-    <!-- 
-      Diperbarui: 
-      1. Menghapus 'bg-white'
-      2. Menambahkan 'bg-[rgba(226,219,219,0.7)]' untuk warna kustom Anda
-      3. Menambahkan 'backdrop-blur-md' untuk efek blur di belakang navbar
-    -->
-    <nav class="fixed top-0 left-0 right-0 bg-[rgba(226,219,219,0.7)] backdrop-blur-md shadow-sm z-50">
+    <nav class="fixed top-0 left-0 right-0 bg-white backdrop-blur-md shadow-sm z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <!-- Logo -->
                 <div class="flex items-center gap-3">
-                    <!-- Added logo image support with asset() helper -->
-                    <img src="{{ asset('assets/img/logo_login.png') }}" alt="Klinik Sehat Logo" class="h-20 w-auto"
-                         onerror="this.src='https://placehold.co/100x40/0284C7/FFFFFF?text=Logo'; this.onerror=null;">
+                    <a href="{{ route('landing') }}">
+                        <img src="{{ asset('assets/img/logo_login.png') }}" alt="Klinik Sehat Logo" class="h-20 w-auto"
+                             onerror="this.src='https://placehold.co/100x40/0284C7/FFFFFF?text=Logo'; this.onerror=null;">
+                    </a>
                 </div>
 
                 <!-- Desktop Menu -->
                 <div class="hidden md:flex gap-8">
-                    <a href="#beranda" class="text-gray-600 hover:text-blue-600 transition">Beranda</a>
-                    <a href="#mengapa-kami" class="text-gray-600 hover:text-blue-600 transition">Mengapa Kami</a>
-                    <a href="#jadwal-dokter" class="text-gray-600 hover:text-blue-600 transition">Jadwal Dokter</a>
-                    <a href="#tentang-kami" class="text-gray-600 hover:text-blue-600 transition">Tentang Kami</a>
-                    <a href="#layanan" class="text-gray-600 hover:text-blue-600 transition">Layanan</a>
-                    <a href="#artikel" class="text-gray-600 hover:text-blue-600 transition">Artikel</a>
+                    {{-- [MODIFIKASI] Link diubah menjadi route absolut --}}
+                    <a href="{{ route('landing') }}#beranda" class="text-gray-600 hover:text-blue-600 transition">Beranda</a>
+                    <a href="{{ route('landing') }}#mengapa-kami" class="text-gray-600 hover:text-blue-600 transition">Mengapa Kami</a>
+                    <a href="{{ route('landing') }}#jadwal-dokter" class="text-gray-600 hover:text-blue-600 transition">Jadwal Dokter</a>
+                    <a href="{{ route('landing') }}#tentang-kami" class="text-gray-600 hover:text-blue-600 transition">Tentang Kami</a>
+                    <a href="{{ route('landing') }}#layanan" class="text-gray-600 hover:text-blue-600 transition">Layanan</a>
+                    <a href="{{ route('artikel.index') }}" class="text-gray-600 hover:text-blue-600 transition">Artikel</a>
                 </div>
 
-                <!-- Added Login and Register buttons with proper styling -->
+                <!-- Login and Register buttons -->
                 <div class="hidden lg:flex gap-4">
-                  <a href="{{ route('login') }}"
-                     class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium">Masuk</a>
-                  <a href="{{ route('register') }}"
-                     class="border-2 border-blue-600 text-blue-600 px-6 py-2 rounded-lg hover:bg-blue-50 transition font-medium">Daftar</a>
+                    @auth
+                        <a href="{{ route('dashboard') }}" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium">Dashboard</a>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="border-2 border-blue-600 text-blue-600 px-6 py-2 rounded-lg hover:bg-blue-50 transition font-medium">Keluar</button>
+                        </form>
+                    @else
+                        <a href="{{ route('login') }}" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium">Masuk</a>
+                        <a href="{{ route('register') }}" class="border-2 border-blue-600 text-blue-600 px-6 py-2 rounded-lg hover:bg-blue-50 transition font-medium">Daftar</a>
+                    @endauth
                 </div>
 
                 <!-- Mobile Menu Toggle -->
@@ -97,70 +97,66 @@
 
             <!-- Mobile Menu -->
             <div id="mobile-menu" class="md:hidden hidden border-t border-gray-200 py-4 space-y-2">
-                <a href="#beranda" class="block px-4 py-2 text-gray-600 hover:text-blue-600 transition">Beranda</a>
-                <a href="#mengapa-kami" class="block px-4 py-2 text-gray-600 hover:text-blue-600 transition">Mengapa Kami</a>
-                <a href="#jadwal-dokter" class="block px-4 py-2 text-gray-600 hover:text-blue-600 transition">Jadwal Dokter</a>
-                <a href="#tentang-kami" class="block px-4 py-2 text-gray-600 hover:text-blue-600 transition">Tentang Kami</a>
-                <a href="#layanan" class="block px-4 py-2 text-gray-600 hover:text-blue-600 transition">Layanan</a>
-                <a href="#artikel" class="block px-4 py-2 text-gray-600 hover:text-blue-600 transition">Artikel</a>
-                <!-- Added Login and Register buttons to mobile menu -->
+                <a href="{{ route('landing') }}#beranda" class="block px-4 py-2 text-gray-600 hover:text-blue-600 transition mobile-nav-link">Beranda</a>
+                <a href="{{ route('landing') }}#mengapa-kami" class="block px-4 py-2 text-gray-600 hover:text-blue-600 transition mobile-nav-link">Mengapa Kami</a>
+                <a href="{{ route('landing') }}#jadwal-dokter" class="block px-4 py-2 text-gray-600 hover:text-blue-600 transition mobile-nav-link">Jadwal Dokter</a>
+                <a href="{{ route('landing') }}#tentang-kami" class="block px-4 py-2 text-gray-600 hover:text-blue-600 transition mobile-nav-link">Tentang Kami</a>
+                <a href="{{ route('landing') }}#layanan" class="block px-4 py-2 text-gray-600 hover:text-blue-600 transition mobile-nav-link">Layanan</a>
+                <a href="{{ route('artikel.index') }}" class="block px-4 py-2 text-gray-600 hover:text-blue-600 transition mobile-nav-link">Artikel</a>
+                
                 <div class="flex gap-3 mt-4 px-4">
-                    <a href="{{ route('login') }}" class="flex-1 text-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium">
-                        Masuk
-                    </a>
-                    <a href="{{ route('register') }}" class="flex-1 text-center border-2 border-blue-600 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition font-medium">
-                        Daftar
-                    </a>
+                    @auth
+                        <a href="{{ route('dashboard') }}" class="flex-1 text-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium">Dashboard</a>
+                        <form method="POST" action="{{ route('logout') }}" class="flex-1">
+                            @csrf
+                            <button type="submit" class="w-full text-center border-2 border-blue-600 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition font-medium">Keluar</button>
+                        </form>
+                    @else
+                        <a href="{{ route('login') }}" class="flex-1 text-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium">Masuk</a>
+                        <a href="{{ route('register') }}" class="flex-1 text-center border-2 border-blue-600 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition font-medium">Daftar</a>
+                    @endauth
                 </div>
             </div>
         </div>
     </nav>
 
     <!-- ========== HERO SECTION ========== -->
-     <!-- TAMBAHKAN 'relative' agar ::after bisa diposisikan -->
-     <section id="beranda" class="relative pt-32 pb-16 md:pt-40 md:pb-24 bg-cover bg-center" style="background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('{{ asset('assets/img/hero-doctor.jpg') }}')">
+    {{-- [MODIFIKASI] Menambahkan 'min-h-screen' dan 'flex items-center' agar full-screen dan konten di tengah --}}
+    {{-- [MODIFIKASI] Menghapus padding atas/bawah (pt-32 pb-16 md:pt-40 md:pb-24) dan menggantinya dengan padding untuk navbar (pt-16) --}}
+    <section id="beranda" class="relative min-h-screen flex items-center pt-16 bg-cover bg-center" style="background-image: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('{{ asset('assets/img/hero-doctor.jpg') }}')">
          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
              <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
                  <!-- Text Content -->
-                 <div class="space-y-6">
-                     <!-- PERUBAHAN: Mengganti 'text-gray-900' menjadi 'text-white' agar terbaca di atas gambar -->
+                 <div class="space-y-6 text-center md:text-left">
                      <h1 class="text-4xl md:text-5xl font-bold text-white leading-tight">
                          Kesehatan Anda Adalah Prioritas Kami
                      </h1>
-                     <!-- PERUBAHAN: Mengganti 'text-gray-600' menjadi 'text-gray-200' -->
                      <p class="text-lg text-gray-200 leading-relaxed">
                          Klinik Sehat menyediakan layanan kesehatan terpercaya dengan dokter berpengalaman dan fasilitas modern untuk menjaga kesehatan Anda dan keluarga.
                      </p>
-                     <div class="flex flex-col sm:flex-row gap-4 pt-4">
-                         
-                         <!-- ========== PERUBAHAN DIMULAI DI SINI ========== -->
+                     <div class="flex flex-col sm:flex-row gap-4 pt-4 justify-center md:justify-start">
                          
                          <!-- Logika Tombol Buat Antrian -->
                          @guest
-                             <!-- Jika pengguna BELUM LOGIN, arahkan ke halaman login -->
                              <a href="{{ route('login') }}" class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition font-medium">
                                  Buat Antrian Berobat
                              </a>
                          @else
-                             <!-- Jika pengguna SUDAH LOGIN, arahkan ke dashboard/halaman antrian -->
-                             <!-- Ganti 'dashboard' dengan route yang sesuai, misal: 'antrian.create' -->
                              <a href="{{ route('dashboard') }}" class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition font-medium">
                                  Buat Antrian Berobat
                              </a>
                          @endguest
                          
-                         <!-- Tombol Panduan diubah dari <button> ke <a> agar bisa di-scroll -->
                          <a href="#panduan" class="border-2 border-white text-white px-8 py-3 rounded-lg hover:bg-white/10 transition font-medium">
                              Panduan Penggunaan
                          </a>
                          
-                         <!-- ========== PERUBAHAN SELESAI ========== -->
-
                      </div>
                  </div>
              </div>
          </div>
      </section>
+
 
     <!-- ========== MENGAPA KAMI ========== -->
     <!-- PERUBAHAN: Mengganti bg-white dengan gambar, padding, dan overlay putih transparan -->
@@ -359,85 +355,53 @@ Setiap kunjungan, diagnosis, dan resep obat akan tercatat secara otomatis dan am
                     <p class="text-gray-600">Pemeriksaan laboratorium lengkap dengan hasil akurat dan cepat</p>
                 </div>
 
-                <!-- Service 4 -->
-                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
-                    <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-gray-900 mb-2">Radiologi</h3>
-                    <p class="text-gray-600">Pemeriksaan radiologi dengan teknologi CT Scan dan X-Ray modern</p>
-                </div>
-
-                <!-- Service 5 -->
-                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
-                    <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-2m-4-1v8m0 0l3-3m-3 3L9 8m-5 5h.01M17 13h.01"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-gray-900 mb-2">Vaksinasi</h3>
-                    <p class="text-gray-600">Program vaksinasi lengkap untuk anak-anak dan dewasa</p>
-                </div>
-
-                <!-- Service 6 -->
-                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
-                    <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-gray-900 mb-2">Telemedicine</h3>
-                    <p class="text-gray-600">Konsultasi online dengan dokter dari kenyamanan rumah Anda</p>
-                </div>
             </div>
         </div>
     </section>
 
-    <!-- ========== PANDUAN PESAN JANJI ========== -->
-    <section id="panduan" class="py-16 md:py-24 bg-blue-600 text-white">
+    <!-- ========== PANDUAN BEROBAT ONLINE ========== -->
+    <section id="panduan" class="py-16 md:py-24 bg-[#24306E] text-white"> {{-- [MODIFIKASI] Warna disesuaikan dengan tema --}}
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold mb-4">Cara Pesan Janji Temu</h2>
-                <p class="text-lg text-blue-100">Ikuti langkah-langkah mudah berikut untuk membuat janji temu dengan dokter</p>
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">Alur Berobat Online Klinik Kami</h2>
+                <p class="text-lg text-gray-200 max-w-2xl mx-auto">Ikuti 4 langkah mudah untuk berobat, dari pendaftaran di rumah hingga terima obat.</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <!-- Step 1 -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <!-- Step 1: Daftar & Ambil Antrean -->
                 <div class="text-center">
-                    <div class="w-16 h-16 bg-white text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+                    <div class="w-20 h-20 bg-white text-[#24306E] rounded-full flex items-center justify-center mx-auto mb-4 text-3xl font-bold">
                         1
                     </div>
-                    <h3 class="text-lg font-bold mb-2">Daftar/Login</h3>
-                    <p class="text-blue-100">Buat akun atau login ke aplikasi Klinik Sehat</p>
+                    <h3 class="text-xl font-bold mb-2">Daftar & Ambil Antrean</h3>
+                    <p class="text-gray-200">Login atau buat akun baru. Buka dashboard Anda dan ambil antrean dengan memilih Poli, Dokter, serta mengisi keluhan Anda.</p>
                 </div>
 
-                <!-- Step 2 -->
+                <!-- Step 2: Datang & Check-In QR -->
                 <div class="text-center">
-                    <div class="w-16 h-16 bg-white text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+                    <div class="w-20 h-20 bg-white text-[#24306E] rounded-full flex items-center justify-center mx-auto mb-4 text-3xl font-bold">
                         2
                     </div>
-                    <h3 class="text-lg font-bold mb-2">Pilih Dokter</h3>
-                    <p class="text-blue-100">Pilih dokter spesialis sesuai kebutuhan Anda</p>
+                    <h3 class="text-xl font-bold mb-2">Datang & Check-In</h3>
+                    <p class="text-gray-200">Datang ke klinik. Buka kembali dashboard Anda, klik tombol "Check-In", dan pindai (scan) QR code yang tersedia di meja pendaftaran.</p>
                 </div>
 
-                <!-- Step 3 -->
+                <!-- Step 3: Pantau Panggilan Dokter -->
                 <div class="text-center">
-                    <div class="w-16 h-16 bg-white text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+                    <div class="w-20 h-20 bg-white text-[#24306E] rounded-full flex items-center justify-center mx-auto mb-4 text-3xl font-bold">
                         3
                     </div>
-                    <h3 class="text-lg font-bold mb-2">Pilih Jadwal</h3>
-                    <p class="text-blue-100">Tentukan tanggal dan waktu yang sesuai dengan Anda</p>
+                    <h3 class="text-xl font-bold mb-2">Pantau Panggilan & Periksa</h3>
+                    <p class="text-gray-200">Duduk dan pantau dashboard Anda. Saat status berubah menjadi "Giliran Anda!", segera masuk ke ruang dokter untuk pemeriksaan.</p>
                 </div>
 
-                <!-- Step 4 -->
+                <!-- Step 4: Ambil Obat & Selesai -->
                 <div class="text-center">
-                    <div class="w-16 h-16 bg-white text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">
+                    <div class="w-20 h-20 bg-white text-[#24306E] rounded-full flex items-center justify-center mx-auto mb-4 text-3xl font-bold">
                         4
                     </div>
-                    <h3 class="text-lg font-bold mb-2">Konfirmasi</h3>
-                    <p class="text-blue-100">Selesaikan proses booking dan tunggu konfirmasi</p>
+                    <h3 class="text-xl font-bold mb-2">Ambil Obat & Selesai</h3>
+                    <p class="text-gray-200">Setelah diperiksa, Anda akan otomatis mendapat nomor antrean apotek (misal: APT-001). Pantau statusnya hingga "Siap Diambil", lalu ambil obat Anda.</p>
                 </div>
             </div>
         </div>
@@ -451,46 +415,44 @@ Setiap kunjungan, diagnosis, dan resep obat akan tercatat secara otomatis dan am
                 <p class="text-lg text-gray-600">Informasi dan tips kesehatan terkini dari para ahli</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <!-- Article 1 -->
-                <article class="bg-white rounded-lg shadow-md hover:shadow-lg transition overflow-hidden">
-                    <img src="https://placehold.co/400x200/E0E7FF/3B82F6?text=Artikel+1" 
-                         alt="Article thumbnail" class="w-full h-48 object-cover">
-                    <div class="p-6">
-                        <span class="inline-block bg-blue-100 text-blue-600 text-xs px-3 py-1 rounded-full mb-3">Gaya Hidup</span>
-                        <h3 class="text-xl font-bold text-gray-900 mb-2">Tips Hidup Sehat untuk Keseharian</h3>
-                        <p class="text-gray-600 mb-4">Pelajari cara-cara sederhana untuk meningkatkan kualitas hidup Anda setiap hari dengan kebiasaan sehat.</p>
-                        <a href="#" class="text-blue-600 font-medium hover:text-blue-700">Baca Selengkapnya →</a>
-                    </div>
-                </article>
+            {{-- [MODIFIKASI UTAMA] Mengganti grid statis dengan loop dinamis --}}
+            @if(isset($articles) && $articles->isNotEmpty())
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    @foreach($articles as $article)
+                        {{-- Menggunakan gaya dari dashboard pasien --}}
+                        <div class="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col transform hover:-translate-y-2 transition-transform duration-300">
+                            {{-- [PERBAIKAN] Menggunakan route('artikel.show') yang baru --}}
+                            <a href="{{ route('artikel.show', $article->slug) }}">
+                                <img src="{{ $article->image_url ?? 'https://placehold.co/600x400/ABDCD6/24306E?text=Klinik+Sehat' }}" alt="Gambar Artikel: {{ $article->title }}" class="w-full h-48 object-cover">
+                            </a>
+                            <div class="p-6 flex-grow flex flex-col">
+                                <h3 class="font-bold text-lg mb-2 text-gray-800">{{ $article->title }}</h3>
+                                <p class="text-gray-600 text-sm flex-grow">{{ Str::limit(strip_tags($article->content), 100) }}</p>
+                                {{-- [PERBAIKAN] Menggunakan route('artikel.show') yang baru --}}
+                                <a href="{{ route('artikel.show', $article->slug) }}" class="text-sm text-[#24306E] font-semibold mt-4 self-start hover:underline">Baca Selengkapnya &rarr;</a>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
 
-                <!-- Article 2 -->
-                <article class="bg-white rounded-lg shadow-md hover:shadow-lg transition overflow-hidden">
-                    <img src="https://placehold.co/400x200/E0E7FF/3B82F6?text=Artikel+2" 
-                         alt="Article thumbnail" class="w-full h-48 object-cover">
-                    <div class="p-6">
-                        <span class="inline-block bg-blue-100 text-blue-600 text-xs px-3 py-1 rounded-full mb-3">Nutrisi</span>
-                        <h3 class="text-xl font-bold text-gray-900 mb-2">Pentingnya Nutrisi Seimbang</h3>
-                        <p class="text-gray-600 mb-4">Memahami kebutuhan nutrisi tubuh dan bagaimana cara mencukupi kebutuhan nutrisi harian Anda.</p>
-                        <a href="#" class="text-blue-600 font-medium hover:text-blue-700">Baca Selengkapnya →</a>
-                    </div>
-                </article>
+                {{-- Tombol untuk melihat semua artikel --}}
+                <div class="text-center mt-16">
+                    {{-- [PERBAIKAN] Menggunakan route('artikel.index') yang baru --}}
+                    <a href="{{ route('artikel.index') }}" class="inline-block text-center py-3 px-8 rounded-lg no-underline font-semibold transition-all duration-300 ease-in-out border-2 border-[#24306E] bg-[#24306E] text-white hover:bg-transparent hover:text-[#24306E]">
+                        Lihat Semua Artikel
+                    </a>
+                </div>
 
-                <!-- Article 3 -->
-                <article class="bg-white rounded-lg shadow-md hover:shadow-lg transition overflow-hidden">
-                    <img src="https://placehold.co/400x200/E0E7FF/3B82F6?text=Artikel+3" 
-                         alt="Article thumbnail" class="w-full h-48 object-cover">
-                    <div class="p-6">
-                        <span class="inline-block bg-blue-100 text-blue-600 text-xs px-3 py-1 rounded-full mb-3">Kesehatan Mental</span>
-                        <h3 class="text-xl font-bold text-gray-900 mb-2">Menjaga Kesehatan Mental Anda</h3>
-                        <p class="text-gray-600 mb-4">Strategi efektif untuk menjaga kesehatan mental dan mengatasi stress dalam kehidupan sehari-hari.</p>
-                        <a href="#" class="text-blue-600 font-medium hover:text-blue-700">Baca Selengkapnya →</a>
-                    </div>
-                </article>
-            </div>
+            @else
+                <div class="text-center text-gray-500 py-16 bg-gray-50 rounded-xl shadow-inner">
+                    <p>Belum ada artikel kesehatan yang diterbitkan.</p>
+                </div>
+            @endif
+            {{-- [/MODIFIKASI UTAMA] --}}
+            
         </div>
     </section>
-
+    
     <!-- ========== FOOTER ========== -->
     <footer class="bg-gray-900 text-gray-300 py-16">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

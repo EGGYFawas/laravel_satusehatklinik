@@ -59,7 +59,7 @@
             <div class="flex items-center gap-4 w-full justify-center">
                 {{-- Tombol Kembali --}}
                 <a href="{{ route('login') }}" 
-                   class="w-1/2 bg-gray-400 text-white font-semibold py-3 px-6 rounded-full hover:bg-gray-500 transition-colors duration-300 text-center">
+                   class="w-1/2 bg-blue-400 text-black font-semibold py-3 px-6 rounded-full hover:bg-gray-500 transition-colors duration-300 text-center">
                    Kembali
                 </a>
                 {{-- Tombol untuk men-submit form di sebelah kanan --}}

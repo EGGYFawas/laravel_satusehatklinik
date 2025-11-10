@@ -18,7 +18,13 @@ use App\Http\Controllers\Pasien\HistoryController as PasienHistoryController;
 use App\Http\Controllers\Dokter\PatientHistoryController as DokterPatientHistoryController;
 use App\Http\Controllers\Pasien\ScheduleController as PasienScheduleController;
 use App\Http\Controllers\Dokter\ScheduleController as DokterScheduleController;
-use App\Http\Controllers\Pasien\ArticleController as PasienArticleController;
+
+// [MODIFIKASI] Import Model yang dibutuhkan untuk route landing
+use App\Models\Article;
+use App\Models\Doctor;
+use Carbon\Carbon;
+use App\Http\Controllers\ArticleController; // <-- Controller Publik Baru
+
 
 /*
 |--------------------------------------------------------------------------
@@ -26,9 +32,33 @@ use App\Http\Controllers\Pasien\ArticleController as PasienArticleController;
 |--------------------------------------------------------------------------
 */
 
-use App\Http\Controllers\LandingPageController; // <--- TAMBAHKAN INI di bagian atas
+// [MODIFIKASI UTAMA] Route landing page digabungkan menjadi satu
+Route::get('/', function () {
+    
+    // 1. Ambil 3 artikel terbaru
+    $articles = Article::whereNotNull('published_at')
+        ->where('published_at', '<=', Carbon::now())
+        ->latest('published_at')
+        ->take(3)
+        ->get();
+        
+    // 2. Ambil data dokter (seperti sebelumnya)
+    $doctors = Doctor::with(['user', 'poli', 'doctorSchedules' => function ($query) {
+            $query->where('is_active', true)->orderBy('start_time');
+        }])
+        ->whereHas('doctorSchedules', function($query) {
+            $query->where('is_active', true);
+        })
+        ->get();
 
-Route::get('/', [LandingPageController::class, 'index'])->name('landing');
+    // 3. Kirim kedua variabel ke view
+    return view('landing', compact('articles', 'doctors')); 
+})->name('landing');
+
+ // [PENAMBAHAN BARU] Route Artikel Publik (untuk Guest & Pasien)
+    Route::get('/artikel', [ArticleController::class, 'index'])->name('artikel.index'); // Daftar artikel (dengan search)
+    Route::get('/artikel/{article:slug}', [ArticleController::class, 'show'])->name('artikel.show'); // Detail artikel
+
 
 // == GRUP UNTUK PENGGUNA YANG BELUM LOGIN (GUEST) ==
 Route::middleware('guest')->group(function () {
@@ -36,8 +66,13 @@ Route::middleware('guest')->group(function () {
     Route::post('login', [AuthController::class, 'login']);
     Route::get('register', [AuthController::class, 'showRegisterForm'])->name('register');
     Route::post('register', [AuthController::class, 'register']);
+    
     Route::get('/check-patient-nik-public/{nik}', [AuthController::class, 'checkPatientPublic'])->name('check-patient-nik-public');
+
+    
+   
 });
+
 
 // == GRUP UNTUK PENGGUNA YANG SUDAH LOGIN (AUTHENTICATED) ==
 Route::middleware(['auth'])->group(function () {
@@ -58,9 +93,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/riwayat', [PasienHistoryController::class, 'index'])->name('riwayat.index');
         Route::get('/riwayat/{patient}', [PasienHistoryController::class, 'show'])->name('riwayat.show');
         Route::get('/jadwal-dokter', [PasienScheduleController::class, 'index'])->name('jadwal.index');
-        Route::get('/artikel', [PasienArticleController::class, 'index'])->name('artikel.index');
-        Route::get('/artikel/{article:slug}', [PasienArticleController::class, 'show'])->name('artikel.show');
-    });
+        });
 
     // --- GRUP ROUTE UNTUK DOKTER ---
     Route::middleware(['role:dokter'])->prefix('dokter')->name('dokter.')->group(function () {
