@@ -23,7 +23,7 @@ class DatabaseSeeder extends Seeder
             // ketergantungan dan menjadi dasar bagi seeder lainnya.
             // =================================================================
             RoleSeeder::class,
-            // PoliSeeder::class,
+            PoliSeeder::class,
             MedicineSeeder::class,
             DiagnosisTagSeeder::class,
 
@@ -40,7 +40,7 @@ class DatabaseSeeder extends Seeder
             // TAHAP 3: DATA TAMBAHAN & TRANSAKSIONAL
             // Seeder ini bergantung pada data pengguna yang sudah dibuat di TAHAP 2.
             // =================================================================
-            // DoctorScheduleSeeder::class, // Membutuhkan data Dokter yang sudah ada
+            DoctorScheduleSeeder::class, // Membutuhkan data Dokter yang sudah ada
             ArticleSeeder::class,        // Membutuhkan User Admin sebagai penulis
             
             // --- [PENAMBAHAN BARU] ---
