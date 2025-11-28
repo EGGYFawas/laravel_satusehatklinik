@@ -9,10 +9,11 @@ class DiagnosisTag extends Model
 {
     use HasFactory;
 
+    protected $table = 'diagnosis_tags';
+
     /**
      * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
+     * tag_name WAJIB ada di sini biar dokter bisa input tag baru.
      */
     protected $fillable = [
         'tag_name',
@@ -21,11 +22,15 @@ class DiagnosisTag extends Model
 
     /**
      * Relasi many-to-many ke MedicalRecord.
-     * Satu tag diagnosa bisa dimiliki oleh banyak rekam medis.
      */
     public function medicalRecords()
     {
-        return $this->belongsToMany(MedicalRecord::class, 'record_diagnoses');
+        // Parameter: (Model Lawan, Nama Tabel Pivot, FK Model Ini, FK Model Lawan)
+        return $this->belongsToMany(
+            MedicalRecord::class, 
+            'record_diagnoses', 
+            'diagnosis_tag_id', 
+            'medical_record_id'
+        );
     }
 }
-

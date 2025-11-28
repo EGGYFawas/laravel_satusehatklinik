@@ -73,7 +73,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/riwayat-pasien', [DokterPatientHistoryController::class, 'index'])->name('riwayat-pasien.index');
         Route::get('/riwayat-pasien/{patient}', [DokterPatientHistoryController::class, 'show'])->name('riwayat-pasien.show');
         Route::get('/jadwal-saya', [DokterScheduleController::class, 'index'])->name('jadwal.index');
-       });
+       Route::get('/icd10/search', [App\Http\Controllers\Dokter\DashboardController::class, 'searchIcd10'])->name('icd10.search');
+    });
 
     // Grup Admin dihapus karena sudah ditangani oleh Filament
 

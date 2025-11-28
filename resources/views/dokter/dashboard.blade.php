@@ -18,6 +18,12 @@
         .blood-pressure-input { display: flex; align-items: center; }
         .blood-pressure-input input { text-align: center; }
         .blood-pressure-input span { margin: 0 0.5rem; font-size: 1.5rem; color: #9ca3af; }
+
+        /* [MODIFIKASI] Custom Scrollbar biar lebih rapi di Modal */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 @endpush
 
@@ -149,20 +155,43 @@
                                 
                                 <!-- Seksi Asesmen & Rencana -->
                                 <div class="space-y-6 border-t pt-6 mt-6">
+                                    
+                                    <!-- [MODIFIKASI] Diagnosis Utama (ICD 10) -->
+                                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                        <label class="block text-lg font-semibold text-blue-800 mb-2">Diagnosis Utama (ICD-10) <span class="text-red-500">*</span></label>
+                                        
+                                        <div class="flex gap-2">
+                                            <div class="flex-grow">
+                                                <input type="hidden" name="icd10_code" id="icd10_code" required>
+                                                <input type="hidden" name="icd10_name" id="icd10_name" required>
+                                                <input type="text" id="icd10_display" class="w-full p-3 border border-blue-300 rounded-md bg-white text-gray-700 cursor-not-allowed font-medium" placeholder="Belum ada diagnosis dipilih... (Klik tombol Cari)" readonly>
+                                            </div>
+                                            <button type="button" id="openIcd10ModalBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition flex items-center shadow-md">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                                </svg>
+                                                Cari ICD-10
+                                            </button>
+                                        </div>
+                                        <p class="text-xs text-blue-600 mt-1">Diagnosis utama wajib menggunakan standar ICD-10. Data diambil langsung dari database.</p>
+                                    </div>
+
+                                    <!-- [MODIFIKASI] Diagnosis Tambahan (Tags) -->
                                     <div>
-                                        <label for="diagnosis_tags" class="block text-lg font-semibold text-gray-700 mb-2">Diagnosis (Asesmen) <span class="text-red-500">*</span></label>
+                                        <label for="diagnosis_tags" class="block text-lg font-semibold text-gray-700 mb-2">Diagnosis Tambahan / Catatan (Tags)</label>
                                         <select name="diagnosis_tags[]" id="diagnosis_tags" class="w-full" multiple="multiple">
                                             @if($diagnosisTags) @foreach($diagnosisTags as $tag) <option value="{{ $tag->tag_name }}">{{ $tag->tag_name }}</option> @endforeach @endif
                                         </select>
-                                        <p class="text-xs text-gray-500 mt-1">Pilih diagnosis yang ada atau ketik untuk membuat diagnosis baru.</p>
+                                        <p class="text-xs text-gray-500 mt-1">Gunakan ini untuk diagnosis sekunder atau catatan tambahan (bebas ketik).</p>
                                     </div>
+
                                     <div>
                                         <label for="doctor_notes" class="block text-lg font-semibold text-gray-700 mb-2">Rencana Penatalaksanaan (Plan) <span class="text-red-500">*</span></label>
                                         <textarea name="doctor_notes" id="doctor_notes" rows="4" class="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500" placeholder="Tuliskan rencana, edukasi, atau catatan lain untuk pasien..." required></textarea>
                                     </div>
                                     <div>
                                         <h3 class="text-lg font-semibold text-gray-700 mb-3">Resep Obat</h3>
-                                        <button type="button" id="showObatModalBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md transition duration-300 ease-in-out transform hover:scale-105">
+                                        <button type="button" id="showObatModalBtn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-md transition duration-300 ease-in-out transform hover:scale-105">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" /></svg>
                                             Tambah & Pilih Obat
                                         </button>
@@ -189,7 +218,7 @@
             </div>
         </div>
 
-        {{-- Kolom Kanan: Daftar Antrean (Tidak ada perubahan di sini) --}}
+        {{-- Kolom Kanan: Daftar Antrean --}}
         <div>
             @if($pasienBerikutnya && !$pasienSedangDipanggil)
             <div class="bg-white rounded-xl shadow-lg mb-8 border-2 border-blue-500">
@@ -265,8 +294,8 @@
     </div>
 
 @if($pasienAktif)
+<!-- MODAL OBAT -->
 <div id="obatModal" class="fixed inset-0 flex items-center justify-center hidden">
-    {{-- ... Konten Modal Obat (Tidak ada perubahan di sini) ... --}}
     <div class="modal-backdrop" id="modalBackdrop"></div>
     <div class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-3xl m-4 max-h-[90vh] flex flex-col">
         <div class="flex justify-between items-center p-5 border-b">
@@ -287,6 +316,52 @@
         </div>
     </div>
 </div>
+
+<!-- [MODIFIKASI] MODAL ICD 10 (AJAX) -->
+<div id="icd10Modal" class="fixed inset-0 flex items-center justify-center hidden z-50">
+    <div class="fixed inset-0 bg-black bg-opacity-50" id="icd10ModalBackdrop"></div>
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl m-4 flex flex-col max-h-[85vh] z-50 relative">
+        <div class="flex justify-between items-center p-5 border-b">
+            <h3 class="text-xl font-bold text-gray-800">Cari Diagnosis ICD-10</h3>
+            <button id="closeIcd10ModalBtn" class="text-gray-400 hover:text-gray-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+        
+        <div class="p-5">
+            <!-- Search Bar -->
+            <div class="relative mb-4">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                </div>
+                <!-- Kita gunakan data-search-url untuk menyimpan route -->
+                <input type="text" id="icd10SearchInput" 
+                       data-search-url="{{ route('dokter.icd10.search') }}"
+                       class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
+                       placeholder="Ketik kode (Contoh: A00) atau nama penyakit..." autocomplete="off">
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="icd10Loading" class="hidden text-center py-4 text-blue-500">
+                <svg class="animate-spin h-5 w-5 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                <span class="text-xs mt-1">Mencari di database...</span>
+            </div>
+
+            <!-- List Container [MODIFIKASI] (Tambah class custom-scrollbar dan bg) -->
+            <div class="overflow-y-auto h-80 border border-gray-200 rounded-lg custom-scrollbar bg-gray-50" id="icd10ListContainer">
+                 <!-- Default Empty State -->
+                 <div class="flex flex-col items-center justify-center h-full text-gray-400">
+                    <svg class="w-12 h-12 mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 16l2.879-2.879m0 0a3 3 0 104.243-4.242 3 3 0 00-4.243 4.242zM21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <p class="text-sm font-medium">Mulai ketik untuk mencari diagnosis...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-end items-center p-5 border-t bg-gray-50 rounded-b-xl">
+             <button type="button" id="cancelIcd10ModalBtn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg">Batal</button>
+        </div>
+    </div>
+</div>
 @endif
 @endsection
 
@@ -301,12 +376,13 @@
         if(formPemeriksaan) {
             $('#diagnosis_tags').select2({
                 tags: true,
-                placeholder: "Pilih atau ketik diagnosis",
+                placeholder: "Tulis catatan tambahan (opsional)",
                 tokenSeparators: [',']
             });
             
-            // ... (Logika modal obat tidak berubah) ...
-            const medicinesData = {!! Illuminate\Support\Js::from($medicines ?? []) !!};
+            // --- LOGIKA MODAL OBAT ---
+            const medicinesData = @json($medicines ?? []);
+            
             let medicineRowCounter = 0;
             const modal = $('#obatModal');
             const showModalBtn = $('#showObatModalBtn');
@@ -404,32 +480,154 @@
                 });
             });
 
-            // [MODIFIKASI] Event listener untuk submit form pemeriksaan
+            // --- [MODIFIKASI] LOGIKA MODAL ICD 10 DENGAN AJAX ---
+            const icd10Modal = $('#icd10Modal');
+            const openIcd10Btn = $('#openIcd10ModalBtn');
+            const closeIcd10Btn = $('#closeIcd10ModalBtn');
+            const cancelIcd10Btn = $('#cancelIcd10ModalBtn');
+            const icd10Backdrop = $('#icd10ModalBackdrop');
+            const icd10ListContainer = $('#icd10ListContainer');
+            const icd10SearchInput = $('#icd10SearchInput');
+            const icd10Loading = $('#icd10Loading');
+            
+            const icd10CodeInput = $('#icd10_code');
+            const icd10NameInput = $('#icd10_name');
+            const icd10DisplayInput = $('#icd10_display');
+
+            const toggleIcd10Modal = (show) => {
+                if(show) {
+                    icd10Modal.removeClass('hidden');
+                    icd10SearchInput.focus();
+                } else {
+                    icd10Modal.addClass('hidden');
+                }
+            };
+
+            // Debounce function agar tidak spam request setiap ketik huruf
+            function debounce(func, wait) {
+                let timeout;
+                return function() {
+                    const context = this, args = arguments;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(context, args), wait);
+                };
+            }
+
+            // Fungsi Fetch Data dari Controller
+            const fetchIcd10 = debounce(function(query) {
+                if (query.length < 2) {
+                    icd10ListContainer.html('<div class="flex flex-col items-center justify-center h-40 text-gray-400"><svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg><p class="text-sm">Ketik minimal 2 karakter...</p></div>');
+                    return;
+                }
+
+                const url = icd10SearchInput.data('search-url') + '?q=' + encodeURIComponent(query);
+                
+                icd10Loading.removeClass('hidden'); 
+                icd10ListContainer.addClass('opacity-50');
+
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        icd10ListContainer.empty();
+                        if(data.length === 0) {
+                            // [DESIGN] Empty State Keren
+                            icd10ListContainer.append(`
+                                <div class="flex flex-col items-center justify-center h-40 text-gray-500">
+                                    <svg class="w-12 h-12 mb-2 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <p class="font-medium">Tidak ditemukan</p>
+                                    <p class="text-xs text-gray-400">Coba kata kunci lain atau kode ICD spesifik.</p>
+                                </div>
+                            `);
+                        } else {
+                            // [DESIGN] Render List yang Rapi & Highlighted
+                            let html = '<div class="flex flex-col">';
+                            data.forEach(item => {
+                                // Highlight kata kunci yang dicari (Regex Case Insensitive)
+                                const regex = new RegExp(`(${query})`, 'gi');
+                                const highlightedName = item.name.replace(regex, '<span class="bg-yellow-200 font-semibold">$1</span>');
+                                const highlightedCode = item.code.replace(regex, '<span class="bg-yellow-200 text-blue-800">$1</span>');
+
+                                html += `
+                                    <div class="group flex items-center justify-between p-3 border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-all duration-200 icd10-item" 
+                                        data-code="${item.code}" 
+                                        data-name="${item.name}">
+                                        
+                                        <div class="flex items-start gap-3 overflow-hidden">
+                                            <!-- Badge Kode ICD -->
+                                            <div class="flex-shrink-0 bg-blue-100 text-blue-700 font-mono font-bold px-2 py-1 rounded text-sm border border-blue-200 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-colors">
+                                                ${highlightedCode}
+                                            </div>
+                                            
+                                            <!-- Nama Penyakit -->
+                                            <div class="flex flex-col">
+                                                <span class="text-gray-800 text-sm font-medium leading-snug group-hover:text-blue-900">
+                                                    ${highlightedName}
+                                                </span>
+                                                <span class="text-[10px] text-gray-400 group-hover:text-blue-400">ICD-10 Standard</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Tombol Pilih (Muncul pas hover) -->
+                                        <div class="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2">
+                                            <span class="text-xs bg-blue-600 text-white px-3 py-1 rounded-full shadow-sm font-medium">
+                                                Pilih
+                                            </span>
+                                        </div>
+                                    </div>
+                                `;
+                            });
+                            html += '</div>';
+                            icd10ListContainer.append(html);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        icd10ListContainer.html('<p class="text-center text-red-500 py-4">Gagal mengambil data.</p>');
+                    })
+                    .finally(() => {
+                        icd10Loading.addClass('hidden'); // Sembunyikan loading
+                        icd10ListContainer.removeClass('opacity-50');
+                    });
+            }, 400); // Tunggu 400ms setelah mengetik baru request
+
+            openIcd10Btn.on('click', () => toggleIcd10Modal(true));
+            // [FIXED] Menambahkan kurung tutup ')' yang hilang di baris ini
+            [closeIcd10Btn, cancelIcd10Btn, icd10Backdrop].forEach(el => el.on('click', () => toggleIcd10Modal(false)));
+
+            icd10SearchInput.on('input', function() {
+                fetchIcd10($(this).val());
+            });
+
+            icd10ListContainer.on('click', '.icd10-item', function() {
+                const code = $(this).data('code');
+                const name = $(this).data('name');
+                icd10CodeInput.val(code);
+                icd10NameInput.val(name);
+                icd10DisplayInput.val(`${code} - ${name}`);
+                toggleIcd10Modal(false);
+            });
+            // --- END LOGIKA MODAL ICD 10 ---
+
             formPemeriksaan.addEventListener('submit', function(e) {
                 e.preventDefault();
-                
-                // Mengambil nilai dari setiap input yang wajib diisi
                 const systolic = document.getElementById('blood_pressure_systolic').value;
                 const diastolic = document.getElementById('blood_pressure_diastolic').value;
                 const heartRate = document.getElementById('heart_rate').value;
                 const temperature = document.getElementById('temperature').value;
                 const doctorNotes = document.getElementById('doctor_notes').value;
-                
-                // [PERBAIKAN] Mengambil nilai dari Select2 untuk diagnosis
-                const diagnosisTags = $('#diagnosis_tags').val();
+                const icd10Code = $('#icd10_code').val();
 
-                // Pengecekan semua field wajib, termasuk diagnosis
-                if (!systolic || !diastolic || !heartRate || !temperature || !doctorNotes.trim() || diagnosisTags.length === 0) {
+                if (!systolic || !diastolic || !heartRate || !temperature || !doctorNotes.trim() || !icd10Code) {
                     Swal.fire({
                         icon: 'error',
                         title: 'Data Pemeriksaan Tidak Lengkap',
-                        // [PERBAIKAN] Pesan error lebih spesifik
-                        text: 'Harap lengkapi semua kolom yang ditandai wajib (*), termasuk Tanda Vital, Diagnosis, dan Rencana Penatalaksanaan.',
+                        text: 'Harap lengkapi Tanda Vital, Diagnosis Utama (ICD-10), dan Rencana Penatalaksanaan.',
                     });
-                    return; // Menghentikan proses jika ada data yang kurang
+                    return; 
                 }
 
-                // Jika semua validasi lolos, tampilkan konfirmasi
                 Swal.fire({
                     title: 'Konfirmasi Penyimpanan',
                     text: "Anda yakin ingin menyelesaikan pemeriksaan dan menyimpan data ini? Tindakan ini tidak dapat diubah.",
@@ -441,7 +639,7 @@
                     cancelButtonText: 'Batal'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        formPemeriksaan.submit(); // Kirim form jika dokter setuju
+                        formPemeriksaan.submit(); 
                     }
                 });
             });
@@ -449,4 +647,3 @@
     });
     </script>
 @endpush
-

@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Doctor; // 1. Impor Model Doctor Anda
+use App\Models\Doctor;
+use App\Models\Article; // <--- 1. TAMBAHKAN IMPORT INI
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use Illuminate\Support\Str; // Kita akan butuh ini di view, tapi impor di sini bagus
+use Illuminate\Support\Str;
 
 class LandingPageController extends Controller
 {
@@ -14,16 +15,22 @@ class LandingPageController extends Controller
      */
     public function index(): View
     {
-        // 2. Ambil semua dokter yang PUNYA JADWAL
-        //    Kita juga 'eager load' relasi 'user' (untuk nama) 
-        //    dan 'doctorSchedules' (untuk jadwal)
+        // Kode untuk mengambil dokter (ini sudah Anda miliki)
         $doctorsWithSchedules = Doctor::has('doctorSchedules')
                                     ->with('user', 'doctorSchedules')
                                     ->get();
 
-        // 3. Kirim data dokter ke view 'landing'
+        // 2. TAMBAHKAN KODE INI UNTUK MENGAMBIL ARTIKEL
+        $articles = Article::whereNotNull('published_at')
+                            ->where('published_at', '<=', now())
+                            ->latest('published_at')
+                            ->limit(3)
+                            ->get();
+
+        // 3. PERBARUI 'return view' UNTUK MENGIRIM KEDUA DATA
         return view('landing', [
-            'doctors' => $doctorsWithSchedules
+            'doctors' => $doctorsWithSchedules,
+            'articles' => $articles, // <-- Kirim data artikel
         ]);
     }
 }

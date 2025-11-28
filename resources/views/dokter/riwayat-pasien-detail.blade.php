@@ -10,6 +10,19 @@
     .detail-section p, .detail-section li { color: #1f2937; /* gray-800 */ margin-bottom: 0.5rem;}
     .detail-section ul { list-style: disc; margin-left: 1.5rem; }
     .prescription-detail { background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.375rem; padding: 0.75rem; margin-bottom: 0.5rem;}
+    
+    /* Badge ICD-10 Style */
+    .icd-badge {
+        display: inline-block;
+        background-color: #DBEAFE; /* blue-100 */
+        color: #1E40AF; /* blue-800 */
+        font-weight: bold;
+        padding: 0.1rem 0.4rem;
+        border-radius: 0.25rem;
+        font-family: monospace;
+        margin-right: 0.5rem;
+        border: 1px solid #BFDBFE;
+    }
 </style>
 @endpush
 
@@ -113,17 +126,38 @@
                              </div>
                              @endif
 
-                             {{-- Diagnosis --}}
-                             @if ($record->diagnosisTags->isNotEmpty())
+                             {{-- [MODIFIKASI] Diagnosis Section --}}
                              <div class="detail-section border-t pt-4">
-                                 <h4>Diagnosis (Asesmen)</h4>
-                                 <ul>
-                                     @foreach ($record->diagnosisTags as $tag)
-                                         <li>{{ $tag->tag_name }}</li>
-                                     @endforeach
-                                 </ul>
+                                <h4>Diagnosis (Asesmen)</h4>
+                                
+                                {{-- 1. Diagnosis Utama (ICD-10) --}}
+                                <div class="mb-4">
+                                    <p class="text-sm font-semibold text-gray-500 mb-1">Diagnosis Utama (ICD-10):</p>
+                                    @if($record->primary_icd10_code)
+                                        <div class="flex items-start">
+                                            <span class="icd-badge">{{ $record->primary_icd10_code }}</span>
+                                            <span class="text-gray-800 font-medium">{{ $record->primary_icd10_name }}</span>
+                                        </div>
+                                    @else
+                                        <p class="text-gray-400 italic text-sm">Tidak ada diagnosis utama (ICD-10) tercatat.</p>
+                                    @endif
+                                </div>
+
+                                {{-- 2. Diagnosis Tambahan (Tags) --}}
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-500 mb-1">Diagnosis Tambahan / Catatan:</p>
+                                    @if ($record->diagnosisTags->isNotEmpty())
+                                        <ul class="list-disc pl-5">
+                                            @foreach ($record->diagnosisTags as $tag)
+                                                <li>{{ $tag->tag_name }}</li>
+                                            @endforeach
+                                        </ul>
+                                    @else
+                                        <p class="text-gray-400 italic text-sm">Tidak ada diagnosis tambahan.</p>
+                                    @endif
+                                </div>
                              </div>
-                             @endif
+                             {{-- [END MODIFIKASI] --}}
                              
                              {{-- Rencana Penatalaksanaan --}}
                              @if ($record->doctor_notes)
@@ -133,7 +167,7 @@
                              </div>
                              @endif
 
-                             {{-- [PENAMBAHAN BARU] Detail Resep Obat --}}
+                             {{-- Detail Resep Obat --}}
                              @if ($record->prescription && $record->prescription->prescriptionDetails->isNotEmpty())
                              <div class="detail-section border-t pt-4">
                                  <h4>Resep Obat</h4>

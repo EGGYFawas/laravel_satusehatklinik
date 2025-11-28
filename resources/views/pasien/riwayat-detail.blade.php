@@ -5,10 +5,11 @@
 @push('styles')
 <style>
     .visit-list-item { cursor: pointer; transition: background-color 0.2s ease-in-out; }
-    .visit-list-item:hover, .visit-list-item.active { background-color: #e0f2fe; /* light blue */ }
+    .visit-list-item:hover, .visit-list-item.active { background-color: #e0f2fe; /* light blue */ border-left: 4px solid #0ea5e9; }
     .detail-section h4 { font-weight: 600; color: #4b5563; /* gray-600 */ margin-bottom: 0.5rem; font-size: 0.875rem; /* text-sm */ text-transform: uppercase; letter-spacing: 0.05em;}
     .detail-section p, .detail-section li { color: #1f2937; /* gray-800 */ margin-bottom: 0.5rem;}
     .detail-section ul { list-style: disc; margin-left: 1.5rem; }
+    .prescription-detail { background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.375rem; padding: 0.75rem; margin-bottom: 0.5rem;}
 </style>
 @endpush
 
@@ -50,7 +51,7 @@
             <div class="max-h-[60vh] overflow-y-auto">
                 @forelse ($riwayatKunjungan as $kunjungan)
                     <div
-                        class="visit-list-item border-b p-4"
+                        class="visit-list-item border-b p-4 border-l-4 border-transparent"
                         :class="{ 'active': selectedVisitId == {{ $kunjungan->id }} }"
                         @click="selectedVisitId = {{ $kunjungan->id }}"
                     >
@@ -70,7 +71,6 @@
             <h3 class="text-xl font-bold text-gray-800 border-b pb-3 mb-6">Detail Pemeriksaan</h3>
 
             @if($riwayatKunjungan->isNotEmpty())
-                {{-- [MODIFIKASI] Gunakan perulangan untuk menampilkan detail berdasarkan ID yang dipilih --}}
                 @foreach ($riwayatKunjungan as $kunjungan)
                     {{-- Tampilkan detail HANYA jika ID kunjungan cocok dengan selectedVisitId --}}
                     <div x-show="selectedVisitId == {{ $kunjungan->id }}" x-transition.opacity.duration.300ms class="space-y-5">
@@ -80,12 +80,12 @@
                              <h4>Informasi Kunjungan</h4>
                              <p><strong>Tanggal:</strong> {{ $kunjungan->finish_time ? $kunjungan->finish_time->translatedFormat('l, d F Y H:i') : '-' }} WIB</p>
                              <p><strong>Poli:</strong> {{ $kunjungan->poli?->name ?? 'N/A' }}</p>
-                             <p><strong>Dokter:</strong> {{ $kunjungan->doctor?->user?->full_name ?? 'N/A' }}</p>
+                             <p><strong>Dokter Pemeriksa:</strong> {{ $kunjungan->doctor?->user?->full_name ?? 'N/A' }}</p>
                         </div>
 
                         {{-- Keluhan Utama --}}
                         <div class="detail-section border-t pt-4">
-                            <h4>Keluhan Utama (Subjektif)</h4>
+                            <h4>Keluhan Utama</h4>
                             <p>{{ $kunjungan->chief_complaint ?? '-' }}</p>
                         </div>
 
@@ -93,7 +93,7 @@
                         @if ($kunjungan->medicalRecord)
                             @php $record = $kunjungan->medicalRecord; @endphp
 
-                            {{-- Tampilkan Tanda Vital Jika Ada Data --}}
+                            {{-- Tanda Vital --}}
                             @if ($record->blood_pressure || $record->heart_rate || $record->temperature || $record->respiratory_rate || $record->oxygen_saturation)
                             <div class="detail-section border-t pt-4">
                                 <h4>Tanda Vital</h4>
@@ -110,44 +110,55 @@
                                     @if($record->respiratory_rate)
                                     <div><p><strong>Pernapasan:</strong> {{ $record->respiratory_rate }} x/mnt</p></div>
                                     @endif
-                                     @if($record->oxygen_saturation)
+                                    @if($record->oxygen_saturation)
                                     <div><p><strong>Saturasi O2:</strong> {{ $record->oxygen_saturation }} %</p></div>
                                     @endif
                                  </div>
                             </div>
                             @endif
 
-                            {{-- Tampilkan Temuan Fisik Jika Ada Data --}}
-                             @if ($record->physical_examination_notes)
-                             <div class="detail-section border-t pt-4">
-                                 <h4>Temuan Pemeriksaan Fisik (Objektif)</h4>
-                                 <p class="whitespace-pre-wrap">{{ $record->physical_examination_notes }}</p>
-                             </div>
-                             @endif
+                            {{-- [MODIFIKASI] Diagnosis untuk Pasien (HANYA TAGS) --}}
+                            <div class="detail-section border-t pt-4">
+                                <h4>Diagnosis / Catatan Dokter</h4>
+                                {{-- Kita hanya menampilkan Tags, ICD-10 di-skip --}}
+                                @if ($record->diagnosisTags->isNotEmpty())
+                                    <ul class="list-disc pl-5">
+                                        @foreach ($record->diagnosisTags as $tag)
+                                            <li class="font-medium text-gray-800">{{ $tag->tag_name }}</li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    <p class="text-gray-500 italic">-</p>
+                                @endif
+                            </div>
+                            
+                            {{-- Rencana Penatalaksanaan --}}
+                            @if ($record->doctor_notes)
+                            <div class="detail-section border-t pt-4">
+                                <h4>Catatan / Anjuran Dokter</h4>
+                                <p class="whitespace-pre-wrap">{{ $record->doctor_notes }}</p>
+                            </div>
+                            @endif
 
-                             {{-- Tampilkan Diagnosis Jika Ada Data --}}
-                             @if ($record->diagnosisTags->isNotEmpty())
-                             <div class="detail-section border-t pt-4">
-                                 <h4>Diagnosis (Asesmen)</h4>
-                                 <ul>
-                                     @foreach ($record->diagnosisTags as $tag)
-                                         <li>{{ $tag->tag_name }}</li>
-                                     @endforeach
-                                 </ul>
-                             </div>
-                             @endif
-                             
-                             {{-- Tampilkan Catatan Dokter Jika Ada Data --}}
-                             @if ($record->doctor_notes)
-                             <div class="detail-section border-t pt-4">
-                                 <h4>Rencana Penatalaksanaan (Plan)</h4>
-                                 <p class="whitespace-pre-wrap">{{ $record->doctor_notes }}</p>
-                             </div>
-                             @endif
+                            {{-- [PENAMBAHAN] Detail Resep Obat --}}
+                            @if ($record->prescription && $record->prescription->prescriptionDetails->isNotEmpty())
+                            <div class="detail-section border-t pt-4">
+                                <h4>Resep Obat</h4>
+                                <div class="space-y-2">
+                                    @foreach ($record->prescription->prescriptionDetails as $detail)
+                                        <div class="prescription-detail text-sm">
+                                            <p class="font-semibold">{{ $detail->medicine->name ?? 'Obat' }} (Jumlah: {{ $detail->quantity }})</p>
+                                            <p class="text-gray-600">Aturan Pakai: {{ $detail->dosage }}</p>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                            @endif
+
                         @else
                             {{-- Tampilkan pesan jika tidak ada rekam medis --}}
                             <div class="border-t pt-6 text-center text-gray-500">
-                                <p>Detail pemeriksaan untuk kunjungan ini tidak ditemukan.</p>
+                                <p>Detail pemeriksaan belum tersedia.</p>
                             </div>
                         @endif
 
@@ -156,7 +167,7 @@
             @else
                  {{-- Tampilan jika $riwayatKunjungan kosong sama sekali --}}
                 <div x-show="selectedVisitId == null" class="text-center text-gray-500 py-12">
-                     <p>Pilih tanggal kunjungan di sebelah kiri untuk melihat detail.</p>
+                     <p>Pilih riwayat kunjungan di sebelah kiri untuk melihat detail.</p>
                 </div>
             @endif
         </div>
@@ -165,6 +176,5 @@
 @endsection
 
 @push('scripts')
-{{-- Tidak perlu script tambahan khusus untuk halaman ini, karena AlpineJS sudah menangani show/hide --}}
+{{-- Scripts --}}
 @endpush
-

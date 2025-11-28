@@ -359,38 +359,7 @@ Setiap kunjungan, diagnosis, dan resep obat akan tercatat secara otomatis dan am
                     <p class="text-gray-600">Pemeriksaan laboratorium lengkap dengan hasil akurat dan cepat</p>
                 </div>
 
-                <!-- Service 4 -->
-                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
-                    <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-gray-900 mb-2">Radiologi</h3>
-                    <p class="text-gray-600">Pemeriksaan radiologi dengan teknologi CT Scan dan X-Ray modern</p>
-                </div>
-
-                <!-- Service 5 -->
-                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
-                    <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-2m-4-1v8m0 0l3-3m-3 3L9 8m-5 5h.01M17 13h.01"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-gray-900 mb-2">Vaksinasi</h3>
-                    <p class="text-gray-600">Program vaksinasi lengkap untuk anak-anak dan dewasa</p>
-                </div>
-
-                <!-- Service 6 -->
-                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition">
-                    <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-gray-900 mb-2">Telemedicine</h3>
-                    <p class="text-gray-600">Konsultasi online dengan dokter dari kenyamanan rumah Anda</p>
-                </div>
+                
             </div>
         </div>
     </section>
@@ -452,41 +421,34 @@ Setiap kunjungan, diagnosis, dan resep obat akan tercatat secara otomatis dan am
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <!-- Article 1 -->
-                <article class="bg-white rounded-lg shadow-md hover:shadow-lg transition overflow-hidden">
-                    <img src="https://placehold.co/400x200/E0E7FF/3B82F6?text=Artikel+1" 
-                         alt="Article thumbnail" class="w-full h-48 object-cover">
-                    <div class="p-6">
-                        <span class="inline-block bg-blue-100 text-blue-600 text-xs px-3 py-1 rounded-full mb-3">Gaya Hidup</span>
-                        <h3 class="text-xl font-bold text-gray-900 mb-2">Tips Hidup Sehat untuk Keseharian</h3>
-                        <p class="text-gray-600 mb-4">Pelajari cara-cara sederhana untuk meningkatkan kualitas hidup Anda setiap hari dengan kebiasaan sehat.</p>
-                        <a href="#" class="text-blue-600 font-medium hover:text-blue-700">Baca Selengkapnya →</a>
-                    </div>
-                </article>
+                
+                @forelse ($articles as $article)
+                    <article class="bg-white rounded-lg shadow-md hover:shadow-lg transition overflow-hidden">
+                        
+                        <img src="{{ asset('storage/' . $article->image_url) }}" 
+                             alt="{{ $article->title }}" 
+                             class="w-full h-48 object-cover"
+                             onerror="this.src='https://placehold.co/400x200/E0E7FF/3B82F6?text=Image'; this.onerror=null;">
 
-                <!-- Article 2 -->
-                <article class="bg-white rounded-lg shadow-md hover:shadow-lg transition overflow-hidden">
-                    <img src="https://placehold.co/400x200/E0E7FF/3B82F6?text=Artikel+2" 
-                         alt="Article thumbnail" class="w-full h-48 object-cover">
-                    <div class="p-6">
-                        <span class="inline-block bg-blue-100 text-blue-600 text-xs px-3 py-1 rounded-full mb-3">Nutrisi</span>
-                        <h3 class="text-xl font-bold text-gray-900 mb-2">Pentingnya Nutrisi Seimbang</h3>
-                        <p class="text-gray-600 mb-4">Memahami kebutuhan nutrisi tubuh dan bagaimana cara mencukupi kebutuhan nutrisi harian Anda.</p>
-                        <a href="#" class="text-blue-600 font-medium hover:text-blue-700">Baca Selengkapnya →</a>
-                    </div>
-                </article>
+                        <div class="p-6">
+                            <span class="inline-block bg-blue-100 text-blue-600 text-xs px-3 py-1 rounded-full mb-3">Info</span>
+                            
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">{{ $article->title }}</h3>
+                            
+                            <p class="text-gray-600 mb-4">
+                                {{ Str::limit(strip_tags($article->content), 100, '...') }}
+                            </p>
+                            
+                            <a href="{{ route('pasien.artikel.show', $article) }}" 
+                               class="text-blue-600 font-medium hover:text-blue-700">
+                                Baca Selengkapnya →
+                            </a>
+                        </div>
+                    </article>
+                @empty
+                    <p class="text-gray-600 col-span-3 text-center">Belum ada artikel untuk ditampilkan.</p>
+                @endforelse
 
-                <!-- Article 3 -->
-                <article class="bg-white rounded-lg shadow-md hover:shadow-lg transition overflow-hidden">
-                    <img src="https://placehold.co/400x200/E0E7FF/3B82F6?text=Artikel+3" 
-                         alt="Article thumbnail" class="w-full h-48 object-cover">
-                    <div class="p-6">
-                        <span class="inline-block bg-blue-100 text-blue-600 text-xs px-3 py-1 rounded-full mb-3">Kesehatan Mental</span>
-                        <h3 class="text-xl font-bold text-gray-900 mb-2">Menjaga Kesehatan Mental Anda</h3>
-                        <p class="text-gray-600 mb-4">Strategi efektif untuk menjaga kesehatan mental dan mengatasi stress dalam kehidupan sehari-hari.</p>
-                        <a href="#" class="text-blue-600 font-medium hover:text-blue-700">Baca Selengkapnya →</a>
-                    </div>
-                </article>
             </div>
         </div>
     </section>

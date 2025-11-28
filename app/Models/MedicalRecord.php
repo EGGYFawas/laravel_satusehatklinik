@@ -9,54 +9,42 @@ class MedicalRecord extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
+    protected $table = 'medical_records';
+
     protected $fillable = [
         'clinic_queue_id',
         'patient_id',
         'doctor_id',
         'checkup_date',
         'doctor_notes',
-        // [PENAMBAHAN BARU]
-        // Mendaftarkan semua kolom baru agar bisa diisi melalui metode create() atau update()
         'blood_pressure',
         'heart_rate',
         'respiratory_rate',
         'temperature',
         'oxygen_saturation',
         'physical_examination_notes',
+        
+        // [PENTING UNTUK DOKTER]
+        // Data ini disimpan tapi nanti TIDAK PERLU ditampilkan di view Pasien
+        'primary_icd10_code',
+        'primary_icd10_name',
     ];
 
-    /**
-     * Mendapatkan data antrian klinik asal rekam medis ini.
-     */
     public function clinicQueue()
     {
         return $this->belongsTo(ClinicQueue::class);
     }
 
-    /**
-     * Mendapatkan data pasien pemilik rekam medis.
-     */
     public function patient()
     {
         return $this->belongsTo(Patient::class);
     }
 
-    /**
-     * Mendapatkan data dokter yang menangani.
-     */
     public function doctor()
     {
         return $this->belongsTo(Doctor::class);
     }
 
-    /**
-     * Mendapatkan resep yang terkait dengan rekam medis ini.
-     */
     public function prescription()
     {
         return $this->hasOne(Prescription::class);
@@ -64,11 +52,24 @@ class MedicalRecord extends Model
 
     /**
      * Relasi many-to-many ke DiagnosisTag.
-     * Satu rekam medis bisa memiliki banyak tag diagnosa.
+     * Ini yang akan ditampilkan ke Pasien sebagai "Diagnosis".
      */
     public function diagnosisTags()
     {
-        return $this->belongsToMany(DiagnosisTag::class, 'record_diagnoses');
+        // [FIXED RELASI]
+        // Menggunakan parameter lengkap agar Laravel tidak salah tebak nama tabel/kolom
+        return $this->belongsToMany(
+            DiagnosisTag::class, 
+            'record_diagnoses',      // Nama Tabel Pivot
+            'medical_record_id',     // Foreign Key model INI (MedicalRecord) di pivot
+            'diagnosis_tag_id'       // Foreign Key model LAWAN (DiagnosisTag) di pivot
+        ); 
+    }
+    
+    public function medicines()
+    {
+        return $this->belongsToMany(Medicine::class, 'prescription_details')
+                    ->using(PrescriptionDetail::class)
+                    ->withPivot('quantity', 'dosage');
     }
 }
-

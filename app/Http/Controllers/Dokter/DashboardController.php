@@ -19,6 +19,7 @@ use App\Models\PharmacyQueue;
 use App\Models\Prescription;
 use App\Models\PrescriptionDetail;
 use App\Models\Medicine;
+use App\Models\Icd10; // Import Model ICD10
 
 class DashboardController extends Controller
 {
@@ -63,12 +64,35 @@ class DashboardController extends Controller
         if ($pasienAktif) {
             $medicines = Medicine::where('stock', '>', 0)->orderBy('name', 'asc')->get(['id', 'name', 'stock']);
             $diagnosisTags = DiagnosisTag::orderBy('tag_name', 'asc')->get(['tag_name']);
+            // Kita TIDAK memuat Icd10 di sini agar loading halaman cepat.
+            // Data ICD-10 akan diambil via AJAX di method searchIcd10
         }
 
         return view('dokter.dashboard', compact(
             'doctor', 'pasienSedangDipanggil', 'pasienBerikutnya', 'antreanHadir', 'antreanMenunggu',
             'antreanSelesai', 'medicines', 'diagnosisTags'
         ));
+    }
+
+    /**
+     * [BARU] Method AJAX untuk mencari ICD-10 dari database (Server-side Filtering)
+     * Menangani 18.000+ data dengan cepat.
+     */
+    public function searchIcd10(Request $request)
+    {
+        $query = $request->get('q');
+        
+        if (!$query) {
+            return response()->json([]);
+        }
+
+        // Cari berdasarkan kode atau nama, batasi 20 hasil agar ringan
+        $results = Icd10::where('code', 'like', "%{$query}%")
+            ->orWhere('name', 'like', "%{$query}%")
+            ->limit(30)
+            ->get(['code', 'name']);
+
+        return response()->json($results);
     }
 
     /**
@@ -104,7 +128,7 @@ class DashboardController extends Controller
     }
     
     /**
-     * Method untuk menyimpan hasil pemeriksaan dengan otorisasi yang sudah diperbaiki.
+     * Method untuk menyimpan hasil pemeriksaan.
      */
     public function simpanPemeriksaan(Request $request, ClinicQueue $antrean)
     {
@@ -124,15 +148,22 @@ class DashboardController extends Controller
             'respiratory_rate' => 'nullable|integer|min:0',
             'oxygen_saturation' => 'nullable|integer|min:0',
             'physical_examination_notes' => 'nullable|string|max:2000',
-            'diagnosis_tags' => 'required|array|min:1',
-            'diagnosis_tags.*' => 'required|string|max:100',
+            
+            // Diagnosis Utama (Wajib ICD 10)
+            'icd10_code' => 'required|string',
+            'icd10_name' => 'required|string',
+
+            // Diagnosis Tambahan (Tags - Opsional)
+            'diagnosis_tags' => 'nullable|array', 
+            'diagnosis_tags.*' => 'string|max:100',
+            
             'doctor_notes' => 'required|string|min:5',
             'medicines' => 'nullable|array',
             'medicines.*.id' => 'required|exists:medicines,id',
             'medicines.*.quantity' => 'required|integer|min:1',
             'medicines.*.dosage' => 'required|string|max:255',
         ], [
-            'diagnosis_tags.required' => 'Diagnosis (Asesmen) wajib diisi.',
+            'icd10_code.required' => 'Diagnosis Utama (ICD-10) wajib dipilih.',
             'doctor_notes.required' => 'Rencana Penatalaksanaan (Plan) wajib diisi.',
         ]);
 
@@ -148,6 +179,7 @@ class DashboardController extends Controller
                 ]);
             }
 
+            // Simpan Rekam Medis dengan Diagnosis Utama
             $medicalRecord = MedicalRecord::create([
                 'clinic_queue_id' => $antrean->id,
                 'patient_id' => $patient->id,
@@ -160,14 +192,21 @@ class DashboardController extends Controller
                 'respiratory_rate' => $validatedData['respiratory_rate'],
                 'oxygen_saturation' => $validatedData['oxygen_saturation'],
                 'physical_examination_notes' => $validatedData['physical_examination_notes'],
+                
+                // Simpan data ICD 10 (Pastikan kolom ini ada di database)
+                'primary_icd10_code' => $validatedData['icd10_code'],
+                'primary_icd10_name' => $validatedData['icd10_name'],
             ]);
 
+            // Simpan Diagnosis Tambahan (Tags)
             $tagIds = [];
-            foreach ($validatedData['diagnosis_tags'] as $tagName) {
-                $tag = DiagnosisTag::firstOrCreate(['tag_name' => trim($tagName)]);
-                $tagIds[] = $tag->id;
+            if (!empty($validatedData['diagnosis_tags'])) {
+                foreach ($validatedData['diagnosis_tags'] as $tagName) {
+                    $tag = DiagnosisTag::firstOrCreate(['tag_name' => trim($tagName)]);
+                    $tagIds[] = $tag->id;
+                }
+                $medicalRecord->diagnosisTags()->sync($tagIds);
             }
-            $medicalRecord->diagnosisTags()->sync($tagIds);
 
             if (!empty($validatedData['medicines'])) {
                 $prescription = Prescription::create([
@@ -190,14 +229,13 @@ class DashboardController extends Controller
                     $medicine->decrement('stock', $med['quantity']);
                 }
                 
-                // [MODIFIKASI UTAMA] Mengembalikan logika pemformatan nomor antrean apotek
-                $nextQueueNumberInt = PharmacyQueue::generateQueueNumber(); // Dapatkan angka berikutnya (misal: 1, 2, 3)
-                $formattedQueueNumber = 'APT-' . str_pad($nextQueueNumberInt, 3, '0', STR_PAD_LEFT); // Format menjadi APT-001, APT-002, dst.
+                $nextQueueNumberInt = PharmacyQueue::generateQueueNumber(); 
+                $formattedQueueNumber = 'APT-' . str_pad($nextQueueNumberInt, 3, '0', STR_PAD_LEFT); 
 
                 PharmacyQueue::create([
                     'clinic_queue_id' => $antrean->id,
                     'prescription_id' => $prescription->id,
-                    'pharmacy_queue_number' => $formattedQueueNumber, // Gunakan nomor yang sudah diformat
+                    'pharmacy_queue_number' => $formattedQueueNumber, 
                     'status' => 'DALAM_ANTREAN',
                     'entry_time' => now(),
                 ]);
@@ -214,9 +252,7 @@ class DashboardController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("Gagal menyimpan pemeriksaan: {$e->getMessage()}");
-             // Tampilkan pesan error yang sebenarnya untuk debugging
              return redirect()->back()->withInput()->with('error', 'DEBUG: ' . $e->getMessage());
         }
     }
 }
-

@@ -281,79 +281,60 @@
 @endsection
 
 @push('modals')
-    @if(!$hasActiveProcess)
+{{-- @if(!$hasActiveProcess) --}}
     <div id="antrianModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-70 flex items-center justify-center z-50 p-4">
         <div id="modalContent" class="bg-white rounded-xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[95vh] transform transition-all" 
              x-data="{ isFamily: false, customRelationship: false, nikInput: '' }">
+            
             <div class="text-center p-6 border-b border-gray-200 flex-shrink-0">
                 <h3 class="text-2xl font-bold text-gray-800">Formulir Antrean Baru</h3>
             </div>
+            
             <div class="overflow-y-auto p-8 flex-grow">
                 @if($patient)
                 <form id="antrianForm" action="{{ route('pasien.antrean.store') }}" method="POST">
                     @csrf
-                    <div class="flex items-center justify-center mb-6">
+                    
+                    {{-- [MODIFIKASI] Bagian Switch Dinonaktifkan --}}
+                    {{-- <div class="flex items-center justify-center mb-6">
                         <label class="text-sm font-medium text-gray-900">Daftarkan Diri Sendiri</label>
-                        <button type="button" @click="isFamily = !isFamily" :class="isFamily ? 'bg-indigo-600' : 'bg-gray-200'" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 mx-3" role="switch">
-                            <span :class="isFamily ? 'translate-x-5' : 'translate-x-0'" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                        
+                        <!-- Tombol Switch dimatikan (Disabled) -->
+                        <button type="button" disabled 
+                                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-not-allowed rounded-full border-2 border-transparent bg-gray-200 transition-colors duration-200 ease-in-out focus:outline-none mx-3 opacity-60" 
+                                role="switch">
+                            <span class="translate-x-0 pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
                         </button>
-                        <label class="text-sm font-medium text-gray-900">Daftarkan Anggota Keluarga</label>
-                        <input type="hidden" name="is_family" x-bind:value="isFamily">
+                        
+                        <label class="text-sm font-medium text-gray-400 decoration-slate-400">Daftarkan Anggota Keluarga (Nonaktif)</label>
+                        
+                        <!-- Force value is_family menjadi false/0 -->
+                        <input type="hidden" name="is_family" value="0">
                     </div>
+                    [END MODIFIKASI] --}}
+
                     <div class="border-t border-gray-200 pt-6">
-                        <div x-show="!isFamily" x-transition class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-4">
+                        {{-- Karena isFamily selalu false, bagian ini akan selalu muncul --}}
+                        <div x-show="!isFamily" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-4">
                             <h4 class="md:col-span-2 text-lg font-semibold text-gray-700 mb-2">Data Pasien</h4>
-                              <div>
+                             <div>
                                 <label for="nama" class="block text-sm font-medium text-gray-700 mb-1">Nama</label>
                                 <input type="text" id="nama" class="w-full p-2 bg-gray-100 border border-gray-300 rounded-md" value="{{ $patient->full_name ?? $user->full_name }}" readonly>
-                              </div>
-                              <div>
+                             </div>
+                             <div>
                                 <label for="nik" class="block text-sm font-medium text-gray-700 mb-1">NIK</label>
                                 <input type="text" id="nik" class="w-full p-2 bg-gray-100 border border-gray-300 rounded-md" value="{{ $patient->nik ?? 'NIK tidak ditemukan' }}" readonly>
-                              </div>
+                             </div>
                         </div>
-                        <div x-show="isFamily" x-transition class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-4 border-b border-gray-200 pb-4">
-                            <h4 class="md:col-span-2 text-lg font-semibold text-gray-700 mb-2">Data Anggota Keluarga</h4>
-                            <div>
-                                <label for="new_patient_name" class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap Pasien <span class="text-red-500">*</span></label>
-                                <input type="text" name="new_patient_name" class="w-full p-2 border border-gray-300 rounded-md" :required="isFamily" @input="event.target.value = event.target.value.toUpperCase()">
-                            </div>
-                            <div>
-                                <label for="new_patient_nik" class="block text-sm font-medium text-gray-700 mb-1">NIK (16 Digit) <span class="text-red-500">*</span></label>
-                                <input type="text" name="new_patient_nik" class="w-full p-2 border border-gray-300 rounded-md" :required="isFamily" maxlength="16" x-model="nikInput" @input="nikInput = nikInput.replace(/\D/g, '')">
-                                <p x-show="isFamily && nikInput.length > 0 && nikInput.length !== 16" class="text-xs text-red-600 mt-1">NIK harus terdiri dari 16 digit angka.</p>
-                            </div>
-                            <div>
-                                <label for="new_patient_dob" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Lahir <span class="text-red-500">*</span></label>
-                                <input type="date" name="new_patient_dob" class="w-full p-2 border border-gray-300 rounded-md" :required="isFamily">
-                            </div>
-                            <div>
-                                <label for="new_patient_gender" class="block text-sm font-medium text-gray-700 mb-1">Jenis Kelamin <span class="text-red-500">*</span></label>
-                                <select name="new_patient_gender" class="w-full p-2 border border-gray-300 rounded-md" :required="isFamily">
-                                    <option value="" disabled selected>-- Pilih Jenis Kelamin --</option>
-                                    <option value="Laki-laki">Laki-laki</option>
-                                    <option value="Perempuan">Perempuan</option>
-                                </select>
-                            </div>
-                            <div class="md:col-span-2">
-                                <label for="patient_relationship" class="block text-sm font-medium text-gray-700 mb-1">Hubungan Keluarga <span class="text-red-500">*</span></label>
-                                <select name="patient_relationship" @change="customRelationship = ($event.target.value === 'Lainnya')" class="w-full p-2 border border-gray-300 rounded-md" :required="isFamily">
-                                    <option value="" disabled selected>-- Pilih Hubungan --</option>
-                                    <option value="Anak">Anak</option>
-                                    <option value="Orang Tua">Orang Tua</option>
-                                    <option value="Pasangan">Pasangan</option>
-                                    <option value="Saudara Kandung">Saudara Kandung</option>
-                                    <option value="Lainnya">Lainnya</option>
-                                </select>
-                            </div>
-                            <div x-show="customRelationship" x-transition class="md:col-span-2">
-                                <label for="patient_relationship_custom" class="block text-sm font-medium text-gray-700 mb-1">Sebutkan Hubungan Lainnya</label>
-                                <input type="text" name="patient_relationship_custom" class="w-full p-2 border border-gray-300 rounded-md" :required="customRelationship">
-                            </div>
+
+                        {{-- Bagian Form Anggota Keluarga (Tidak akan pernah muncul karena isFamily false) --}}
+                        <div x-show="isFamily" style="display: none;" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-4 border-b border-gray-200 pb-4">
+                            <!-- Konten form keluarga disembunyikan -->
                         </div>
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                            <h4 class="md:col-span-2 text-lg font-semibold text-gray-700 mb-2 pt-4" :class="isFamily ? '' : 'border-t border-gray-200'">Detail Pendaftaran</h4>
-                              <div>
+                            <h4 class="md:col-span-2 text-lg font-semibold text-gray-700 mb-2 pt-4 border-t border-gray-200">Detail Pendaftaran</h4>
+                             <div>
                                 <label for="poli" class="block text-sm font-medium text-gray-700 mb-1">Pilih Poli <span class="text-red-500">*</span></label>
                                 <select id="poli" name="poli_id" class="w-full p-2 border border-gray-300 rounded-md" required>
                                     <option value="" disabled selected>-- Silahkan Pilih Poli --</option>
@@ -361,18 +342,18 @@
                                         <option value="{{ $poli->id }}">{{ $poli->name }}</option>
                                     @endforeach
                                 </select>
-                              </div>
-                              <div>
+                             </div>
+                             <div>
                                 <label for="doctor" class="block text-sm font-medium text-gray-700 mb-1">Pilih Dokter <span class="text-red-500">*</span></label>
                                 <select id="doctor" name="doctor_id" class="w-full p-2 border border-gray-300 rounded-md" required disabled>
                                     <option value="">-- Pilih Poli Terlebih Dahulu --</option>
                                 </select>
-                              </div>
-                              <div class="md:col-span-2">
+                             </div>
+                             <div class="md:col-span-2">
                                 <label for="keluhan" class="block text-sm font-medium text-gray-700 mb-1">Keluhan <span class="text-red-500">*</span></label>
                                 <textarea name="chief_complaint" rows="3" class="w-full p-2 border border-gray-300 rounded-md" placeholder="Tuliskan keluhan utama Anda..." required></textarea>
-                              </div>
-                              <input type="hidden" name="registration_date" value="{{ date('Y-m-d') }}">
+                             </div>
+                             <input type="hidden" name="registration_date" value="{{ date('Y-m-d') }}">
                         </div>
                     </div>
                 </form>
@@ -386,7 +367,7 @@
             </div>
        </div>
     </div>
-    @endif
+    {{-- @endif --}}
     <div id="qrScannerModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 text-center relative">
             <h3 class="text-xl font-bold text-gray-800 mb-4">Pindai QR Code Check-In</h3>
