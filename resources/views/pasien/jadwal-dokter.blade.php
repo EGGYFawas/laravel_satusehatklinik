@@ -167,14 +167,14 @@
             <form id="antrianForm" action="{{ route('pasien.antrean.store') }}" method="POST">
                 @csrf
                 {{-- Toggle Diri Sendiri / Keluarga --}}
-                <div class="flex items-center justify-center mb-6">
+                {{-- <div class="flex items-center justify-center mb-6">
                     <label class="text-sm font-medium text-gray-900">Daftarkan Diri Sendiri</label>
                     <button type="button" @click="isFamily = !isFamily" :class="isFamily ? 'bg-indigo-600' : 'bg-gray-200'" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 mx-3" role="switch">
                         <span :class="isFamily ? 'translate-x-5' : 'translate-x-0'" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
                     </button>
                     <label class="text-sm font-medium text-gray-900">Daftarkan Anggota Keluarga</label>
                     <input type="hidden" name="is_family" x-bind:value="isFamily">
-                </div>
+                </div> --}}
                 <div class="border-t border-gray-200 pt-6">
                     {{-- Form Data Diri Sendiri --}}
                     <div x-show="!isFamily" x-transition class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-4">
@@ -189,7 +189,7 @@
                             <input type="text" id="self_nik" class="w-full p-2 disabled-input rounded-md" value="{{ $patientData->nik ?? 'NIK tidak ditemukan' }}" readonly>
                           </div>
                     </div>
-                    {{-- Form Data Anggota Keluarga --}}
+                    {{-- Form Data Anggota Keluarga
                     <div x-show="isFamily" x-transition class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-4 border-b border-gray-200 pb-4">
                         <h4 class="md:col-span-2 text-lg font-semibold text-gray-700 mb-2">Data Anggota Keluarga</h4>
                         <div>
@@ -228,7 +228,7 @@
                             <label for="patient_relationship_custom" class="block text-sm font-medium text-gray-700 mb-1">Sebutkan Hubungan Lainnya</label>
                             <input type="text" name="patient_relationship_custom" class="w-full p-2 border border-gray-300 rounded-md" :required="customRelationship">
                         </div>
-                    </div>
+                    </div> --}}
                     {{-- Detail Pendaftaran --}}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                         <h4 class="md:col-span-2 text-lg font-semibold text-gray-700 mb-2 pt-4" :class="isFamily ? '' : 'border-t border-gray-200'">Detail Pendaftaran</h4>

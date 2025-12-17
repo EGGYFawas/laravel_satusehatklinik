@@ -148,10 +148,15 @@
                         {{-- [PERBAIKAN] Menambahkan @if untuk mencegah error pada data lama --}}
                         @if($riwayatBerobatTerakhir->finish_time)
                             <p class="text-2xl font-bold text-gray-800 mt-2">
-                                {{ $riwayatBerobatTerakhir->finish_time->translatedFormat('l, d F Y') }}
+                                {{-- [SOLUSI] Pakai setTimezone('Asia/Jakarta') agar akurat WIB --}}
+                                {{ $riwayatBerobatTerakhir->finish_time->setTimezone('Asia/Jakarta')->translatedFormat('l, d F Y') }}
                             </p>
                             <div class="mt-4 text-left space-y-2 text-sm">
-                                <p><span class="font-semibold w-24 inline-block">Selesai Pukul</span>: {{ $riwayatBerobatTerakhir->finish_time->format('H:i') }} WIB</p>
+                                <p>
+                                    <span class="font-semibold w-24 inline-block">Selesai Pukul</span>: 
+                                    {{-- [SOLUSI] Pakai setTimezone('Asia/Jakarta') di sini juga --}}
+                                    {{ $riwayatBerobatTerakhir->finish_time->setTimezone('Asia/Jakarta')->format('H:i') }} WIB
+                                </p>
                                 <p><span class="font-semibold w-24 inline-block">Poli</span>: {{ $riwayatBerobatTerakhir->poli->name }}</p>
                                 <p><span class="font-semibold w-24 inline-block">Dokter</span>: {{ $riwayatBerobatTerakhir->doctor->user->full_name ?? 'N/A' }}</p>
                             </div>

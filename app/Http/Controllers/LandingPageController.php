@@ -3,7 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Doctor;
-use App\Models\Article; // <--- 1. TAMBAHKAN IMPORT INI
+use App\Models\Article;
+use App\Models\LandingPageContent; // <--- 1. TAMBAHAN PENTING: Import Model Baru
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Support\Str;
@@ -15,22 +16,32 @@ class LandingPageController extends Controller
      */
     public function index(): View
     {
-        // Kode untuk mengambil dokter (ini sudah Anda miliki)
+        // === BAGIAN 1: DATA DOKTER (Existing) ===
         $doctorsWithSchedules = Doctor::has('doctorSchedules')
                                     ->with('user', 'doctorSchedules')
                                     ->get();
 
-        // 2. TAMBAHKAN KODE INI UNTUK MENGAMBIL ARTIKEL
+        // === BAGIAN 2: DATA ARTIKEL (Existing) ===
         $articles = Article::whereNotNull('published_at')
                             ->where('published_at', '<=', now())
                             ->latest('published_at')
                             ->limit(3)
                             ->get();
 
-        // 3. PERBARUI 'return view' UNTUK MENGIRIM KEDUA DATA
+        // === BAGIAN 3: DATA KONTEN DINAMIS (BARU) ===
+        // Mengambil semua settingan teks/gambar dari tabel landing_page_contents
+        $rawContents = LandingPageContent::all();
+        
+        // Mengubah format menjadi array Key => Value
+        // Contoh: ['hero_title' => 'Klinik Sehat', 'hero_image' => 'img/foto.jpg']
+        // Tujuannya agar mudah dipanggil di Blade view.
+        $content = $rawContents->pluck('value', 'key')->toArray();
+
+        // === BAGIAN 4: KIRIM SEMUA KE VIEW ===
         return view('landing', [
-            'doctors' => $doctorsWithSchedules,
-            'articles' => $articles, // <-- Kirim data artikel
+            'doctors'  => $doctorsWithSchedules,
+            'articles' => $articles,
+            'content'  => $content, // <--- Data konten dinamis dikirim di sini
         ]);
     }
 }
