@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Doctor;
 use App\Models\Article;
-use App\Models\LandingPageContent; // <--- 1. TAMBAHAN PENTING: Import Model Baru
+use App\Models\LandingPageContent; // Import Model
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Support\Str;
@@ -28,20 +28,24 @@ class LandingPageController extends Controller
                             ->limit(3)
                             ->get();
 
-        // === BAGIAN 3: DATA KONTEN DINAMIS (BARU) ===
-        // Mengambil semua settingan teks/gambar dari tabel landing_page_contents
+        // === BAGIAN 3: DATA KONTEN DINAMIS (UPDATE LOGIKA BARU) ===
+        // Mengambil semua settingan teks/gambar
         $rawContents = LandingPageContent::all();
         
-        // Mengubah format menjadi array Key => Value
-        // Contoh: ['hero_title' => 'Klinik Sehat', 'hero_image' => 'img/foto.jpg']
-        // Tujuannya agar mudah dipanggil di Blade view.
-        $content = $rawContents->pluck('value', 'key')->toArray();
+        // Logika Mapping Cerdas:
+        // Cek tipe datanya. 
+        // - Jika 'image' -> Ambil dari kolom 'image' (yang baru kita buat di migrasi)
+        // - Jika 'text'/'textarea' -> Ambil dari kolom 'value'
+        $content = $rawContents->mapWithKeys(function ($item) {
+            $isi = $item->type === 'image' ? $item->image : $item->value;
+            return [$item->key => $isi];
+        })->toArray();
 
         // === BAGIAN 4: KIRIM SEMUA KE VIEW ===
         return view('landing', [
             'doctors'  => $doctorsWithSchedules,
             'articles' => $articles,
-            'content'  => $content, // <--- Data konten dinamis dikirim di sini
+            'content'  => $content, 
         ]);
     }
 }
