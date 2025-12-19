@@ -316,12 +316,12 @@
                         </li>
                     </ul>
                     
-                    <div class="pt-2">
+                   <!-- <div class="pt-2">
                         <button class="group bg-blue-600 text-white px-8 py-3 rounded-xl font-medium hover:bg-blue-700 transition shadow-lg hover:shadow-blue-200 flex items-center gap-2">
                             Selengkapnya 
                             <i class="fas fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
                         </button>
-                    </div>
+                    </div> -->
                 </div>
             </div>
         </div>
