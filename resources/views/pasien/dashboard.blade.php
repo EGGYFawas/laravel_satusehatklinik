@@ -356,7 +356,7 @@
                              </div>
                              <div class="md:col-span-2">
                                 <label for="keluhan" class="block text-sm font-medium text-gray-700 mb-1">Keluhan <span class="text-red-500">*</span></label>
-                                <textarea name="chief_complaint" rows="3" class="w-full p-2 border border-gray-300 rounded-md" placeholder="Tuliskan keluhan utama Anda..." required></textarea>
+                                <textarea name="chief_complaint" rows="3" class="w-full p-2 border border-gray-300 rounded-md" placeholder="Tuliskan keluhan utama Anda...(Cth: Batuk Berdahak, Demam Tinggi)" required></textarea>
                              </div>
                              <input type="hidden" name="registration_date" value="{{ date('Y-m-d') }}">
                         </div>

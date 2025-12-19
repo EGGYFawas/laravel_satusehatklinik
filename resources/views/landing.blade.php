@@ -376,8 +376,8 @@
     <section id="panduan" class="py-16 md:py-24 bg-blue-600 text-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold mb-4">Cara Pesan Janji Temu</h2>
-                <p class="text-lg text-blue-100">Ikuti langkah-langkah mudah berikut untuk membuat janji temu dengan dokter</p>
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">Cara Daftar Antrean Berobat Pasien</h2>
+                <p class="text-lg text-blue-100">Ikuti langkah-langkah mudah berikut untuk membuat Antrean Berobat </p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -385,66 +385,102 @@
                 <div class="text-center">
                     <div class="w-16 h-16 bg-white text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">1</div>
                     <h3 class="text-lg font-bold mb-2">Daftar/Login</h3>
-                    <p class="text-blue-100">Buat akun atau login ke aplikasi Klinik Sehat</p>
+                    <p class="text-blue-100">Daftar akun terlebih dahulu jika sudah bisa langsung login ke aplikasi Klinik Sehat</p>
                 </div>
 
                 <!-- Step 2 -->
                 <div class="text-center">
                     <div class="w-16 h-16 bg-white text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">2</div>
-                    <h3 class="text-lg font-bold mb-2">Pilih Dokter</h3>
-                    <p class="text-blue-100">Pilih dokter spesialis sesuai kebutuhan Anda</p>
+                    <h3 class="text-lg font-bold mb-2">Ambil Antrean</h3>
+                    <p class="text-blue-100">Pada Halaman Dashboard Pilih menu "Ambil Antrian" kemudian isi pada detail pendaftaran yang dituju </p>
                 </div>
 
                 <!-- Step 3 -->
                 <div class="text-center">
                     <div class="w-16 h-16 bg-white text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">3</div>
-                    <h3 class="text-lg font-bold mb-2">Pilih Jadwal</h3>
-                    <p class="text-blue-100">Tentukan tanggal dan waktu yang sesuai dengan Anda</p>
+                    <h3 class="text-lg font-bold mb-2">Antrean Berobat</h3>
+                    <p class="text-blue-100">Setelah mendapatkan nomor antrean silahkan melakukan checkin terlebih dahulu sebelum memulai pemeriksaan (Wajib), Kode QR Check-in tersedia di meja Administrasi Klinik setelah itu tunggu sampai di panggil untuk melakukan pemeriksaan </p>
                 </div>
 
                 <!-- Step 4 -->
                 <div class="text-center">
                     <div class="w-16 h-16 bg-white text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold">4</div>
-                    <h3 class="text-lg font-bold mb-2">Konfirmasi</h3>
-                    <p class="text-blue-100">Selesaikan proses booking dan tunggu konfirmasi</p>
+                    <h3 class="text-lg font-bold mb-2">Antrean Apotek</h3>
+                    <p class="text-blue-100">Setelah melakukan pemeriksaan sistem otomatis memberikan nomor antrean apotek lalu tunggu sampai nomor antrean anda dipanggil </p>
                 </div>
             </div>
         </div>
     </section>
+<!-- ========== ARTIKEL ========== -->
+<section id="artikel" class="py-16 md:py-24 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {{-- Header Section --}}
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Artikel Kesehatan</h2>
+            <p class="text-lg text-gray-600">Informasi dan tips kesehatan terkini dari para ahli</p>
+        </div>
 
-    <!-- ========== ARTIKEL ========== -->
-    <section id="artikel" class="py-16 md:py-24 bg-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Artikel Kesehatan</h2>
-                <p class="text-lg text-gray-600">Informasi dan tips kesehatan terkini dari para ahli</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                @forelse ($articles as $article)
-                    <article class="bg-white rounded-lg shadow-md hover:shadow-lg transition overflow-hidden">
+        {{-- Grid Artikel --}}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            @forelse ($articles as $article)
+                <article class="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col h-full border border-gray-100">
+                    
+                    {{-- Gambar (Sekarang bisa diklik) --}}
+                    <a href="{{ route('artikel.show', $article->slug) }}" class="block overflow-hidden group">
                         <img src="{{ asset('storage/' . $article->image_url) }}" 
                              alt="{{ $article->title }}" 
-                             class="w-full h-48 object-cover"
-                             onerror="this.src='https://placehold.co/400x200/E0E7FF/3B82F6?text=Image'; this.onerror=null;">
+                             class="w-full h-48 object-cover transition duration-500 group-hover:scale-105"
+                             onerror="this.src='https://placehold.co/600x400/E0E7FF/3B82F6?text=Artikel+Kesehatan'; this.onerror=null;">
+                    </a>
 
-                        <div class="p-6">
-                            <span class="inline-block bg-blue-100 text-blue-600 text-xs px-3 py-1 rounded-full mb-3">Info</span>
-                            <h3 class="text-xl font-bold text-gray-900 mb-2">{{ $article->title }}</h3>
-                            <p class="text-gray-600 mb-4">
-                                {{ Str::limit(strip_tags($article->content), 100, '...') }}
-                            </p>
-                            <a href="{{ route('pasien.artikel.show', $article) }}" class="text-blue-600 font-medium hover:text-blue-700">
-                                Baca Selengkapnya →
+                    <div class="p-6 flex flex-col flex-grow">
+                        {{-- Kategori Label --}}
+                        <div class="mb-3">
+                            <span class="inline-block bg-blue-100 text-blue-600 text-xs font-semibold px-3 py-1 rounded-full">
+                                Info Kesehatan
+                            </span>
+                        </div>
+
+                        {{-- Judul (Bisa diklik) --}}
+                        <h3 class="text-xl font-bold text-gray-900 mb-2 line-clamp-2 hover:text-blue-600 transition">
+                            <a href="{{ route('artikel.show', $article->slug) }}">
+                                {{ $article->title }}
+                            </a>
+                        </h3>
+
+                        {{-- Cuplikan Isi --}}
+                        <p class="text-gray-600 mb-4 text-sm line-clamp-3 flex-grow">
+                            {{ Str::limit(strip_tags($article->content), 100, '...') }}
+                        </p>
+
+                        {{-- Tombol Baca Selengkapnya --}}
+                        <div class="mt-auto pt-4 border-t border-gray-100">
+                            <a href="{{ route('artikel.show', $article->slug) }}" class="text-blue-600 font-medium hover:text-blue-800 inline-flex items-center transition">
+                                Baca Selengkapnya 
+                                <svg class="w-4 h-4 ml-1 transform transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
                             </a>
                         </div>
-                    </article>
-                @empty
-                    <p class="text-gray-600 col-span-3 text-center">Belum ada artikel untuk ditampilkan.</p>
-                @endforelse
-            </div>
+                    </div>
+                </article>
+            @empty
+                {{-- State Kosong --}}
+                <div class="col-span-1 md:col-span-3 text-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                    <svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
+                    <p class="text-gray-600 font-medium">Belum ada artikel untuk ditampilkan saat ini.</p>
+                </div>
+            @endforelse
         </div>
-    </section>
+
+        {{-- Tombol Lihat Semua (Navigasi ke Index) --}}
+        @if(isset($articles) && $articles->isNotEmpty())
+            <div class="text-center mt-12">
+                <a href="{{ route('artikel.index') }}" class="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:text-lg transition shadow-md hover:shadow-lg">
+                    Lihat Semua Artikel
+                </a>
+            </div>
+        @endif
+    </div>
+</section>
 
     <!-- ========== FOOTER ========== -->
     <footer class="bg-gray-900 text-gray-300 py-16">
