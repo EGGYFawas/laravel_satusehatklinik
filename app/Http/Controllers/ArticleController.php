@@ -27,7 +27,7 @@ class ArticleController extends Controller
 
         // [PERUBAHAN PENTING ADA DISINI]
         // Pastikan mengarah ke 'landing.artikel.index'
-        return view('landing.artikel.index', compact('articles', 'searchQuery'));
+        return view('landing.artikel.artikel-index', compact('articles', 'searchQuery'));
     }
 
     public function show(Article $article)
@@ -38,6 +38,6 @@ class ArticleController extends Controller
 
         // [PERUBAHAN PENTING ADA DISINI]
         // Pastikan mengarah ke 'landing.artikel.show'
-        return view('landing.artikel.show', compact('article'));
+        return view('landing.artikel.artikel-show', compact('article'));
     }
 }

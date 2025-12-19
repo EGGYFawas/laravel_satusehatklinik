@@ -18,7 +18,7 @@ use App\Http\Controllers\Pasien\CheckInController;
 use App\Http\Controllers\Pasien\ProfileController as PasienProfileController;
 use App\Http\Controllers\Pasien\HistoryController as PasienHistoryController;
 use App\Http\Controllers\Pasien\ScheduleController as PasienScheduleController;
-// Note: PasienArticleController dihapus dari import jika logikanya dipindah ke ArticleController umum
+use App\Http\Controllers\Pasien\ArticleController as PasienArticleController;
 
 // Controller Dokter
 use App\Http\Controllers\Dokter\DashboardController as DokterDashboardController;
@@ -88,8 +88,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/riwayat/{patient}', [PasienHistoryController::class, 'show'])->name('riwayat.show');
         Route::get('/jadwal-dokter', [PasienScheduleController::class, 'index'])->name('jadwal.index');
 
-        // [DIHAPUS DARI SINI] Route Artikel Pasien dihapus agar tidak duplikat.
-        // Pasien sekarang mengakses artikel lewat Public Route di atas.
+         Route::get('/artikel', [PasienArticleController::class, 'index'])->name('artikel.index');
+        Route::get('/artikel/{article:slug}', [PasienArticleController::class, 'show'])->name('artikel.show');
+       
+    
     });
 
     // --- GROUP: ROLE DOKTER ---

@@ -10,7 +10,19 @@
     .article-body p { margin-bottom: 1em; line-height: 1.6; color: #374151; }
     .article-body ul { list-style: disc; margin-left: 1.5rem; margin-bottom: 1em; }
     .article-body ol { list-style: decimal; margin-left: 1.5rem; margin-bottom: 1em; }
-    .article-body img { max-width: 100%; height: auto; margin: 1.5em 0; border-radius: 0.5rem; }
+    
+    /* [MODIFIKASI] Style untuk Gambar di dalam konten */
+    .article-body img { 
+        max-width: 100%;      /* Agar tidak melebar melebihi container */
+        max-height: 500px;    /* Batasi tinggi maksimal agar tidak terlalu panjang ke bawah */
+        width: auto;          /* Biarkan lebar menyesuaikan proporsi */
+        height: auto;         /* Biarkan tinggi menyesuaikan proporsi */
+        display: block;       /* Agar margin auto bekerja (tengah) */
+        margin: 1.5em auto;   /* Posisi gambar di tengah (center) */
+        border-radius: 0.5rem; 
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); /* Sedikit bayangan agar elegan */
+    }
+
     .article-body a { color: #24306E; text-decoration: underline; }
     .article-body blockquote { border-left: 4px solid #24306E; padding-left: 1rem; margin: 1.5em 0; font-style: italic; color: #4b5563; background: #f3f4f6; padding: 1rem; }
 </style>
@@ -20,10 +32,13 @@
 <div class="w-full max-w-4xl mx-auto">
     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
         
-        {{-- [FIX] Logic Gambar --}}
-        <img src="{{ $article->image_url ? asset('storage/' . $article->image_url) : 'https://placehold.co/1200x600/E9E6E6/24306E?text=Artikel' }}" 
-             alt="{{ $article->title }}" 
-             class="w-full h-64 md:h-[400px] object-cover">
+        {{-- [MODIFIKASI] Gambar Sampul --}}
+        {{-- Ukuran tinggi diubah menjadi h-56 (mobile) dan md:h-80 (desktop) agar lebih proporsional --}}
+        <div class="w-full bg-gray-100 flex justify-center items-center overflow-hidden">
+            <img src="{{ $article->image_url ? asset('storage/' . $article->image_url) : 'https://placehold.co/1200x600/E9E6E6/24306E?text=Artikel' }}" 
+                 alt="{{ $article->title }}" 
+                 class="w-full h-56 md:h-80 object-cover object-center">
+        </div>
 
         <div class="p-6 md:p-10">
             <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">{{ $article->title }}</h1>

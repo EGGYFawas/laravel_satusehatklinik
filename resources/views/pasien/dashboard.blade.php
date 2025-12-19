@@ -264,25 +264,63 @@
     </div>
 
     {{-- Artikel Kesehatan --}}
-    <div class="mt-12 w-full max-w-5xl mx-auto">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6">Artikel Kesehatan Terbaru</h2>
-        @if(isset($articles) && $articles->isNotEmpty())
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                @foreach($articles as $article)
-                    <div class="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col transform hover:-translate-y-2 transition-transform duration-300">
-                        <img src="https://placehold.co/600x400/ABDCD6/24306E?text=Klinik+Sehat" alt="Gambar Artikel: {{ $article->title }}" class="w-full h-48 object-cover">
-                        <div class="p-6 flex-grow flex flex-col">
-                            <h3 class="font-bold text-lg mb-2 text-gray-800">{{ $article->title }}</h3>
-                            <p class="text-gray-600 text-sm flex-grow">{{ Str::limit(strip_tags($article->content), 100) }}</p>
-                            <a href="#" class="text-sm text-[#24306E] font-semibold mt-4 self-start hover:underline">Baca Selengkapnya &rarr;</a>
-                        </div>
+        <div class="mt-12 w-full max-w-5xl mx-auto">
+            
+            {{-- [PERBAIKAN 1] Menambahkan Container/Card untuk Judul agar tulisan terbaca jelas --}}
+            <div class="bg-white/90 backdrop-blur-sm shadow-sm rounded-xl p-6 mb-8 border border-gray-100 relative z-10">
+                <div class="flex justify-between items-end">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800">Artikel Kesehatan Terbaru</h2>
+                        <p class="text-sm text-gray-500 mt-1">Informasi terkini untuk menunjang kesehatan Anda.</p>
                     </div>
-                @endforeach
+                    
+                    {{-- Link Lihat Semua --}}
+                    <a href="{{ route('pasien.artikel.index') }}" class="text-sm text-[#24306E] hover:text-blue-800 font-semibold mb-1 flex items-center transition-colors">
+                        Lihat Semua <span class="ml-1 text-lg leading-none">&rarr;</span>
+                    </a>
+                </div>
             </div>
-        @else
-            <div class="text-center text-gray-500 py-8 bg-white rounded-xl shadow-lg"><p>Belum ada artikel kesehatan yang diterbitkan.</p></div>
-        @endif
-    </div>
+                @if(isset($articles) && $articles->isNotEmpty())
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                        @foreach($articles as $article)
+                            <div class="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col transform hover:-translate-y-2 transition-transform duration-300 border border-gray-100 group">
+                                
+                                {{-- [FIX] Gambar Sampul (Klikable) --}}
+                                <a href="{{ route('pasien.artikel.show', $article->slug) }}" class="block overflow-hidden h-48">
+                                    <img src="{{ $article->image_url ? asset('storage/' . $article->image_url) : 'https://placehold.co/600x400/ABDCD6/24306E?text=Klinik+Sehat' }}" 
+                                        alt="Gambar Artikel: {{ $article->title }}" 
+                                        class="w-full h-full object-cover transition duration-500 group-hover:scale-105">
+                                </a>
+
+                                <div class="p-6 flex-grow flex flex-col">
+                                    {{-- Judul --}}
+                                    <h3 class="font-bold text-lg mb-2 text-gray-800 line-clamp-2">
+                                        <a href="{{ route('pasien.artikel.show', $article->slug) }}" class="hover:text-[#24306E] transition">
+                                            {{ $article->title }}
+                                        </a>
+                                    </h3>
+
+                                    {{-- Isi Singkat --}}
+                                    <p class="text-gray-600 text-sm flex-grow line-clamp-3">
+                                        {{ Str::limit(strip_tags($article->content), 100) }}
+                                    </p>
+
+                                    {{-- [FIX] Tombol Baca Selengkapnya --}}
+                                    <a href="{{ route('pasien.artikel.show', $article->slug) }}" class="text-sm text-[#24306E] font-semibold mt-4 self-start hover:underline flex items-center">
+                                        Baca Selengkapnya 
+                                        <svg class="w-4 h-4 ml-1 transform transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                                    </a>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="text-center text-gray-500 py-12 bg-white rounded-xl shadow-lg border border-dashed border-gray-200">
+                        <svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 12h6M7 8h6"></path></svg>
+                        <p>Belum ada artikel kesehatan yang diterbitkan.</p>
+                    </div>
+                @endif
+            </div>
 @endsection
 
 @push('modals')

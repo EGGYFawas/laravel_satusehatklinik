@@ -11,7 +11,6 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Str;
 
 // Komponen Form
@@ -20,14 +19,14 @@ use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Section;
-use Filament\Forms\Components\FileUpload; // [BARU] Untuk upload gambar
-use Filament\Forms\Components\Grid;       // [BARU] Untuk layout kolom
-use Filament\Forms\Components\Group;      // [BARU] Untuk grouping layout
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Group;
 use Filament\Forms\Set;
 
 // Komponen Tabel
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ImageColumn;  // [BARU] Untuk preview gambar di tabel
+use Filament\Tables\Columns\ImageColumn;
 
 class ArticleResource extends Resource
 {
@@ -38,14 +37,20 @@ class ArticleResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static ?string $navigationGroup = 'Manajemen Konten';
 
+    // [PERBAIKAN 2] Mengatur Urutan: Draft (NULL) paling atas, lalu Published Terbaru
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->orderByRaw('published_at IS NULL DESC') // 1. Draft (Null) paling atas
+            ->orderBy('published_at', 'desc');        // 2. Artikel terbaru paling atas
+    }
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                // Menggunakan Grid untuk membagi layout menjadi 3 bagian (2 Kiri : 1 Kanan)
                 Grid::make(3)
                     ->schema([
-                        // === KOLOM KIRI (UTAMA) ===
                         Group::make()
                             ->columnSpan(2)
                             ->schema([
@@ -64,31 +69,27 @@ class ArticleResource extends Resource
                                             ->maxLength(255)
                                             ->unique(Article::class, 'slug', ignoreRecord: true),
 
-                                        // RichEditor untuk Isi Konten
                                         RichEditor::make('content')
                                             ->label('Isi Artikel')
                                             ->required()
-                                            // [PENTING] Konfigurasi agar gambar di dalam teks bisa diakses publik
                                             ->fileAttachmentsDirectory('articles/content') 
                                             ->fileAttachmentsVisibility('public')
                                             ->columnSpanFull(),
                                     ]),
                             ]),
 
-                        // === KOLOM KANAN (SIDEBAR) ===
                         Group::make()
                             ->columnSpan(1)
                             ->schema([
                                 Section::make('Gambar Sampul')
                                     ->schema([
-                                        // [PENTING] Upload Gambar Sampul
                                         FileUpload::make('image_url')
                                             ->label('Gambar Utama')
-                                            ->image()             // Validasi file harus gambar
-                                            ->imageEditor()       // Fitur Crop/Rotate bawaan Filament
-                                            ->directory('articles/covers') // Folder penyimpanan
-                                            ->visibility('public')         // Agar bisa dilihat Guest
-                                            ->maxSize(2048)                // Maksimal 2MB (Mencegah loading lambat)
+                                            ->image()
+                                            ->imageEditor()
+                                            ->directory('articles/covers')
+                                            ->visibility('public')
+                                            ->maxSize(2048)
                                             ->columnSpanFull(),
                                     ]),
 
@@ -96,7 +97,7 @@ class ArticleResource extends Resource
                                     ->schema([
                                         Select::make('author_id')
                                             ->label('Penulis')
-                                            ->relationship('author', 'name') // Pastikan 'name' atau 'full_name' ada di Model User
+                                            ->relationship('author', 'full_name')
                                             ->searchable()
                                             ->preload()
                                             ->default(auth()->id())
@@ -115,11 +116,10 @@ class ArticleResource extends Resource
     {
         return $table
             ->columns([
-                // [BARU] Menampilkan thumbnail gambar di tabel list
                 ImageColumn::make('image_url')
                     ->label('Cover')
-                    ->circular() // Tampilan bulat rapi
-                    ->defaultImageUrl(url('/images/placeholder.png')), // Opsional: gambar default
+                    ->circular()
+                    ->defaultImageUrl(url('/images/placeholder.png')),
 
                 TextColumn::make('title')
                     ->label('Judul')
@@ -128,7 +128,7 @@ class ArticleResource extends Resource
                     ->limit(30)
                     ->tooltip(fn (Article $record): string => $record->title),
 
-                TextColumn::make('author.name') // Sesuaikan dengan kolom nama di tabel users
+                TextColumn::make('author.full_name')
                     ->label('Penulis')
                     ->sortable()
                     ->toggleable(),
@@ -141,7 +141,6 @@ class ArticleResource extends Resource
                     ->sortable(),
             ])
             ->filters([
-                // Bisa tambahkan filter Draft/Published di sini nanti
                 Tables\Filters\Filter::make('published')
                     ->query(fn (Builder $query) => $query->whereNotNull('published_at'))
                     ->label('Sudah Terbit'),
