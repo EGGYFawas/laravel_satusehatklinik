@@ -37,7 +37,8 @@ class PoliResource extends Resource
                         TextInput::make('name')
                             ->label('Nama Poli')
                             ->required()
-                            ->maxLength(100),
+                            ->maxLength(100)
+                            ->helperText('Contoh: Poli Gigi, Poli ...'),
                         TextInput::make('code')
                             ->label('Kode Poli')
                             ->required()

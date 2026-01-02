@@ -5,6 +5,7 @@ namespace App\Http\Controllers\PetugasLoket;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\PharmacyQueue;
+use App\Services\PaymentService; // Import Service Pembayaran
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -14,30 +15,37 @@ class DashboardController extends Controller
 {
     /**
      * Menampilkan dashboard utama petugas loket/apotek.
-     * [MODIFIKASI] Mengambil data untuk 4 kolom Kanban baru.
      */
     public function index()
     {
         $today = Carbon::today();
 
-        // Mengambil semua antrean apotek untuk hari ini dengan relasi yang dibutuhkan
+        // Mengambil semua antrean apotek untuk hari ini
         $allQueues = PharmacyQueue::with([
                 'clinicQueue.patient', 
                 'clinicQueue.poli',
-                'prescription.prescriptionDetails.medicine'
+                'prescription.prescriptionDetails.medicine' // Load detail obat & resep
             ])
             ->whereDate('entry_time', $today)
             ->orderBy('pharmacy_queue_number', 'asc')
             ->get();
 
-        // Mengelompokkan antrean berdasarkan status baru
+        // --- TAMBAHAN LOGIC: Pastikan Total Harga Terhitung ---
+        // Kita loop sekilas untuk trigger hitung total jika masih 0
+        $paymentService = new PaymentService();
+        foreach ($allQueues as $q) {
+            if ($q->prescription && $q->prescription->total_price <= 0) {
+                $paymentService->calculateTotal($q->prescription);
+            }
+        }
+
+        // Mengelompokkan antrean
         $dalamAntrean = $allQueues->where('status', 'DALAM_ANTREAN');
         $sedangDiracik = $allQueues->where('status', 'SEDANG_DIRACIK');
         $siapDiambil = $allQueues->where('status', 'SIAP_DIAMBIL');
         
-        // Kolom riwayat menampilkan status DISERAHKAN dan DITERIMA_PASIEN
         $telahDiserahkan = $allQueues->whereIn('status', ['DISERAHKAN', 'DITERIMA_PASIEN'])
-                                   ->sortByDesc('taken_time'); // Urutkan berdasarkan waktu diserahkan
+                                     ->sortByDesc('taken_time');
 
         return view('petugas-loket.dashboard', compact(
             'dalamAntrean',
@@ -48,12 +56,35 @@ class DashboardController extends Controller
     }
 
     /**
-     * [FUNGSI BARU] Meng-handle semua pembaruan status dari satu route.
-     * Menggantikan startRacik(), finishRacik(), dan markAsTaken().
-     *
-     * @param Request $request
-     * @param PharmacyQueue $pharmacyQueue
-     * @return \Illuminate\Http\RedirectResponse
+     * [BARU] Fungsi untuk memproses pembayaran tunai di loket
+     */
+    public function bayarTunai(Request $request, $pharmacyQueueId)
+    {
+        try {
+            $queue = PharmacyQueue::findOrFail($pharmacyQueueId);
+            $prescription = $queue->prescription;
+
+            if (!$prescription) {
+                return back()->with('error', 'Data resep tidak ditemukan.');
+            }
+
+            // Update status pembayaran jadi Lunas
+            $prescription->update([
+                'payment_status' => 'paid',
+                'payment_method' => 'cash', // Tunai lewat loket
+                'paid_at' => now(),
+            ]);
+
+            return back()->with('success', "Pembayaran tunai untuk antrean {$queue->pharmacy_queue_number} berhasil dikonfirmasi.");
+
+        } catch (\Exception $e) {
+            Log::error("Gagal proses bayar tunai: " . $e->getMessage());
+            return back()->with('error', 'Gagal memproses pembayaran.');
+        }
+    }
+
+    /**
+     * Update status antrean (Start Racik, Finish Racik, Serahkan)
      */
     public function updateStatus(Request $request, PharmacyQueue $pharmacyQueue)
     {
@@ -69,7 +100,6 @@ class DashboardController extends Controller
         try {
             DB::beginTransaction();
 
-            // Logika untuk mengisi timestamp berdasarkan status baru
             switch ($newStatus) {
                 case 'SEDANG_DIRACIK':
                     if ($currentStatus !== 'DALAM_ANTREAN') {
@@ -91,11 +121,17 @@ class DashboardController extends Controller
                     if ($currentStatus !== 'SIAP_DIAMBIL') {
                         return redirect()->back()->with('error', 'Hanya obat yang siap yang bisa diserahkan.');
                     }
+
+                    // --- VALIDASI PEMBAYARAN DI SINI ---
+                    // Cek apakah resep sudah lunas?
+                    if ($pharmacyQueue->prescription && $pharmacyQueue->prescription->payment_status !== 'paid') {
+                        return redirect()->back()->with('error', 'GAGAL: Pasien belum melunasi tagihan obat. Harap lakukan pembayaran terlebih dahulu.');
+                    }
+
                     $updateData['taken_time'] = now();
                     $successMessage = "Obat untuk {$pharmacyQueue->pharmacy_queue_number} telah diserahkan ke pasien.";
                     break;
                 
-                // Opsi untuk pembatalan jika diperlukan di masa depan
                 case 'BATAL':
                     $successMessage = "Antrean {$pharmacyQueue->pharmacy_queue_number} telah dibatalkan.";
                     break;
@@ -111,6 +147,33 @@ class DashboardController extends Controller
             DB::rollBack();
             Log::error("Gagal update status antrean apotek: " . $e->getMessage());
             return redirect()->back()->with('error', 'Terjadi kesalahan saat memperbarui status antrean.');
+        }
+    }
+
+    /**
+     * [BARU] Cek status pembayaran ke Midtrans manual oleh Petugas
+     */
+    public function checkPaymentStatus(Request $request, $pharmacyQueueId)
+    {
+        try {
+            $queue = PharmacyQueue::findOrFail($pharmacyQueueId);
+            $prescription = $queue->prescription;
+
+            if (!$prescription) {
+                return back()->with('error', 'Data resep tidak ditemukan.');
+            }
+
+            $paymentService = new PaymentService();
+            $isPaid = $paymentService->checkTransactionStatus($prescription);
+
+            if ($isPaid) {
+                return back()->with('success', "Status pembayaran diperbarui: LUNAS (Midtrans).");
+            } else {
+                return back()->with('error', "Status di Midtrans masih BELUM LUNAS.");
+            }
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal cek status: ' . $e->getMessage());
         }
     }
 }

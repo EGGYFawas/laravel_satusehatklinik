@@ -17,6 +17,13 @@ class Prescription extends Model
     protected $fillable = [
         'medical_record_id',
         'prescription_date',
+        // [PENTING] Tambahkan field pembayaran ini agar bisa diupdate
+        'payment_status',       // pending, paid
+        'payment_method',       // cash, midtrans
+        'total_price',          // Total harga
+        'midtrans_snap_token',  // Token pembayaran
+        'midtrans_booking_code',// Order ID
+        'paid_at',              // Waktu bayar
     ];
 
     /**
@@ -28,11 +35,21 @@ class Prescription extends Model
     }
 
     /**
-     * Mendapatkan semua detail item obat dalam resep ini.
+     * Relasi ke detail obat.
+     * Nama fungsi ini SANGAT PENTING.
+     * Di Controller & View kita pakai 'details', jadi di sini harus 'details'.
+     */
+    public function details()
+    {
+        return $this->hasMany(PrescriptionDetail::class, 'prescription_id');
+    }
+
+    /**
+     * (Opsional) Alias jika ada kodingan lama yang pakai 'prescriptionDetails'
+     * Biar aman dua-duanya jalan.
      */
     public function prescriptionDetails()
     {
-        return $this->hasMany(PrescriptionDetail::class);
+        return $this->hasMany(PrescriptionDetail::class, 'prescription_id');
     }
 }
-

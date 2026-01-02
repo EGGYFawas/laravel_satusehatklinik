@@ -2,31 +2,21 @@
 
 namespace App\Filament\Resources;
 
-// 1. Sesuaikan namespace ke 'ObatResource'
-use App\Filament\Resources\ObatResource\Pages; 
-use App\Filament\Resources\ObatResource\RelationManagers;
-use App\Models\Medicine; // <-- Model tetap 'Medicine'
+use App\Filament\Resources\ObatResource\Pages;
+use App\Models\Medicine;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-
-// Komponen Form
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Section;
-
-// Komponen Tabel
 use Filament\Tables\Columns\TextColumn;
 
-// 2. Ubah nama class
-class ObatResource extends Resource 
+class ObatResource extends Resource
 {
-    // 3. Model tetap 'Medicine'
-    protected static ?string $model = Medicine::class; 
+    protected static ?string $model = Medicine::class;
 
     protected static ?string $navigationLabel = 'Data Obat';
     protected static ?string $pluralModelLabel = 'Data Obat';
@@ -43,6 +33,7 @@ class ObatResource extends Resource
                             ->required()
                             ->maxLength(255)
                             ->columnSpanFull(),
+                        
                         TextInput::make('sku')
                             ->label('SKU (Kode Obat)')
                             ->unique(ignoreRecord: true)
@@ -66,8 +57,18 @@ class ObatResource extends Resource
                             ->numeric()
                             ->required()
                             ->default(0),
+
+                        // --- TAMBAHAN: INPUT HARGA ---
+                        TextInput::make('price')
+                            ->label('Harga Satuan')
+                            ->prefix('Rp')
+                            ->numeric()
+                            ->required()
+                            ->default(0)
+                            ->helperText('Harga per unit/satuan obat.'),
+                        // -----------------------------
                     ])
-                    ->columns(3),
+                    ->columns(2), // Ubah jadi 2 kolom biar rapi
             ]);
     }
 
@@ -78,17 +79,28 @@ class ObatResource extends Resource
                 TextColumn::make('name')
                     ->label('Nama Obat')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->weight('bold'),
+                
                 TextColumn::make('sku')
                     ->label('SKU')
                     ->searchable(),
+                
                 TextColumn::make('unit')
                     ->label('Satuan')
                     ->badge(),
+                
                 TextColumn::make('stock')
                     ->label('Stok')
                     ->numeric()
                     ->sortable(),
+
+                // --- TAMBAHAN: KOLOM HARGA ---
+                TextColumn::make('price')
+                    ->label('Harga')
+                    ->money('IDR') // Format otomatis Rp xx.xxx
+                    ->sortable(),
+                // -----------------------------
             ])
             ->filters([
                 //
@@ -112,13 +124,12 @@ class ObatResource extends Resource
         ];
     }
     
-    // 4. Sesuaikan rute Pages
     public static function getPages(): array
     {
         return [
             'index' => Pages\ListObat::route('/'),
             'create' => Pages\CreateObat::route('/create'),
-            'view' => Pages\ViewObat::route('/{record}'), 
+            'view' => Pages\ViewObat::route('/{record}'),
             'edit' => Pages\EditObat::route('/{record}/edit'),
         ];
     }    

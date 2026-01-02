@@ -10,6 +10,10 @@ use App\Models\Poli;
 use App\Models\Doctor;
 use App\Models\Article;
 use App\Models\PharmacyQueue;
+// --- TAMBAHAN IMPORT ---
+use App\Models\MedicalRecord; 
+use App\Models\Prescription;
+// -----------------------
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -40,6 +44,10 @@ class DashboardController extends Controller
         $antreanApotek = null;
         $antreanApotekBerjalan = null;
         $jumlahAntreanApotekSebelumnya = 0;
+        
+        // --- VARIABEL BARU UNTUK TAGIHAN ---
+        $tagihanObat = null;
+        // -----------------------------------
 
         if ($patient) {
             $kunjunganHariIni = ClinicQueue::with(['poli', 'doctor.user'])
@@ -63,6 +71,16 @@ class DashboardController extends Controller
                 $antreanApotek = PharmacyQueue::where('clinic_queue_id', $kunjunganHariIni->id)
                     ->where('status', '!=', 'BATAL')
                     ->first();
+
+                // --- LOGIC BARU: CEK TAGIHAN / RESEP ---
+                // Kita cari Medical Record dari kunjungan ini, lalu cari Prescription-nya
+                $medicalRecord = MedicalRecord::where('clinic_queue_id', $kunjunganHariIni->id)->first();
+                if ($medicalRecord) {
+                    $tagihanObat = Prescription::where('medical_record_id', $medicalRecord->id)
+                                    ->latest()
+                                    ->first();
+                }
+                // ---------------------------------------
 
                 if (!in_array($kunjunganHariIni->status, ['SELESAI', 'BATAL'])) {
                     $antreanBerjalan = ClinicQueue::where('poli_id', $antreanBerobat->poli_id)
@@ -108,7 +126,8 @@ class DashboardController extends Controller
         return view('pasien.dashboard', compact(
             'user', 'patient', 'antreanBerobat', 'riwayatBerobatTerakhir',
             'antreanBerjalan', 'antreanApotek', 'antreanApotekBerjalan',
-            'jumlahAntreanApotekSebelumnya', 'polis', 'articles'
+            'jumlahAntreanApotekSebelumnya', 'polis', 'articles',
+            'tagihanObat' // <-- Pastikan variabel ini dikirim ke view
         ));
     }
 
@@ -237,7 +256,6 @@ class DashboardController extends Controller
 
             $antreanApotek->update([
                 'status' => 'DITERIMA_PASIEN',
-                // now() sudah WIB, jadi taken_time akan akurat
                 'taken_time' => now() 
             ]);
 

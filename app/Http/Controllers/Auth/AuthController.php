@@ -61,8 +61,8 @@ class AuthController extends Controller
                 'full_name' => strtoupper($validatedData['full_name']),
                 'email' => $validatedData['email'],
                 'password' => Hash::make($validatedData['password']),
-                // [MODIFIKASI] Role 'pasien' ditambahkan di controller register
-                // 'role' => 'pasien' // Jika Anda tidak pakai Spatie, pastikan kolom role ada
+    
+                //proses enkripsi password
             ]);
 
             // Asumsi Anda pakai Spatie karena assignRole

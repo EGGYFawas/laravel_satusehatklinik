@@ -26,6 +26,8 @@ class Medicine extends Model
         'sku',
         'unit',
         'stock',
+        'price', 
+        'price', 
     ];
 
     /**

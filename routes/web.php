@@ -10,7 +10,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DashboardRedirectController;
 use App\Http\Controllers\LandingPageController;
-use App\Http\Controllers\ArticleController; // Pastikan Anda membuat/menggunakan controller ini untuk publik
+use App\Http\Controllers\ArticleController;
+use App\Http\Controllers\InvoiceController; // [PENTING] Tambahkan ini untuk cetak PDF
 
 // Controller Pasien
 use App\Http\Controllers\Pasien\DashboardController as PasienDashboardController;
@@ -19,6 +20,7 @@ use App\Http\Controllers\Pasien\ProfileController as PasienProfileController;
 use App\Http\Controllers\Pasien\HistoryController as PasienHistoryController;
 use App\Http\Controllers\Pasien\ScheduleController as PasienScheduleController;
 use App\Http\Controllers\Pasien\ArticleController as PasienArticleController;
+use App\Http\Controllers\Pasien\BillingController;
 
 // Controller Dokter
 use App\Http\Controllers\Dokter\DashboardController as DokterDashboardController;
@@ -42,9 +44,7 @@ use App\Http\Controllers\PetugasLoket\AntreanOfflineController;
 // Landing Page
 Route::get('/', [LandingPageController::class, 'index'])->name('landing');
 
-// [BARU] Artikel Publik
-// Ini diletakkan di luar middleware 'auth' agar tamu bisa baca, 
-// tapi pasien yang login juga tetap bisa akses link ini.
+// Artikel Publik
 Route::get('/artikel', [ArticleController::class, 'index'])->name('artikel.index');
 Route::get('/artikel/{article:slug}', [ArticleController::class, 'show'])->name('artikel.show');
 
@@ -70,6 +70,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardRedirectController::class, 'index'])->name('dashboard');
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 
+    // [BARU] Route Global untuk Download Struk (Bisa diakses Pasien & Petugas)
+    Route::get('/invoice/{id}/download', [InvoiceController::class, 'download'])->name('invoice.download');
+
     // --- GROUP: ROLE PASIEN ---
     Route::middleware(['role:pasien'])->prefix('pasien')->name('pasien.')->group(function () {
         Route::get('/dashboard', [PasienDashboardController::class, 'index'])->name('dashboard');
@@ -88,10 +91,14 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/riwayat/{patient}', [PasienHistoryController::class, 'show'])->name('riwayat.show');
         Route::get('/jadwal-dokter', [PasienScheduleController::class, 'index'])->name('jadwal.index');
 
-         Route::get('/artikel', [PasienArticleController::class, 'index'])->name('artikel.index');
+        // Artikel (View Khusus Pasien)
+        Route::get('/artikel', [PasienArticleController::class, 'index'])->name('artikel.index');
         Route::get('/artikel/{article:slug}', [PasienArticleController::class, 'show'])->name('artikel.show');
-       
-    
+        
+        // Billing / Pembayaran (Nama route diperbaiki agar tidak double 'pasien.')
+        Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
+        Route::get('/billing/pay/{prescription}', [BillingController::class, 'pay'])->name('billing.pay');
+        Route::get('/billing/check/{prescription}', [BillingController::class, 'checkStatus'])->name('billing.check');
     });
 
     // --- GROUP: ROLE DOKTER ---
@@ -106,9 +113,18 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // --- GROUP: ROLE PETUGAS LOKET ---
+    // Pastikan nama role di database 'petugas loket' (pakai spasi) atau 'petugas_loket'
     Route::middleware(['role:petugas loket'])->prefix('petugas-loket')->name('petugas-loket.')->group(function () {
         Route::get('/dashboard', [PetugasLoketDashboardController::class, 'index'])->name('dashboard');
+        
+        // Update Status (Racik, Selesai, Serahkan)
         Route::patch('/antrean-apotek/{pharmacyQueue}/update-status', [PetugasLoketDashboardController::class, 'updateStatus'])->name('antrean-apotek.updateStatus');
+        
+        // [BARU] Bayar Tunai Manual
+        Route::post('/bayar-tunai/{pharmacyQueueId}', [PetugasLoketDashboardController::class, 'bayarTunai'])->name('bayar-tunai');
+        Route::post('/cek-status-bayar/{pharmacyQueueId}', [PetugasLoketDashboardController::class, 'checkPaymentStatus'])->name('cek-status-bayar');
+
+        // Antrean Offline
         Route::get('/antrean-offline', [AntreanOfflineController::class, 'index'])->name('antrean-offline.index');
         Route::post('/antrean-offline', [AntreanOfflineController::class, 'store'])->name('antrean-offline.store');
         Route::patch('/antrean-offline/{antrean}/check-in', [AntreanOfflineController::class, 'checkIn'])->name('antrean-offline.checkin');

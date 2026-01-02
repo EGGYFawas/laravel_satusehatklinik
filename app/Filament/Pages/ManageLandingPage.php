@@ -14,27 +14,26 @@ use Illuminate\Support\Facades\Storage;
 
 class ManageLandingPage extends Page
 {
-    // Konfigurasi Menu Sidebar
+    // === 1. KONFIGURASI HALAMAN ===
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
     protected static ?string $navigationLabel = 'Kelola Landing Page';
     protected static ?string $title = 'Pengaturan Landing Page';
     protected static ?string $navigationGroup = 'Pengaturan Web';
 
-    // Menghubungkan ke file tampilan (Blade)
     protected static string $view = 'filament.pages.manage-landing-page';
 
-    // Variabel untuk menampung data form
+    // Variabel penampung data form
     public ?array $data = [];
 
+    // === 2. SAAT HALAMAN DIBUKA (MOUNT) ===
     public function mount(): void
     {
-        // 1. Ambil data dari database saat halaman dibuka
+        // Ambil semua data konten dari database
         $contents = LandingPageContent::all();
         $formData = [];
         
         foreach ($contents as $item) {
-            // Logika: Jika tipe gambar, ambil data dari kolom 'image'
-            // Jika tipe teks, ambil data dari kolom 'value'
+            // Jika tipe image, ambil dari kolom 'image', jika text ambil dari 'value'
             if ($item->type === 'image') {
                 $formData[$item->key] = $item->image;
             } else {
@@ -42,17 +41,18 @@ class ManageLandingPage extends Page
             }
         }
 
-        // Isi form dengan data tersebut
+        // Masukkan data ke form
         $this->form->fill($formData);
     }
 
+    // === 3. STRUKTUR FORM (SCHEMA) ===
     public function form(Form $form): Form
     {
         return $form
             ->schema([
                 Tabs::make('Tabs')
                     ->tabs([
-                        // === TAB 1: HERO SECTION ===
+                        // --- TAB 1: HERO SECTION ---
                         Tabs\Tab::make('Hero Section')
                             ->icon('heroicon-m-home')
                             ->schema([
@@ -63,13 +63,13 @@ class ManageLandingPage extends Page
                                 FileUpload::make('hero_image')
                                     ->label('Gambar Background Utama')
                                     ->image()
-                                    ->disk('public') // Pastikan storage:link aman
+                                    ->disk('public')
                                     ->directory('landing-page')
                                     ->visibility('public')
                                     ->imageEditor(), // Fitur crop/resize
                             ]),
 
-                        // === TAB 2: TENTANG KAMI ===
+                        // --- TAB 2: TENTANG KAMI ---
                         Tabs\Tab::make('Tentang Kami')
                             ->icon('heroicon-m-information-circle')
                             ->schema([
@@ -86,46 +86,56 @@ class ManageLandingPage extends Page
                                     ->imageEditor(),
                             ]),
 
-                        // === TAB 3: KONTAK ===
+                        // --- TAB 3: KONTAK ---
                         Tabs\Tab::make('Kontak')
                             ->icon('heroicon-m-phone')
                             ->schema([
                                 TextInput::make('contact_phone')
                                     ->label('Nomor Telepon')
-                                    ->required(),
+                                    ->tel() // Set tipe input HTML ke 'tel'
+                                    ->placeholder('08xxxxxxxxxx')
+                                    ->maxLength(13) // Batasi maksimal 13 karakter
+                                    ->minLength(10) // Batasi minimal 10 karakter
+                                    // Script JS: Hapus karakter non-angka & potong jika > 13 digit
+                                    ->extraInputAttributes([
+                                        'oninput' => "this.value = this.value.replace(/[^0-9]/g, '').slice(0, 13)",
+                                        'pattern' => '[0-9]*'
+                                    ])
+                                    // Validasi Backend: Pastikan hanya angka
+                                    ->regex('/^[0-9]+$/') 
+                                    ->  X(),
                             ]),
-                    ])->columnSpanFull(),
+                    ])
+                    ->columnSpanFull(), // Agar Tabs memenuhi lebar halaman
             ])
-            ->statePath('data'); // Mengikat input form ke variabel $data
+            ->statePath('data'); // Bind ke variabel $data
     }
 
+    // === 4. PROSES PENYIMPANAN (SAVE) ===
     public function save(): void
     {
-        // 1. Ambil data dari form
+        // Ambil data yang ada di form
         $formData = $this->form->getState();
 
-        // 2. Loop dan simpan ke database
         foreach ($formData as $key => $value) {
-            // Cari data di database berdasarkan key
+            // Cari data di database berdasarkan 'key'
             $content = LandingPageContent::where('key', $key)->first();
 
             if ($content) {
-                // Simpan sesuai tipe datanya
+                // Logika Simpan
                 if ($content->type === 'image') {
-                    // Hapus gambar lama jika diganti (Optional)
+                    // Hapus gambar lama jika ada gambar baru (dan gambar lama ada)
                     if ($content->image && $content->image !== $value) {
                         Storage::disk('public')->delete($content->image);
                     }
-                    // Simpan ke kolom 'image'
                     $content->update(['image' => $value]);
                 } else {
-                    // Simpan ke kolom 'value'
                     $content->update(['value' => $value]);
                 }
             }
         }
 
-        // 3. Tampilkan notifikasi sukses
+        // Tampilkan notifikasi
         Notification::make()
             ->title('Berhasil disimpan')
             ->success()

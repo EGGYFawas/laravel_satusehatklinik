@@ -46,7 +46,8 @@
             $hasActiveProcess = ($antreanBerobat && !in_array($antreanBerobat->status, ['SELESAI', 'BATAL'])) || 
                                 ($antreanApotek && !in_array($antreanApotek->status, ['DITERIMA_PASIEN', 'BATAL']));
         @endphp
-
+        
+        <!-- card daftar antrian -->
         @if(!$hasActiveProcess)
             <div class="w-full max-w-lg bg-white rounded-xl shadow-lg p-6 text-center mb-8">
                 <img src="{{ asset('assets/img/ambil_antrean.png') }}" alt="Antrean Online" class="w-32 h-32 mx-auto mb-4">
@@ -130,7 +131,6 @@
                             @endif
                         @endif
                         
-                        {{-- [DIKEMBALIKAN] Logika untuk menampilkan tombol check-in dan status lainnya --}}
                         <div id="action-button-container" class="pt-4 border-t">
                             @if($antreanBerobat->status == 'MENUNGGU')
                                 <button id="checkInBtn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg shadow-md text-base">Saya Sudah Tiba, Lakukan Check-In</button>
@@ -145,23 +145,19 @@
                     <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
                         <p class="font-semibold text-gray-700">Kunjungan Terakhir Anda</p>
                         
-                        {{-- [PERBAIKAN] Menambahkan @if untuk mencegah error pada data lama --}}
                         @if($riwayatBerobatTerakhir->finish_time)
                             <p class="text-2xl font-bold text-gray-800 mt-2">
-                                {{-- [SOLUSI] Pakai setTimezone('Asia/Jakarta') agar akurat WIB --}}
                                 {{ $riwayatBerobatTerakhir->finish_time->setTimezone('Asia/Jakarta')->translatedFormat('l, d F Y') }}
                             </p>
                             <div class="mt-4 text-left space-y-2 text-sm">
                                 <p>
                                     <span class="font-semibold w-24 inline-block">Selesai Pukul</span>: 
-                                    {{-- [SOLUSI] Pakai setTimezone('Asia/Jakarta') di sini juga --}}
                                     {{ $riwayatBerobatTerakhir->finish_time->setTimezone('Asia/Jakarta')->format('H:i') }} WIB
                                 </p>
                                 <p><span class="font-semibold w-24 inline-block">Poli</span>: {{ $riwayatBerobatTerakhir->poli->name }}</p>
                                 <p><span class="font-semibold w-24 inline-block">Dokter</span>: {{ $riwayatBerobatTerakhir->doctor->user->full_name ?? 'N/A' }}</p>
                             </div>
                         @else
-                            {{-- Tampilan alternatif jika finish_time kosong --}}
                             <p class="text-lg text-gray-600 mt-2">
                                 Data waktu kunjungan tidak lengkap.
                             </p>
@@ -224,8 +220,8 @@
                                          $estimasiApotek = '-';
                                          if ($antreanApotek->status === 'SEDANG_DIRACIK') { $estimasiApotek = "Segera"; } 
                                          elseif ($antreanApotek->status === 'DALAM_ANTREAN') {
-                                             $waktuTunggu = ($jumlahAntreanApotekSebelumnya) * 10;
-                                             $estimasiApotek = $waktuTunggu > 0 ? "sekitar {$waktuTunggu} menit" : "Segera";
+                                              $waktuTunggu = ($jumlahAntreanApotekSebelumnya) * 10;
+                                              $estimasiApotek = $waktuTunggu > 0 ? "sekitar {$waktuTunggu} menit" : "Segera";
                                          }
                                      @endphp
                                      {{ $estimasiApotek }}
@@ -234,9 +230,37 @@
                         @endif
                         
                         <div class="pt-4 border-t">
-                             @if($antreanApotek->status == 'SIAP_DIAMBIL')
-                                 <div class="w-full bg-green-500 text-white font-bold py-3 px-6 rounded-lg text-center text-lg animate-pulse">SEGERA MENUJU LOKET APOTEK</div>
-                             @elseif($antreanApotek->status == 'DISERAHKAN')
+                            @if($antreanApotek->status == 'SIAP_DIAMBIL')
+                                
+                                {{-- [MODIFIKASI] Tombol Bayar Tagihan --}}
+                                @if(isset($tagihanObat) && $tagihanObat->payment_status == 'pending')
+                                    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 text-left">
+                                        <div class="flex">
+                                            <div class="ml-3">
+                                                <p class="text-sm text-yellow-700 font-bold">
+                                                    Tagihan obat belum dibayar.
+                                                </p>
+                                                <p class="text-xs text-yellow-600 mt-1">
+                                                    Silakan lakukan pembayaran agar obat dapat diserahkan.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <a href="{{ route('pasien.billing.index') }}" class="block w-full bg-[#24306E] hover:bg-[#1a224d] text-white font-bold py-3 px-6 rounded-lg text-center shadow-lg transform transition hover:scale-105 duration-300">
+                                        <i class="fas fa-wallet mr-2"></i> Lihat & Bayar Tagihan
+                                    </a>
+                                @else
+                                    {{-- Jika sudah lunas atau tidak ada tagihan (GRATIS/BPJS dsb) --}}
+                                    <div class="w-full bg-green-500 text-white font-bold py-3 px-6 rounded-lg text-center text-lg animate-pulse">
+                                        SEGERA MENUJU LOKET APOTEK
+                                        @if(isset($tagihanObat) && $tagihanObat->payment_status == 'paid')
+                                            <br><span class="text-sm font-normal">(LUNAS)</span>
+                                        @endif
+                                    </div>
+                                @endif
+                                {{-- [END MODIFIKASI] --}}
+
+                            @elseif($antreanApotek->status == 'DISERAHKAN')
                                  <form action="{{ route('pasien.antrean.apotek.konfirmasi', $antreanApotek->id) }}" method="POST" id="konfirmasiObatForm">
                                      @csrf
                                      <button type="button" id="konfirmasiObatBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg shadow-md text-base">Konfirmasi Obat Sudah Diterima</button>
@@ -264,67 +288,66 @@
     </div>
 
     {{-- Artikel Kesehatan --}}
-        <div class="mt-12 w-full max-w-5xl mx-auto">
-            
-            {{-- [PERBAIKAN 1] Menambahkan Container/Card untuk Judul agar tulisan terbaca jelas --}}
-            <div class="bg-white/90 backdrop-blur-sm shadow-sm rounded-xl p-6 mb-8 border border-gray-100 relative z-10">
-                <div class="flex justify-between items-end">
-                    <div>
-                        <h2 class="text-2xl font-bold text-gray-800">Artikel Kesehatan Terbaru</h2>
-                        <p class="text-sm text-gray-500 mt-1">Informasi terkini untuk menunjang kesehatan Anda.</p>
-                    </div>
-                    
-                    {{-- Link Lihat Semua --}}
-                    <a href="{{ route('pasien.artikel.index') }}" class="text-sm text-[#24306E] hover:text-blue-800 font-semibold mb-1 flex items-center transition-colors">
-                        Lihat Semua <span class="ml-1 text-lg leading-none">&rarr;</span>
-                    </a>
+    <div class="mt-12 w-full max-w-5xl mx-auto">
+        
+        {{-- [PERBAIKAN 1] Menambahkan Container/Card untuk Judul agar tulisan terbaca jelas --}}
+        <div class="bg-white/90 backdrop-blur-sm shadow-sm rounded-xl p-6 mb-8 border border-gray-100 relative z-10">
+            <div class="flex justify-between items-end">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">Artikel Kesehatan Terbaru</h2>
+                    <p class="text-sm text-gray-500 mt-1">Informasi terkini untuk menunjang kesehatan Anda.</p>
                 </div>
+                
+                {{-- Link Lihat Semua --}}
+                <a href="{{ route('pasien.artikel.index') }}" class="text-sm text-[#24306E] hover:text-blue-800 font-semibold mb-1 flex items-center transition-colors">
+                    Lihat Semua <span class="ml-1 text-lg leading-none">&rarr;</span>
+                </a>
             </div>
-                @if(isset($articles) && $articles->isNotEmpty())
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                        @foreach($articles as $article)
-                            <div class="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col transform hover:-translate-y-2 transition-transform duration-300 border border-gray-100 group">
-                                
-                                {{-- [FIX] Gambar Sampul (Klikable) --}}
-                                <a href="{{ route('pasien.artikel.show', $article->slug) }}" class="block overflow-hidden h-48">
-                                    <img src="{{ $article->image_url ? asset('storage/' . $article->image_url) : 'https://placehold.co/600x400/ABDCD6/24306E?text=Klinik+Sehat' }}" 
-                                        alt="Gambar Artikel: {{ $article->title }}" 
-                                        class="w-full h-full object-cover transition duration-500 group-hover:scale-105">
-                                </a>
+        </div>
+            @if(isset($articles) && $articles->isNotEmpty())
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    @foreach($articles as $article)
+                        <div class="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col transform hover:-translate-y-2 transition-transform duration-300 border border-gray-100 group">
+                            
+                            {{-- [FIX] Gambar Sampul (Klikable) --}}
+                            <a href="{{ route('pasien.artikel.show', $article->slug) }}" class="block overflow-hidden h-48">
+                                <img src="{{ $article->image_url ? asset('storage/' . $article->image_url) : 'https://placehold.co/600x400/ABDCD6/24306E?text=Klinik+Sehat' }}" 
+                                     alt="Gambar Artikel: {{ $article->title }}" 
+                                     class="w-full h-full object-cover transition duration-500 group-hover:scale-105">
+                            </a>
 
-                                <div class="p-6 flex-grow flex flex-col">
-                                    {{-- Judul --}}
-                                    <h3 class="font-bold text-lg mb-2 text-gray-800 line-clamp-2">
-                                        <a href="{{ route('pasien.artikel.show', $article->slug) }}" class="hover:text-[#24306E] transition">
-                                            {{ $article->title }}
-                                        </a>
-                                    </h3>
-
-                                    {{-- Isi Singkat --}}
-                                    <p class="text-gray-600 text-sm flex-grow line-clamp-3">
-                                        {{ Str::limit(strip_tags($article->content), 100) }}
-                                    </p>
-
-                                    {{-- [FIX] Tombol Baca Selengkapnya --}}
-                                    <a href="{{ route('pasien.artikel.show', $article->slug) }}" class="text-sm text-[#24306E] font-semibold mt-4 self-start hover:underline flex items-center">
-                                        Baca Selengkapnya 
-                                        <svg class="w-4 h-4 ml-1 transform transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                            <div class="p-6 flex-grow flex flex-col">
+                                {{-- Judul --}}
+                                <h3 class="font-bold text-lg mb-2 text-gray-800 line-clamp-2">
+                                    <a href="{{ route('pasien.artikel.show', $article->slug) }}" class="hover:text-[#24306E] transition">
+                                        {{ $article->title }}
                                     </a>
-                                </div>
+                                </h3>
+
+                                {{-- Isi Singkat --}}
+                                <p class="text-gray-600 text-sm flex-grow line-clamp-3">
+                                    {{ Str::limit(strip_tags($article->content), 100) }}
+                                </p>
+
+                                {{-- [FIX] Tombol Baca Selengkapnya --}}
+                                <a href="{{ route('pasien.artikel.show', $article->slug) }}" class="text-sm text-[#24306E] font-semibold mt-4 self-start hover:underline flex items-center">
+                                    Baca Selengkapnya 
+                                    <svg class="w-4 h-4 ml-1 transform transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                                </a>
                             </div>
-                        @endforeach
-                    </div>
-                @else
-                    <div class="text-center text-gray-500 py-12 bg-white rounded-xl shadow-lg border border-dashed border-gray-200">
-                        <svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 12h6M7 8h6"></path></svg>
-                        <p>Belum ada artikel kesehatan yang diterbitkan.</p>
-                    </div>
-                @endif
-            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="text-center text-gray-500 py-12 bg-white rounded-xl shadow-lg border border-dashed border-gray-200">
+                    <svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 12h6M7 8h6"></path></svg>
+                    <p>Belum ada artikel kesehatan yang diterbitkan.</p>
+                </div>
+            @endif
+    </div>
 @endsection
 
 @push('modals')
-{{-- @if(!$hasActiveProcess) --}}
     <div id="antrianModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-70 flex items-center justify-center z-50 p-4">
         <div id="modalContent" class="bg-white rounded-xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[95vh] transform transition-all" 
              x-data="{ isFamily: false, customRelationship: false, nikInput: '' }">
@@ -410,7 +433,6 @@
             </div>
        </div>
     </div>
-    {{-- @endif --}}
     <div id="qrScannerModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 text-center relative">
             <h3 class="text-xl font-bold text-gray-800 mb-4">Pindai QR Code Check-In</h3>
@@ -548,4 +570,3 @@
     });
     </script>
 @endpush
-
