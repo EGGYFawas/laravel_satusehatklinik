@@ -52,4 +52,14 @@ class Prescription extends Model
     {
         return $this->hasMany(PrescriptionDetail::class, 'prescription_id');
     }
+
+    /**
+     * [BARU] Relasi ke antrian farmasi.
+     * Diperlukan untuk mengambil data petugas yang memproses obat (taken_time, user_id).
+     */
+    public function pharmacyQueue()
+    {
+        // HasOne: Karena satu resep biasanya hanya masuk satu kali ke antrian farmasi
+        return $this->hasOne(PharmacyQueue::class, 'prescription_id');
+    }
 }

@@ -31,21 +31,23 @@ class DashboardController extends Controller
         $user = Auth::user();
         $doctor = Doctor::where('user_id', $user->id)->firstOrFail();
 
-        $tz = config('app.timezone');
-        $startOfDay = Carbon::now($tz)->startOfDay();
-        $endOfDay = Carbon::now($tz)->endOfDay();
+        // Gunakan helper now() agar konsisten dengan timezone aplikasi (Asia/Jakarta)
+        $startOfDay = now()->startOfDay();
+        $endOfDay = now()->endOfDay();
 
         $allQueues = ClinicQueue::with('patient.user')
             ->where('doctor_id', $doctor->id)
+            // Filter antrean HANYA hari ini
             ->whereBetween('registration_time', [$startOfDay, $endOfDay])
-            ->orderBy('check_in_time', 'asc')
-            ->orderBy('queue_number', 'asc')
+            ->orderBy('check_in_time', 'asc') // Urutkan yang sudah check-in duluan
+            ->orderBy('queue_number', 'asc')  // Lalu urutkan nomor antrean
             ->get();
 
         $pasienSedangDipanggil = $allQueues->firstWhere('status', 'DIPANGGIL');
         
         $pasienBerikutnya = null;
         if(!$pasienSedangDipanggil) {
+            // Prioritaskan pasien yang statusnya HADIR (sudah ada di klinik)
             $pasienBerikutnya = $allQueues->where('status', 'HADIR')->first();
         }
         
@@ -64,8 +66,6 @@ class DashboardController extends Controller
         if ($pasienAktif) {
             $medicines = Medicine::where('stock', '>', 0)->orderBy('name', 'asc')->get(['id', 'name', 'stock']);
             $diagnosisTags = DiagnosisTag::orderBy('tag_name', 'asc')->get(['tag_name']);
-            // Kita TIDAK memuat Icd10 di sini agar loading halaman cepat.
-            // Data ICD-10 akan diambil via AJAX di method searchIcd10
         }
 
         return view('dokter.dashboard', compact(
@@ -76,7 +76,6 @@ class DashboardController extends Controller
 
     /**
      * [BARU] Method AJAX untuk mencari ICD-10 dari database (Server-side Filtering)
-     * Menangani 18.000+ data dengan cepat.
      */
     public function searchIcd10(Request $request)
     {
@@ -86,7 +85,7 @@ class DashboardController extends Controller
             return response()->json([]);
         }
 
-        // Cari berdasarkan kode atau nama, batasi 20 hasil agar ringan
+        // Cari berdasarkan kode atau nama, batasi 30 hasil agar ringan
         $results = Icd10::where('code', 'like', "%{$query}%")
             ->orWhere('name', 'like', "%{$query}%")
             ->limit(30)
@@ -111,8 +110,9 @@ class DashboardController extends Controller
             return redirect()->back()->with('error', 'Pasien belum melakukan check-in kehadiran.');
         }
 
+        // Cek apakah ada pasien lain yang MASIH status 'DIPANGGIL' hari ini
         $isCallingAnother = ClinicQueue::where('doctor_id', $doctor->id)
-            ->whereDate('registration_time', today(config('app.timezone')))
+            ->whereDate('registration_time', today()) // today() mengikuti timezone app
             ->where('status', 'DIPANGGIL')
             ->exists();
 
@@ -179,7 +179,7 @@ class DashboardController extends Controller
                 ]);
             }
 
-            // Simpan Rekam Medis dengan Diagnosis Utama
+            // Simpan Rekam Medis
             $medicalRecord = MedicalRecord::create([
                 'clinic_queue_id' => $antrean->id,
                 'patient_id' => $patient->id,
@@ -192,13 +192,11 @@ class DashboardController extends Controller
                 'respiratory_rate' => $validatedData['respiratory_rate'],
                 'oxygen_saturation' => $validatedData['oxygen_saturation'],
                 'physical_examination_notes' => $validatedData['physical_examination_notes'],
-                
-                // Simpan data ICD 10 (Pastikan kolom ini ada di database)
                 'primary_icd10_code' => $validatedData['icd10_code'],
                 'primary_icd10_name' => $validatedData['icd10_name'],
             ]);
 
-            // Simpan Diagnosis Tambahan (Tags)
+            // Simpan Diagnosis Tambahan
             $tagIds = [];
             if (!empty($validatedData['diagnosis_tags'])) {
                 foreach ($validatedData['diagnosis_tags'] as $tagName) {
@@ -215,21 +213,31 @@ class DashboardController extends Controller
                 ]);
 
                 foreach ($validatedData['medicines'] as $med) {
+                    $medicine = Medicine::find($med['id']);
+                    
+                    // Cek stok sebelum insert detail agar tidak minus
+                    if ($medicine->stock < $med['quantity']) {
+                        DB::rollBack();
+                        return redirect()->back()->withInput()->with('error', "Stok obat {$medicine->name} tidak mencukupi.");
+                    }
+                    
                     PrescriptionDetail::create([
                         'prescription_id' => $prescription->id,
                         'medicine_id' => $med['id'],
                         'quantity' => $med['quantity'],
                         'dosage' => $med['dosage'],
                     ]);
-                    $medicine = Medicine::find($med['id']);
-                    if ($medicine->stock < $med['quantity']) {
-                        DB::rollBack();
-                        return redirect()->back()->withInput()->with('error', "Stok obat {$medicine->name} tidak mencukupi.");
-                    }
+                    
                     $medicine->decrement('stock', $med['quantity']);
                 }
                 
-                $nextQueueNumberInt = PharmacyQueue::generateQueueNumber(); 
+                // --- [PERBAIKAN BUG KRUSIAL] ---
+                // Jangan gunakan Model statis yang berisiko salah casting string ke int.
+                // Hitung manual di sini agar antrean apotek selalu unique dan berurut.
+                $todayStart = now()->startOfDay();
+                $countToday = PharmacyQueue::where('created_at', '>=', $todayStart)->count();
+                $nextQueueNumberInt = $countToday + 1;
+                
                 $formattedQueueNumber = 'APT-' . str_pad($nextQueueNumberInt, 3, '0', STR_PAD_LEFT); 
 
                 PharmacyQueue::create([
@@ -241,6 +249,8 @@ class DashboardController extends Controller
                 ]);
             }
 
+            // Update Status Antrean Klinik jadi SELESAI
+            // Jika ini tidak tereksekusi (karena error di atas), dokter akan stuck.
             $antrean->update([
                 'finish_time' => now(),
                 'status' => 'SELESAI',
@@ -252,7 +262,7 @@ class DashboardController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("Gagal menyimpan pemeriksaan: {$e->getMessage()}");
-             return redirect()->back()->withInput()->with('error', 'DEBUG: ' . $e->getMessage());
+             return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
         }
     }
 }

@@ -117,7 +117,7 @@
                             </div>
                             @endif
 
-                            {{-- [MODIFIKASI] Diagnosis untuk Pasien (HANYA TAGS) --}}
+                            {{-- Diagnosis untuk Pasien (HANYA TAGS) --}}
                             <div class="detail-section border-t pt-4">
                                 <h4>Diagnosis / Catatan Dokter</h4>
                                 {{-- Kita hanya menampilkan Tags, ICD-10 di-skip --}}
@@ -140,10 +140,12 @@
                             </div>
                             @endif
 
-                            {{-- [PENAMBAHAN] Detail Resep Obat --}}
+                            {{-- Detail Resep Obat --}}
                             @if ($record->prescription && $record->prescription->prescriptionDetails->isNotEmpty())
                             <div class="detail-section border-t pt-4">
-                                <h4>Resep Obat</h4>
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4>Resep Obat & Tagihan</h4>
+                                </div>
                                 <div class="space-y-2">
                                     @foreach ($record->prescription->prescriptionDetails as $detail)
                                         <div class="prescription-detail text-sm">
@@ -152,6 +154,26 @@
                                         </div>
                                     @endforeach
                                 </div>
+
+                                {{-- [NEW] Button Download Invoice --}}
+                                @if($record->prescription->payment_status == 'paid')
+                                    <div class="mt-4 pt-4 border-t border-dashed border-gray-200">
+                                        <a href="{{ route('invoice.download', $record->prescription->id) }}" target="_blank"
+                                           class="inline-flex items-center justify-center w-full sm:w-auto px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold rounded-lg shadow-sm transition">
+                                            <i class="fas fa-file-invoice-dollar mr-2"></i> Download Struk / Invoice
+                                        </a>
+                                        <p class="text-xs text-green-600 mt-2 flex items-center">
+                                            <i class="fas fa-check-circle mr-1"></i> Pembayaran Lunas
+                                        </p>
+                                    </div>
+                                @elseif($record->prescription->payment_status == 'failed' || $record->prescription->payment_status == 'pending')
+                                    <div class="mt-4 pt-4 border-t border-dashed border-gray-200">
+                                         <a href="{{ route('pasien.billing.index') }}" 
+                                            class="inline-flex items-center text-teal-600 hover:text-teal-800 text-sm font-semibold">
+                                            Lihat Tagihan Pembayaran &rarr;
+                                         </a>
+                                    </div>
+                                @endif
                             </div>
                             @endif
 

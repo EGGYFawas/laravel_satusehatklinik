@@ -23,6 +23,7 @@ class PharmacyQueue extends Model
         'start_racik_time',
         'finish_racik_time',
         'taken_time',
+        'user_id', // [PENTING] Pastikan kolom ini ada di database untuk menyimpan siapa petugasnya
     ];
 
     /**
@@ -39,6 +40,17 @@ class PharmacyQueue extends Model
     public function prescription()
     {
         return $this->belongsTo(Prescription::class);
+    }
+
+    /**
+     * [BARU] Relasi ke User (Petugas/Apoteker).
+     * Ini yang dipanggil di InvoiceController: ->with('pharmacyQueue.pharmacist')
+     */
+    public function pharmacist()
+    {
+        // Asumsi: Foreign Key di tabel pharmacy_queues adalah 'user_id'
+        // Jika di database namanya 'pharmacist_id', ubah 'user_id' jadi 'pharmacist_id'
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     /**
