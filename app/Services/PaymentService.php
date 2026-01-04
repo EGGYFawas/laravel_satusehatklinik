@@ -10,11 +10,12 @@ use Illuminate\Support\Facades\Log;
 
 class PaymentService
 {
-    // Definisikan harga jasa di satu tempat agar konsisten
+    // Konstanta harga jasa agar konsisten di seluruh aplikasi
     protected const JASA_KLINIK = 15000; 
 
     public function __construct()
     {
+        // Set konfigurasi Midtrans dari .env
         Config::$serverKey = env('MIDTRANS_SERVER_KEY');
         Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false);
         Config::$isSanitized = true;
@@ -22,12 +23,14 @@ class PaymentService
     }
 
     /**
-     * Hitung total tagihan dan update ke database
+     * Hitung total tagihan dan update ke database.
+     * Fungsi ini memastikan total_price di database selalu sinkron dengan item.
      */
     public function calculateTotal(Prescription $prescription)
     {
         $total = 0;
         
+        // Load relasi obat jika belum ada
         $prescription->loadMissing('details.medicine');
 
         foreach ($prescription->details as $detail) {
@@ -36,48 +39,34 @@ class PaymentService
             $total += ($hargaSatuan * $qty);
         }
 
-        // Gunakan konstanta agar harga sama
+        // Tambah Biaya Jasa
         $total += self::JASA_KLINIK;
 
+        // Simpan ke database
         $prescription->update(['total_price' => $total]);
 
         return $total;
     }
 
     /**
-     * Request Snap Token ke Midtrans (Smart Logic)
+     * Request Snap Token ke Midtrans (Smart Logic for Android/Web)
      */
     public function getSnapToken(Prescription $prescription)
     {
+        // Load relasi penting (User, Pasien, Obat)
         $prescription->loadMissing(['details.medicine', 'medicalRecord.patient.user']);
 
-        // 1. CEK DULU: Apakah sudah ada token & Order ID yang aktif?
-        if ($prescription->midtrans_snap_token && $prescription->midtrans_booking_code) {
-            try {
-                // Cek status transaksi terakhir ke Midtrans
-                $status = Transaction::status($prescription->midtrans_booking_code);
-                
-                // Jika statusnya pending (user belum bayar atau belum selesai), pakai token lama
-                if ($status->transaction_status == 'pending') {
-                    return $prescription->midtrans_snap_token;
-                }
-                
-                // Jika sudah lunas (settlement/capture), update DB dan jangan kasih token (harusnya redirect)
-                if ($status->transaction_status == 'settlement' || $status->transaction_status == 'capture') {
-                    $this->updateSuccessStatus($prescription, 'midtrans');
-                    return null; // Sudah lunas
-                }
+        // --- STRATEGI: SELALU BUAT ORDER ID BARU ---
+        // Kita tidak menggunakan token lama. Setiap kali klik "Bayar", kita generate Order ID baru.
+        // Ini mengatasi masalah user tidak bisa ganti metode pembayaran atau token nyangkut.
+        
+        /* // Logika lama (Dihapus/Dikomentar):
+        if ($prescription->midtrans_snap_token && ... ) { return ... } 
+        */
 
-                // Jika status expire/cancel/deny, baru kita buat Order ID BARU di bawah..
-            } catch (\Exception $e) {
-                // Jika order ID tidak ditemukan di Midtrans (404), berarti aman untuk buat baru
-            }
-        }
-
-        // --- MULAI GENERATE TOKEN BARU ---
-
+        // 1. Susun Item Details (Rincian Obat)
         $itemDetails = [];
-        $realTotal = 0;
+        $realTotal = 0; // Hitung ulang total di sini untuk validasi
 
         foreach ($prescription->details as $detail) {
             $price = (int) ($detail->medicine->price ?? 0);
@@ -87,12 +76,12 @@ class PaymentService
                 'id' => 'OBAT-' . $detail->medicine_id,
                 'price' => $price,
                 'quantity' => $qty,
-                'name' => substr($detail->medicine->name, 0, 45),
+                'name' => substr($detail->medicine->name, 0, 45), // Limit nama 50 char
             ];
             $realTotal += ($price * $qty);
         }
         
-        // Tambah Jasa Klinik (Ambil dari Constant)
+        // 2. Tambah Jasa Klinik
         $itemDetails[] = [
             'id' => 'JASA-LAYANAN',
             'price' => self::JASA_KLINIK,
@@ -101,23 +90,25 @@ class PaymentService
         ];
         $realTotal += self::JASA_KLINIK;
 
-        // Sinkronisasi Total
+        // 3. Update total di database biar sama persis dengan yang dikirim ke Midtrans
         if ($prescription->total_price != $realTotal) {
             $prescription->update(['total_price' => $realTotal]);
         }
 
-        // Generate Order ID
-        // Format: INV-IDPRES-TIMESTAMP (Hanya dibuat jika yang lama expire/batal)
+        // 4. Buat Order ID Baru yang Unik
+        // Format: INV-[ID_RESEP]-[TIMESTAMP]
+        // Timestamp penting agar ID selalu beda setiap detik
         $orderId = 'INV-' . $prescription->id . '-' . time();
 
+        // 5. Susun Data Customer
         $customerDetails = [
             'first_name' => $prescription->medicalRecord->patient->full_name ?? 'Pasien',
+            // Gunakan email valid atau fallback ke dummy (Midtrans butuh field ini)
             'email' => $prescription->medicalRecord->patient->user->email ?? 'pasien@klinik.com',
-            // Coba ambil no hp user jika ada, fallback ke dummy
             'phone' => $prescription->medicalRecord->patient->phone_number ?? '08123456789',
         ];
 
-        // [MODIFIKASI] Menambahkan callbacks agar redirect balik ke aplikasi kita
+        // 6. Susun Payload Utama
         $params = [
             'transaction_details' => [
                 'order_id' => $orderId,
@@ -125,18 +116,20 @@ class PaymentService
             ],
             'item_details' => $itemDetails,
             'customer_details' => $customerDetails,
-            // CALLBACKS: Ini kunci solusinya
+            
+            // [PENTING UNTUK ANDROID/WEBVIEW]
+            // Callbacks memberitahu Midtrans harus redirect kemana setelah selesai.
+            // Ini mencegah halaman stuck di Midtrans setelah bayar.
             'callbacks' => [
-                'finish' => route('pasien.billing.index'), // Redirect sukses
-                'unfinish' => route('pasien.billing.index'), // Redirect belum selesai
-                'error' => route('pasien.billing.index'), // Redirect error
+                'finish' => route('billing.index'), // Kembali ke daftar tagihan
             ]
         ];
 
         try {
+            // Request ke Server Midtrans
             $snapToken = Snap::getSnapToken($params);
             
-            // Simpan token & Order ID baru
+            // Simpan token & Order ID baru ke Database
             $prescription->update([
                 'midtrans_snap_token' => $snapToken,
                 'midtrans_booking_code' => $orderId
@@ -145,41 +138,53 @@ class PaymentService
             return $snapToken;
         } catch (\Exception $e) {
             Log::error('Midtrans Error: ' . $e->getMessage());
-            return null;
+            // Throw error agar Controller bisa menangkap pesan aslinya
+            throw new \Exception($e->getMessage());
         }
     }
 
     /**
-     * Cek status pembayaran ke Midtrans
+     * Cek status pembayaran ke Midtrans & Update Database jika lunas
+     * Digunakan oleh tombol "Refresh Status"
      */
     public function checkTransactionStatus(Prescription $prescription)
     {
+        // Pastikan ada Order ID
         if (!$prescription->midtrans_booking_code) {
             return false;
         }
 
         try {
+            // Tembak API Status Midtrans
             $status = Transaction::status($prescription->midtrans_booking_code);
+            
             $transactionStatus = $status->transaction_status;
             $fraudStatus = $status->fraud_status ?? null;
 
+            // Logika Status Midtrans (Settlement = Lunas, Capture = Lunas Kartu Kredit)
             if ($transactionStatus == 'settlement' || ($transactionStatus == 'capture' && $fraudStatus == 'accept')) {
+                
                 $this->updateSuccessStatus($prescription, 'midtrans');
-                return true;
-            } else if ($transactionStatus == 'cancel' || $transactionStatus == 'expire') {
-                 // Reset status biar user bisa coba bayar lagi (generate token baru nanti)
+                return true; // Berhasil lunas
+            } 
+            // Jika batal/expire, update status jadi failed agar user sadar
+            else if ($transactionStatus == 'cancel' || $transactionStatus == 'expire') {
                  $prescription->update(['payment_status' => 'failed']); 
             }
             
-            return false;
+            return false; // Belum lunas
 
         } catch (\Exception $e) {
+            Log::error('Gagal Cek Status Midtrans: ' . $e->getMessage());
             return false;
         }
     }
 
-    // Helper private untuk update status lunas
+    /**
+     * Helper private untuk update status lunas di database
+     */
     private function updateSuccessStatus(Prescription $prescription, $method) {
+        // Hanya update jika belum lunas, biar timestamp tidak berubah-ubah
         if ($prescription->payment_status != 'paid') {
             $prescription->update([
                 'payment_status' => 'paid',

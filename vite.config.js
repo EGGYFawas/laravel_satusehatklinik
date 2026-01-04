@@ -12,17 +12,13 @@ export default defineConfig({
                 "resources/css/app.css", // CSS Tailwind utamamu
                 "resources/js/app.js", // JS utamamu
 
-                // CSS Inti Filament (ini akan di-bundle oleh Vite)
-                "vendor/filament/forms/resources/css/forms.css",
-                "vendor/filament/tables/resources/css/tables.css",
-                "vendor/filament/notifications/resources/css/notifications.css",
-                "vendor/filament/support/resources/css/support.css",
+            
             ],
             // === AKHIR PENGHAPUSAN ===
             refresh: true,
-        }),
+        })
     ],
     server: {
-        host: '127.0.0.1',
+        host: '0.0.0.0',
     },
 });
