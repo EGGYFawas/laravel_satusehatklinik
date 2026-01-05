@@ -121,7 +121,7 @@ class PaymentService
             // Callbacks memberitahu Midtrans harus redirect kemana setelah selesai.
             // Ini mencegah halaman stuck di Midtrans setelah bayar.
             'callbacks' => [
-                'finish' => route('billing.index'), // Kembali ke daftar tagihan
+                'finish' => route('pasien.billing.index'), // Kembali ke daftar tagihan
             ]
         ];
 
