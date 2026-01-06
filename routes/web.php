@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Foundation\Auth\EmailVerificationRequest; // [PENTING] Tambahkan ini untuk verifikasi email
 
 // ==============================================================================
 // 1. IMPORT CONTROLLERS
@@ -11,7 +12,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DashboardRedirectController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\ArticleController;
-use App\Http\Controllers\InvoiceController; // [PENTING] Tambahkan ini untuk cetak PDF
+use App\Http\Controllers\InvoiceController;
 
 // Controller Pasien
 use App\Http\Controllers\Pasien\DashboardController as PasienDashboardController;
@@ -53,11 +54,25 @@ Route::get('/artikel/{article:slug}', [ArticleController::class, 'show'])->name(
 // 3. GUEST ROUTES (Hanya untuk yang BELUM Login)
 // ==============================================================================
 Route::middleware('guest')->group(function () {
+    // Login & Register
     Route::get('login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('login', [AuthController::class, 'login']);
     Route::get('register', [AuthController::class, 'showRegisterForm'])->name('register');
     Route::post('register', [AuthController::class, 'register']);
     Route::get('/check-patient-nik-public/{nik}', [AuthController::class, 'checkPatientPublic'])->name('check-patient-nik-public');
+
+    // [BARU] Lupa Password (Input Email)
+    Route::get('/forgot-password', [AuthController::class, 'showLinkRequestForm'])->name('password.request');
+    Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail'])->name('password.email');
+
+    // [BARU] Reset Password (Input Password Baru)
+    // Route ini menangani link yang diklik dari email
+    Route::get('/reset-password/{token}', function ($token) {
+        return view('auth.passwords.reset', ['token' => $token]);
+    })->name('password.reset');
+    
+    // Note: Pastikan method resetPassword ada di AuthController jika ingin fitur submit password baru berfungsi penuh
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
 });
 
 
@@ -70,7 +85,24 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardRedirectController::class, 'index'])->name('dashboard');
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 
-    // [BARU] Route Global untuk Download Struk (Bisa diakses Pasien & Petugas)
+    // [BARU] Verifikasi Email Routes
+    // 1. Tampilan "Harap Verifikasi Email"
+    Route::get('/email/verify', [AuthController::class, 'showVerificationNotice'])
+        ->name('verification.notice');
+
+    // 2. Handler saat Link di Email diklik
+    Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+        $request->fulfill();
+        return redirect('/dashboard')->with('success', 'Email berhasil diverifikasi! Selamat datang.');
+    })->middleware(['signed'])->name('verification.verify');
+
+    // 3. Kirim Ulang Link Verifikasi
+    Route::post('/email/verification-notification', [AuthController::class, 'resendVerificationEmail'])
+        ->middleware(['throttle:6,1'])
+        ->name('verification.send');
+
+
+    // [BARU] Route Global untuk Download Struk
     Route::get('/invoice/{id}/download', [InvoiceController::class, 'download'])->name('invoice.download');
 
     // --- GROUP: ROLE PASIEN ---
@@ -91,11 +123,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/riwayat/{patient}', [PasienHistoryController::class, 'show'])->name('riwayat.show');
         Route::get('/jadwal-dokter', [PasienScheduleController::class, 'index'])->name('jadwal.index');
 
-        // Artikel (View Khusus Pasien)
+        // Artikel
         Route::get('/artikel', [PasienArticleController::class, 'index'])->name('artikel.index');
         Route::get('/artikel/{article:slug}', [PasienArticleController::class, 'show'])->name('artikel.show');
         
-        // Billing / Pembayaran (Nama route diperbaiki agar tidak double 'pasien.')
+        // Billing
         Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
         Route::get('/billing/pay/{prescription}', [BillingController::class, 'pay'])->name('billing.pay');
         Route::get('/billing/check/{prescription}', [BillingController::class, 'checkStatus'])->name('billing.check');
@@ -113,14 +145,13 @@ Route::middleware(['auth'])->group(function () {
     });
 
     // --- GROUP: ROLE PETUGAS LOKET ---
-    // Pastikan nama role di database 'petugas loket' (pakai spasi) atau 'petugas_loket'
     Route::middleware(['role:petugas loket'])->prefix('petugas-loket')->name('petugas-loket.')->group(function () {
         Route::get('/dashboard', [PetugasLoketDashboardController::class, 'index'])->name('dashboard');
         
-        // Update Status (Racik, Selesai, Serahkan)
+        // Update Status
         Route::patch('/antrean-apotek/{pharmacyQueue}/update-status', [PetugasLoketDashboardController::class, 'updateStatus'])->name('antrean-apotek.updateStatus');
         
-        // [BARU] Bayar Tunai Manual
+        // Bayar Tunai Manual
         Route::post('/bayar-tunai/{pharmacyQueueId}', [PetugasLoketDashboardController::class, 'bayarTunai'])->name('bayar-tunai');
         Route::post('/cek-status-bayar/{pharmacyQueueId}', [PetugasLoketDashboardController::class, 'checkPaymentStatus'])->name('cek-status-bayar');
 
@@ -131,5 +162,4 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/doctors-by-poli/{poli}', [AntreanOfflineController::class, 'getDoctorsByPoli'])->name('doctors.by.poli');
         Route::get('/check-patient-nik/{nik}', [AntreanOfflineController::class, 'checkPatientByNIK'])->name('check-patient-nik');
     });
-
 });

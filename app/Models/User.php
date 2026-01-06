@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+// 1. Import interface MustVerifyEmail untuk fitur verifikasi email
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -12,9 +14,8 @@ use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 // === AKHIR TAMBAHAN FILAMENT ===
 
-
-// Pastikan 'implements FilamentUser' ada di sini
-class User extends Authenticatable implements FilamentUser
+// 2. Tambahkan 'MustVerifyEmail' di sini (dipisahkan koma dengan FilamentUser)
+class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
     use HasFactory, Notifiable, HasRoles;
 
@@ -61,6 +62,7 @@ class User extends Authenticatable implements FilamentUser
      */
     public function canAccessPanel(Panel $panel): bool
     {
+        // Pastikan hanya admin yang bisa akses panel Filament
         return $this->hasRole('admin');
     }
 
@@ -93,4 +95,3 @@ class User extends Authenticatable implements FilamentUser
 
     // === AKHIR METHOD UNTUK FILAMENT ===
 }
-

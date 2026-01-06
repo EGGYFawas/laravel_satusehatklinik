@@ -3,7 +3,7 @@
 @section('title', 'Buat Akun Baru')
 
 @section('content')
-{{-- [MODIFIKASI] Style untuk NIK loader dan Modal --}}
+{{-- Style untuk NIK loader dan Modal --}}
 <style>
     .nik-status-indicator {
         position: absolute;
@@ -34,7 +34,7 @@
         100% { transform: translateY(-50%) rotate(360deg); }
     }
 
-    /* [BARU] Style untuk Modal */
+    /* Style untuk Modal */
     .modal-backdrop {
         transition: opacity 0.3s ease;
     }
@@ -89,7 +89,7 @@
             <form id="registerForm" action="{{ route('register') }}" method="POST" class="space-y-3">
                 @csrf
                 
-                {{-- [MODIFIKASI] NIK Input dengan wrapper --}}
+                {{-- NIK Input dengan wrapper --}}
                 <div class="relative">
                     <label for="nik" class="block text-sm font-medium text-text-dark mb-1">NIK</label>
                     <input type="text" id="nik" name="nik" value="{{ old('nik') }}" required placeholder="Masukkan 16 Digit NIK"
@@ -103,7 +103,6 @@
                 <div>
                     <label for="full_name" class="block text-sm font-medium text-text-dark mb-1">Nama Lengkap (Sesuai KTP)</label>
                     <input type="text" id="full_name" name="full_name" value="{{ old('full_name') }}" required placeholder="Masukkan Nama Anda"
-                           {{-- [MODIFIKASI] Tambah bg-gray-50 --}}
                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary transition uppercase bg-gray-50">
                 </div>
 
@@ -111,7 +110,6 @@
                     <div>
                         <label for="gender" class="block text-sm font-medium text-text-dark mb-1">Jenis Kelamin</label>
                         <select id="gender" name="gender" required
-                                {{-- [MODIFIKASI] Tambah bg-gray-50 --}}
                                 class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary transition bg-gray-50">
                             <option value="" disabled selected>Pilih Jenis Kelamin</option>
                             <option value="Laki-laki" {{ old('gender') == 'Laki-laki' ? 'selected' : '' }}>Laki-laki</option>
@@ -121,7 +119,6 @@
                     <div>
                         <label for="date_of_birth" class="block text-sm font-medium text-text-dark mb-1">Tanggal Lahir</label>
                         <input type="date" id="date_of_birth" name="date_of_birth" value="{{ old('date_of_birth') }}" required
-                               {{-- [MODIFIKASI] Tambah bg-gray-50 --}}
                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary transition bg-gray-50">
                     </div>
                 </div>
@@ -131,7 +128,6 @@
 
                 <div>
                     <label for="email" class="block text-sm font-medium text-text-dark mb-1">Email</label>
-                    {{-- [MODIFIKASI] Hapus value="{{ old('email') }}" untuk request 2 --}}
                     <input type="email" id="email" name="email" value="" required placeholder="contoh: email@gmail.com"
                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary transition">
                 </div>
@@ -162,7 +158,7 @@
     </div>
 </div>
 
-{{-- [BARU] Modal untuk Akun yang Sudah Ada --}}
+{{-- Modal untuk Akun yang Sudah Ada --}}
 <div id="accountExistsModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
     <!-- Backdrop -->
     <div id="modalBackdrop" class="fixed inset-0 bg-black bg-opacity-50 modal-backdrop opacity-0"></div>
@@ -206,10 +202,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const genderSelect = document.getElementById('gender');
     const nikStatusIndicator = document.getElementById('nik_status_indicator');
     const nikMessage = document.getElementById('nik_message');
-    // [MODIFIKASI] Tambahkan konstanta email & password
     const emailInput = document.getElementById('email');
 
-    // --- [BARU] Konstanta Modal ---
+    // --- Konstanta Modal ---
     const accountExistsModal = document.getElementById('accountExistsModal');
     const modalBackdrop = document.getElementById('modalBackdrop');
     const modalPanel = document.querySelector('.modal-panel');
@@ -217,7 +212,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeModalBtn = document.getElementById('closeModalBtn');
     let fetchNikTimer; // Timer untuk debounce
 
-    // --- [BARU] Fungsi Modal ---
+    // --- Fungsi Modal ---
     function openModal(patientName) {
         modalPatientName.textContent = patientName;
         accountExistsModal.classList.remove('hidden');
@@ -242,7 +237,7 @@ document.addEventListener('DOMContentLoaded', function() {
     closeModalBtn.addEventListener('click', closeModal);
     modalBackdrop.addEventListener('click', closeModal);
 
-    // --- [LOGIKA LAMA] Password Matcher (Tetap Dipertahankan) ---
+    // --- Logika Password Matcher ---
     function validatePassword() {
         messageElement.classList.remove('text-green-600', 'text-red-600');
         if (confirmPasswordInput.value === '') { messageElement.textContent = ''; return; }
@@ -257,7 +252,7 @@ document.addEventListener('DOMContentLoaded', function() {
     passwordInput.addEventListener('input', validatePassword);
     confirmPasswordInput.addEventListener('input', validatePassword);
 
-    // --- [LOGIKA BARU] NIK Auto-fill ---
+    // --- Logika NIK Auto-fill ---
 
     // Fungsi untuk mengunci/membuka form data pasien
     function setPatientFormReadOnly(isReadOnly) {
@@ -276,7 +271,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // [MODIFIKASI] Fungsi untuk mereset form data akun
+    // Fungsi untuk mereset form data akun
     function resetAccountForm() {
         emailInput.value = '';
         passwordInput.value = '';
@@ -293,22 +288,16 @@ document.addEventListener('DOMContentLoaded', function() {
         nikMessage.classList.add('hidden');
         nikMessage.textContent = '';
         setPatientFormReadOnly(false); // Buka kunci form
-        
-        // [MODIFIKASI] Panggil juga reset form akun di sini
-        // resetAccountForm(); 
-        // -> Ditunda, dipanggil di level atasnya
     }
 
     // Set form ke non-readonly saat halaman dimuat
     setPatientFormReadOnly(false);
-    // [MODIFIKASI] Hapus old('email') dari HTML,
-    // tapi jika ada old('full_name') (dari error validasi), biarkan form terbuka
+    // Jika ada input lama (dari error validasi), biarkan form terbuka dan isi email
     if (nameInput.value && '{{ old('full_name') }}') {
          setPatientFormReadOnly(false);
-         // Isi kembali email jika ada old('email')
          emailInput.value = '{{ old('email') }}';
     } else {
-        // [MODIFIKASI] Pastikan form akun kosong saat pertama kali memuat
+        // Pastikan form akun kosong saat pertama kali memuat
         resetAccountForm();
     }
 
@@ -331,11 +320,10 @@ document.addEventListener('DOMContentLoaded', function() {
         nikStatusIndicator.className = 'nik-status-indicator loading';
         setPatientFormReadOnly(true); // Kunci form sementara loading
         
-        // [MODIFIKASI] Reset form akun SETIAP kali NIK 16 digit diketik
+        // Reset form akun SETIAP kali NIK 16 digit diketik
         resetAccountForm();
 
         fetchNikTimer = setTimeout(() => {
-            // [PENTING] Ini adalah URL baru. Kita harus menambahkannya ke routes/web.php
             let url = '{{ route('check-patient-nik-public', ['nik' => ':nik']) }}';
             url = url.replace(':nik', nik);
 
@@ -351,8 +339,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             nikStatusIndicator.className = 'nik-status-indicator error';
                             nikStatusIndicator.innerHTML = '&#10005;'; // X mark
                             
-                            // [MODIFIKASI] Hapus pesan text, ganti dengan panggil MODAL
-                            // nikMessage.textContent = '...';
                             openModal(data.data.full_name); // Panggil modal
                             
                             // Isi form dengan data, lalu kunci
@@ -404,4 +390,3 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endsection
-

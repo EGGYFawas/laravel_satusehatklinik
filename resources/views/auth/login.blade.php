@@ -35,7 +35,7 @@
             <h1 class="text-2xl font-bold text-text-dark mb-2">Selamat Datang Kembali</h1>
             <p class="text-sm text-text-grey mb-6">Masuk untuk melanjutkan ke akun Anda.</p>
             
-            {{-- Menampilkan pesan sukses setelah registrasi --}}
+            {{-- Menampilkan pesan sukses setelah registrasi atau verifikasi email --}}
             @if (session('success'))
                 <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md mb-4 text-sm" role="alert">
                     {{ session('success') }}
@@ -72,15 +72,16 @@
 
                 <div class="flex items-center justify-between pt-2">
                      <div class="flex items-center gap-2">
+                        {{-- Checkbox Remember Me --}}
                         <input type="checkbox" id="remember" name="remember" class="h-4 w-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary">
                         <label for="remember" class="text-sm text-text-grey">Ingat Saya</label>
                     </div>
-                    <a href="#" class="text-sm text-brand-primary hover:underline">Lupa Password?</a>
+                    {{-- Link Lupa Password (Updated) --}}
+                    <a href="{{ route('password.request') }}" class="text-sm text-brand-primary hover:underline">Lupa Password?</a>
                 </div>
 
                  <div class="pt-2">
-                    {{-- Tombol submit ini tersembunyi, karena kita menggunakan tombol di bagian branding --}}
-                    {{-- Namun ini diperlukan agar form bisa di-submit dengan menekan Enter --}}
+                    {{-- Tombol submit ini tersembunyi pada desktop (karena pakai tombol di kiri), tapi muncul di mobile --}}
                     <button type="submit" class="w-full bg-brand-primary text-brand-text font-semibold py-3 px-6 rounded-full hover:opacity-90 transition-opacity duration-300 shadow-lg md:hidden">
                         Masuk
                     </button>
@@ -92,4 +93,3 @@
     </div>
 </div>
 @endsection
-

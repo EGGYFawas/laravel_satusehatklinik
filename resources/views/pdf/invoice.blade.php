@@ -4,88 +4,22 @@
     <meta charset="UTF-8">
     <title>Struk Pembayaran</title>
     <style>
-        body {
-            font-family: 'Helvetica', 'Arial', sans-serif;
-            font-size: 10pt;
-            color: #333;
-            line-height: 1.4;
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #ddd;
-            padding-bottom: 10px;
-        }
-        .header h1 {
-            margin: 0;
-            color: #008080; /* Teal color matching your app */
-            font-size: 16pt;
-            text-transform: uppercase;
-        }
-        .header p {
-            margin: 2px 0;
-            font-size: 9pt;
-            color: #666;
-        }
-        .meta-info {
-            width: 100%;
-            margin-bottom: 20px;
-        }
-        .meta-info td {
-            padding: 3px;
-            vertical-align: top;
-        }
-        .label {
-            font-weight: bold;
-            width: 130px; /* Sedikit diperlebar agar muat label panjang */
-        }
-        .table-items {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        .table-items th, .table-items td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        .table-items th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-            font-size: 9pt;
-        }
-        .text-right {
-            text-align: right;
-        }
-        .total-row td {
-            font-weight: bold;
-            background-color: #f9f9f9;
-        }
-        .footer {
-            margin-top: 30px;
-            text-align: center;
-            font-size: 8pt;
-            color: #888;
-        }
-        .status-paid {
-            color: #008000;
-            border: 1px solid #008000;
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-            display: inline-block;
-            font-size: 9pt;
-        }
-        .petugas-section {
-            margin-top: 40px;
-            text-align: right;
-            padding-right: 20px;
-        }
-        .petugas-name {
-            margin-top: 60px; /* Space untuk tanda tangan */
-            font-weight: bold;
-            text-decoration: underline;
-        }
+        body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 10pt; color: #333; line-height: 1.4; }
+        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
+        .header h1 { margin: 0; color: #008080; font-size: 16pt; text-transform: uppercase; }
+        .header p { margin: 2px 0; font-size: 9pt; color: #666; }
+        .meta-info { width: 100%; margin-bottom: 20px; }
+        .meta-info td { padding: 3px; vertical-align: top; }
+        .label { font-weight: bold; width: 130px; }
+        .table-items { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .table-items th, .table-items td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .table-items th { background-color: #f2f2f2; font-weight: bold; font-size: 9pt; }
+        .text-right { text-align: right; }
+        .total-row td { font-weight: bold; background-color: #f9f9f9; }
+        .footer { margin-top: 30px; text-align: center; font-size: 8pt; color: #888; }
+        .status-paid { color: #008000; border: 1px solid #008000; padding: 2px 8px; border-radius: 4px; font-weight: bold; display: inline-block; font-size: 9pt; }
+        .petugas-section { margin-top: 40px; text-align: right; padding-right: 20px; }
+        .petugas-name { margin-top: 60px; font-weight: bold; text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -99,6 +33,7 @@
     <table class="meta-info">
         <tr>
             <td class="label">No. Invoice</td>
+            {{-- Menggunakan $prescription yang benar dari Controller --}}
             <td>: {{ $prescription->midtrans_booking_code ?? 'INV-' . $prescription->id }}</td>
             <td class="label">Tanggal Cetak</td>
             <td>: {{ $date_print }}</td>
@@ -112,7 +47,6 @@
         <tr>
             <td class="label">Status Pembayaran</td>
             <td>: <span class="status-paid">LUNAS</span></td>
-            <!-- [UPDATE] Menambahkan Waktu Ambil Obat -->
             <td class="label">Waktu Ambil Obat</td>
             <td>: {{ $taken_time }}</td>
         </tr>
@@ -140,7 +74,6 @@
             </tr>
             @endforeach
             
-            <!-- Jasa Layanan -->
             <tr>
                 <td style="text-align: center;">{{ $no++ }}</td>
                 <td>Jasa Layanan Klinik</td>
@@ -154,12 +87,21 @@
                 <td colspan="4" class="text-right">Total Tagihan</td>
                 <td class="text-right">Rp {{ number_format($prescription->total_price, 0, ',', '.') }}</td>
             </tr>
+            {{-- Detail Pembayaran & Kembalian --}}
+            <tr>
+                <td colspan="4" class="text-right">Tunai / Bayar</td>
+                {{-- Gunakan amount_paid jika ada, jika tidak (misal midtrans/data lama) pakai total_price --}}
+                <td class="text-right">Rp {{ number_format($prescription->amount_paid ?? $prescription->total_price, 0, ',', '.') }}</td>
+            </tr>
+            <tr>
+                <td colspan="4" class="text-right">Kembalian</td>
+                <td class="text-right">Rp {{ number_format($prescription->change_amount ?? 0, 0, ',', '.') }}</td>
+            </tr>
         </tfoot>
     </table>
 
     <div class="petugas-section">
         <p>Petugas Kasir / Farmasi,</p>
-        <!-- [UPDATE] Menggunakan variabel $petugas dari controller -->
         <div class="petugas-name">( {{ $petugas }} )</div>
     </div>
 

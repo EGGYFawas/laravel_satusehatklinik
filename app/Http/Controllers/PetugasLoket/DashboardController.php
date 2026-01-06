@@ -5,7 +5,8 @@ namespace App\Http\Controllers\PetugasLoket;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\PharmacyQueue;
-use App\Services\PaymentService; // Import Service Pembayaran
+use App\Models\Prescription;
+use App\Services\PaymentService; 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -13,25 +14,20 @@ use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
-    /**
-     * Menampilkan dashboard utama petugas loket/apotek.
-     */
     public function index()
     {
         $today = Carbon::today();
 
-        // Mengambil semua antrean apotek untuk hari ini
         $allQueues = PharmacyQueue::with([
                 'clinicQueue.patient', 
                 'clinicQueue.poli',
-                'prescription.prescriptionDetails.medicine' // Load detail obat & resep
+                'prescription.prescriptionDetails.medicine'
             ])
             ->whereDate('entry_time', $today)
             ->orderBy('pharmacy_queue_number', 'asc')
             ->get();
 
-        // --- TAMBAHAN LOGIC: Pastikan Total Harga Terhitung ---
-        // Kita loop sekilas untuk trigger hitung total jika masih 0
+        // Trigger hitung total jika 0
         $paymentService = new PaymentService();
         foreach ($allQueues as $q) {
             if ($q->prescription && $q->prescription->total_price <= 0) {
@@ -39,7 +35,6 @@ class DashboardController extends Controller
             }
         }
 
-        // Mengelompokkan antrean
         $dalamAntrean = $allQueues->where('status', 'DALAM_ANTREAN');
         $sedangDiracik = $allQueues->where('status', 'SEDANG_DIRACIK');
         $siapDiambil = $allQueues->where('status', 'SIAP_DIAMBIL');
@@ -56,11 +51,18 @@ class DashboardController extends Controller
     }
 
     /**
-     * [BARU] Fungsi untuk memproses pembayaran tunai di loket
+     * [MODIFIKASI] Bayar Tunai dengan Input Nominal & Hitung Kembalian
      */
     public function bayarTunai(Request $request, $pharmacyQueueId)
     {
+        // 1. Validasi Input Uang
+        $request->validate([
+            'amount_paid' => 'required|numeric|min:0',
+        ]);
+
         try {
+            DB::beginTransaction();
+
             $queue = PharmacyQueue::findOrFail($pharmacyQueueId);
             $prescription = $queue->prescription;
 
@@ -68,24 +70,40 @@ class DashboardController extends Controller
                 return back()->with('error', 'Data resep tidak ditemukan.');
             }
 
-            // Update status pembayaran jadi Lunas
+            // 2. Logika Hitung Kembalian
+            $totalTagihan = $prescription->total_price;
+            $uangDibayar = $request->amount_paid;
+
+            // Cek jika uang kurang
+            if ($uangDibayar < $totalTagihan) {
+                return back()->with('error', 'Nominal pembayaran kurang dari total tagihan!');
+            }
+
+            $kembalian = $uangDibayar - $totalTagihan;
+
+            // 3. Update Database
             $prescription->update([
                 'payment_status' => 'paid',
-                'payment_method' => 'cash', // Tunai lewat loket
+                'payment_method' => 'cash',
+                'amount_paid' => $uangDibayar,     // Simpan uang diterima
+                'change_amount' => $kembalian,     // Simpan kembalian
                 'paid_at' => now(),
             ]);
 
-            return back()->with('success', "Pembayaran tunai untuk antrean {$queue->pharmacy_queue_number} berhasil dikonfirmasi.");
+            DB::commit();
+
+            // Format rupiah untuk pesan sukses
+            $kembalianFormatted = number_format($kembalian, 0, ',', '.');
+            
+            return back()->with('success', "Pembayaran Berhasil! Kembalian: Rp $kembalianFormatted.");
 
         } catch (\Exception $e) {
+            DB::rollBack();
             Log::error("Gagal proses bayar tunai: " . $e->getMessage());
-            return back()->with('error', 'Gagal memproses pembayaran.');
+            return back()->with('error', 'Gagal memproses pembayaran: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Update status antrean (Start Racik, Finish Racik, Serahkan)
-     */
     public function updateStatus(Request $request, PharmacyQueue $pharmacyQueue)
     {
         $request->validate([
@@ -122,10 +140,8 @@ class DashboardController extends Controller
                         return redirect()->back()->with('error', 'Hanya obat yang siap yang bisa diserahkan.');
                     }
 
-                    // --- VALIDASI PEMBAYARAN DI SINI ---
-                    // Cek apakah resep sudah lunas?
                     if ($pharmacyQueue->prescription && $pharmacyQueue->prescription->payment_status !== 'paid') {
-                        return redirect()->back()->with('error', 'GAGAL: Pasien belum melunasi tagihan obat. Harap lakukan pembayaran terlebih dahulu.');
+                        return redirect()->back()->with('error', 'GAGAL: Pasien belum melunasi tagihan obat.');
                     }
 
                     $updateData['taken_time'] = now();
@@ -138,9 +154,7 @@ class DashboardController extends Controller
             }
 
             $pharmacyQueue->update($updateData);
-
             DB::commit();
-
             return redirect()->route('petugas-loket.dashboard')->with('success', $successMessage);
 
         } catch (\Exception $e) {
@@ -150,9 +164,6 @@ class DashboardController extends Controller
         }
     }
 
-    /**
-     * [BARU] Cek status pembayaran ke Midtrans manual oleh Petugas
-     */
     public function checkPaymentStatus(Request $request, $pharmacyQueueId)
     {
         try {

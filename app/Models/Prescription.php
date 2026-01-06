@@ -21,6 +21,8 @@ class Prescription extends Model
         'payment_status',       // pending, paid
         'payment_method',       // cash, midtrans
         'total_price',          // Total harga
+        'amount_paid',          // [BARU] Nominal uang yang diserahkan (Cash)
+        'change_amount',        // [BARU] Nominal kembalian
         'midtrans_snap_token',  // Token pembayaran
         'midtrans_booking_code',// Order ID
         'paid_at',              // Waktu bayar

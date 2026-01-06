@@ -10,11 +10,19 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Validation\Rules\Password as PasswordRules;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str; // [BARU] Wajib untuk generate token
+use Illuminate\Auth\Events\PasswordReset; // [BARU] Event reset password
 
 class AuthController extends Controller
 {
+    // =========================================================================
+    // 1. BAGIAN REGISTRASI (DENGAN LOGIKA NIK & EVENT VERIFIKASI)
+    // =========================================================================
+
     /**
      * Menampilkan halaman form registrasi untuk pengguna baru.
      */
@@ -35,7 +43,7 @@ class AuthController extends Controller
             'gender' => 'required|string|in:Laki-laki,Perempuan',
             'date_of_birth' => 'required|date',
             'email' => 'required|string|email|max:255|unique:users,email',
-            'password' => ['required', 'confirmed', Password::min(6)],
+            'password' => ['required', 'confirmed', PasswordRules::min(6)],
             'terms' => 'accepted'
         ], [
             'full_name.required' => 'Nama lengkap wajib diisi.',
@@ -50,6 +58,7 @@ class AuthController extends Controller
         try {
             $existingPatient = Patient::where('nik', $validatedData['nik'])->first();
 
+            // Cek jika NIK sudah punya akun User
             if ($existingPatient && $existingPatient->user_id) {
                 DB::rollBack();
                 return redirect()->back()->withInput()->withErrors([
@@ -57,18 +66,19 @@ class AuthController extends Controller
                 ]);
             }
 
+            // Buat User Baru
             $user = User::create([
                 'full_name' => strtoupper($validatedData['full_name']),
                 'email' => $validatedData['email'],
                 'password' => Hash::make($validatedData['password']),
-    
-                //proses enkripsi password
             ]);
 
-            // Asumsi Anda pakai Spatie karena assignRole
+            // Assign Role Pasien
             $user->assignRole('pasien'); 
 
+            // Logika Linking NIK ke Patient Data
             if ($existingPatient) {
+                // Validasi kecocokan data input vs data database lama
                 if (
                     strtoupper($existingPatient->full_name) !== strtoupper($validatedData['full_name']) ||
                     $existingPatient->date_of_birth !== $validatedData['date_of_birth'] ||
@@ -85,6 +95,7 @@ class AuthController extends Controller
                 ]);
                 Log::info('Akun user baru (ID: ' . $user->id . ') berhasil ditautkan ke pasien lama (ID: ' . $existingPatient->id . ') via NIK.');
             } else {
+                // Jika pasien benar-benar baru
                 Patient::create([
                     'user_id' => $user->id,
                     'full_name' => strtoupper($validatedData['full_name']),
@@ -96,13 +107,23 @@ class AuthController extends Controller
 
             DB::commit();
 
-            return redirect()->route('login')->with('success', 'Pendaftaran berhasil! Silakan masuk dengan akun Anda.');
+            // Memicu event Registered agar email verifikasi terkirim
+            event(new Registered($user));
+
+            // Redirect ke login dengan pesan cek email
+            return redirect()->route('login')
+                ->with('success', 'Registrasi berhasil! Silakan cek email Anda untuk verifikasi akun sebelum login.');
+
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Kesalahan Registrasi: ' . $e->getMessage());
             return redirect()->back()->withInput()->withErrors(['error' => 'Terjadi kesalahan pada server. Silakan coba lagi nanti.']);
         }
     }
+
+    // =========================================================================
+    // 2. BAGIAN LOGIN (DENGAN REMEMBER ME & CEK VERIFIKASI)
+    // =========================================================================
 
     /**
      * Menampilkan halaman form login.
@@ -122,31 +143,32 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        if (Auth::attempt($credentials)) {
+        // Ambil value checkbox "remember" dari form login
+        $remember = $request->has('remember') ? true : false;
+
+        // Tambahkan parameter $remember ke Auth::attempt
+        if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
 
             $user = Auth::user();
 
-            // [MODIFIKASI UTAMA] Menggunakan route() helper, bukan URL hardcode
-            
+            // Cek apakah email sudah diverifikasi?
+            if (!$user->hasVerifiedEmail()) {
+                // Jika belum, jangan izinkan akses dashboard, lempar ke halaman notice
+                return redirect()->route('verification.notice')
+                    ->with('warning', 'Email Anda belum diverifikasi. Silakan cek inbox email Anda.');
+            }
+
+            // Logika Redirect Berdasarkan Role (Klinik Logic)
             if ($user->hasRole('admin')) {
-                // 1. Admin ke dashboard Filament (ini sudah benar)
                 return redirect('/admin'); 
-            
             } elseif ($user->hasRole('dokter')) {
-                // 2. Dokter ke dashboard dokter
-                return redirect()->route('dokter.dashboard'); // Bukan /dashboard-dokter
-
-            } elseif ($user->hasRole('petugas loket')) { // [MODIFIKASI] Menyesuaikan nama role
-                // 3. Petugas Loket ke dashboard petugas loket
-                return redirect()->route('petugas-loket.dashboard'); // Bukan /dashboard-loket
-
+                return redirect()->route('dokter.dashboard');
+            } elseif ($user->hasRole('petugas loket')) {
+                return redirect()->route('petugas-loket.dashboard');
             } elseif ($user->hasRole('pasien')) {
-                // 4. Pasien ke dashboard pasien
-                return redirect()->route('pasien.dashboard'); // Bukan /dashboard-pasien
-            
+                return redirect()->route('pasien.dashboard');
             } else {
-                // 5. Fallback
                 return redirect()->intended('dashboard');
             }
         }
@@ -164,8 +186,12 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/');
+        return redirect('/login')->with('success', 'Anda telah logout.');
     }
+
+    // =========================================================================
+    // 3. BAGIAN CEK NIK (AJAX UNTUK FRONTEND)
+    // =========================================================================
 
     /**
      * Mengecek data pasien berdasarkan NIK untuk auto-fill form registrasi publik.
@@ -205,5 +231,85 @@ class AuthController extends Controller
             'has_account' => false,
             'data' => $patientData
         ]);
+    }
+
+    // =========================================================================
+    // 4. BAGIAN BARU: LUPA PASSWORD & VERIFIKASI EMAIL
+    // =========================================================================
+
+    // --- LUPA PASSWORD (Kirim Link) ---
+    
+    public function showLinkRequestForm()
+    {
+        return view('auth.passwords.email');
+    }
+
+    public function sendResetLinkEmail(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+
+        // Kirim link reset pakai SMTP Gmail yang sudah disetting
+        $status = Password::sendResetLink($request->only('email'));
+
+        if ($status === Password::RESET_LINK_SENT) {
+            return back()->with(['status' => __($status)]);
+        }
+
+        return back()->withErrors(['email' => __($status)]);
+    }
+
+    // --- [BARU] RESET PASSWORD (Proses Update Password) ---
+    // Method ini yang tadi hilang dan menyebabkan error
+    
+    public function resetPassword(Request $request)
+    {
+        // 1. Validasi
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => ['required', 'confirmed', PasswordRules::min(6)->letters()->numbers()],
+        ]);
+
+        // 2. Proses Reset Password
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function (User $user, string $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password)
+                ])->setRememberToken(Str::random(60));
+
+                $user->save();
+
+                event(new PasswordReset($user));
+            }
+        );
+
+        // 3. Redirect jika sukses
+        if ($status === Password::PASSWORD_RESET) {
+            return redirect()->route('login')
+                ->with('success', 'Password berhasil direset! Silakan login dengan password baru.');
+        }
+
+        return back()->withErrors(['email' => __($status)]);
+    }
+
+    // --- VERIFIKASI EMAIL MANUAL ---
+
+    public function showVerificationNotice()
+    {
+        // Tampilkan view yang meminta user cek email (resources/views/auth/verify.blade.php)
+        return view('auth.verify'); 
+    }
+
+    public function resendVerificationEmail(Request $request)
+    {
+        if ($request->user()->hasVerifiedEmail()) {
+            return redirect()->intended('dashboard');
+        }
+
+        // Kirim ulang email verifikasi
+        $request->user()->sendEmailVerificationNotification();
+
+        return back()->with('message', 'Link verifikasi baru telah dikirim ke email Anda!');
     }
 }

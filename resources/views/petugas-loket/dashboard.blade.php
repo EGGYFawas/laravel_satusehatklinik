@@ -77,7 +77,7 @@
                         <p class="text-sm font-semibold text-gray-700 mb-3">{{ $queue->clinicQueue->patient->full_name }}</p>
                         
                         <div class="text-xs text-gray-600 border-t pt-2">
-                             <p class="font-semibold mb-1">Resep Obat:</p>
+                            <p class="font-semibold mb-1">Resep Obat:</p>
                             <ul class="list-disc pl-4 space-y-1">
                                 @foreach ($queue->prescription->prescriptionDetails as $detail)
                                     <li>{{ $detail->medicine->name }} ({{ $detail->quantity }})</li>
@@ -99,7 +99,7 @@
             </div>
         </div>
 
-        <!-- Kolom 3: Siap Diambil & Pembayaran (MODIFIKASI UTAMA) -->
+        <!-- Kolom 3: Siap Diambil (MODIFIKASI UTAMA DI SINI) -->
         <div class="bg-white/80 rounded-xl shadow-md flex flex-col">
             <h3 class="text-lg font-bold text-green-800 border-b-2 border-green-200 p-4 bg-green-100 rounded-t-xl">
                 Siap Diambil ({{ $siapDiambil->count() }})
@@ -125,26 +125,25 @@
                         <!-- Info Tagihan -->
                         <div class="bg-gray-50 p-2 rounded border border-gray-200 mb-3">
                             <p class="text-xs text-gray-500">Total Tagihan:</p>
-                            <p class="text-lg font-bold text-gray-800">Rp {{ number_format($totalPrice) }}</p>
+                            <p class="text-lg font-bold text-gray-800">Rp {{ number_format($totalPrice, 0, ',', '.') }}</p>
                         </div>
 
                         <!-- LOGIKA TOMBOL -->
                         @if(!$isPaid)
-                            {{-- Jika Belum Bayar: Munculkan Tombol Terima Tunai --}}
-                            <form action="{{ route('petugas-loket.bayar-tunai', $queue->id) }}" method="POST" class="form-submit-confirm">
-                                @csrf
-                                <button type="submit" class="w-full mb-2 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-md text-sm">
-                                    <i class="fas fa-money-bill-wave mr-1"></i> Terima Tunai (Cash)
-                                </button>
-                            </form>
+                            {{-- MODIFIKASI: Tombol membuka Modal, bukan submit langsung --}}
+                            <button onclick="openPaymentModal('{{ $queue->id }}', '{{ $queue->clinicQueue->patient->full_name }}', '{{ $totalPrice }}')" 
+                                class="w-full mb-2 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-md text-sm transition-colors flex items-center justify-center">
+                                <i class="fas fa-money-bill-wave mr-2"></i> Terima Tunai (Cash)
+                            </button>
+                            
                             <p class="text-xs text-center text-gray-400 mt-1">
                                 Atau tunggu pasien bayar via QRIS (Otomatis Lunas)
                             </p>
                         @else
-                            {{-- Jika Sudah Bayar: Munculkan Tombol Struk & Serahkan --}}
+                            {{-- Jika Sudah Bayar: Tombol Struk & Serahkan --}}
                             <div class="flex gap-2 mb-2">
-                                <a href="{{ route('invoice.download', $queue->prescription->id) }}" target="_blank" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-2 rounded-md text-xs text-center">
-                                    <i class="fas fa-print"></i> Struk
+                                <a href="{{ route('invoice.download', $queue->prescription->id) }}" target="_blank" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-2 rounded-md text-xs text-center flex items-center justify-center">
+                                    <i class="fas fa-print mr-1"></i> Struk
                                 </a>
                             </div>
 
@@ -158,7 +157,7 @@
                         @endif
                     </div>
                 @empty
-                    <p class="text-center text-gray-500 py-10">Tidak ada obat yang siap diambil.</p>
+                    <p class="text-center text-gray-500 py-10">Tidak ada obat siap diambil.</p>
                 @endforelse
             </div>
         </div>
@@ -180,7 +179,7 @@
                             @endif
                         </div>
                         <p class="text-sm font-semibold text-gray-700 mb-1">{{ $queue->clinicQueue->patient->full_name }}</p>
-                        <p class="text-xs text-green-600 font-bold mb-3">LUNAS - Rp {{ number_format($queue->prescription->total_price) }}</p>
+                        <p class="text-xs text-green-600 font-bold mb-3">LUNAS - Rp {{ number_format($queue->prescription->total_price ?? 0, 0, ',', '.') }}</p>
                     </div>
                 @empty
                     <p class="text-center text-gray-500 py-10">Belum ada riwayat.</p>
@@ -189,10 +188,125 @@
         </div>
 
     </div>
+
+    {{-- MODAL PEMBAYARAN TUNAI (HITUNG KEMBALIAN) --}}
+    <div id="paymentModal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onclick="closePaymentModal()"></div>
+        
+        <!-- Modal Content -->
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md z-10 p-6 relative transform transition-all scale-100">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800">Kasir Pembayaran</h3>
+                <button onclick="closePaymentModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="mb-5 bg-blue-50 p-4 rounded-lg border border-blue-100">
+                <p class="text-sm text-gray-600">Pasien: <span id="modalPatientName" class="font-bold text-gray-800">...</span></p>
+                <div class="flex justify-between items-end mt-2">
+                    <span class="text-sm text-gray-600">Total Tagihan:</span>
+                    <span class="text-2xl font-bold text-blue-700">Rp <span id="modalTotalDisplay">0</span></span>
+                </div>
+            </div>
+
+            <form id="paymentForm" action="" method="POST">
+                @csrf
+                
+                <!-- Input Uang Diterima -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Uang Diterima (Cash)</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-bold">Rp</span>
+                        <input type="number" id="inputAmountPaid" name="amount_paid" 
+                            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg font-semibold"
+                            placeholder="0" required min="0">
+                    </div>
+                </div>
+
+                <!-- Display Kembalian -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Kembalian</label>
+                    <input type="text" id="displayChange" 
+                        class="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-700 font-bold text-lg" 
+                        value="Rp 0" readonly>
+                </div>
+
+                <div class="flex gap-3">
+                    <button type="button" onclick="closePaymentModal()" class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium">Batal</button>
+                    <button type="submit" id="btnProcessPay" disabled
+                        class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                        Bayar & Selesai
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
 <script>
+    // --- 1. SCRIPT LOGIKA MODAL PEMBAYARAN ---
+    let currentTotal = 0;
+
+    function openPaymentModal(id, name, total) {
+        // Set Data ke Modal
+        document.getElementById('modalPatientName').innerText = name;
+        document.getElementById('modalTotalDisplay').innerText = new Intl.NumberFormat('id-ID').format(total);
+        currentTotal = parseFloat(total);
+
+        // Set Action Form
+        let url = "{{ route('petugas-loket.bayar-tunai', ':id') }}";
+        url = url.replace(':id', id);
+        document.getElementById('paymentForm').action = url;
+
+        // Reset Input
+        document.getElementById('inputAmountPaid').value = '';
+        document.getElementById('displayChange').value = 'Rp 0';
+        document.getElementById('displayChange').classList.remove('text-red-600', 'text-green-600');
+        document.getElementById('btnProcessPay').disabled = true;
+
+        // Buka Modal
+        document.getElementById('paymentModal').classList.remove('hidden');
+        // Focus ke input
+        setTimeout(() => document.getElementById('inputAmountPaid').focus(), 100);
+    }
+
+    function closePaymentModal() {
+        document.getElementById('paymentModal').classList.add('hidden');
+    }
+
+    // Event Listener Hitung Kembalian Otomatis
+    document.getElementById('inputAmountPaid').addEventListener('input', function() {
+        let paid = parseFloat(this.value);
+        
+        if (isNaN(paid)) {
+            document.getElementById('displayChange').value = 'Rp 0';
+            document.getElementById('btnProcessPay').disabled = true;
+            return;
+        }
+
+        let change = paid - currentTotal;
+        let formattedChange = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(change);
+        
+        const changeInput = document.getElementById('displayChange');
+        const btnPay = document.getElementById('btnProcessPay');
+
+        if (change < 0) {
+            changeInput.value = 'Uang Kurang!';
+            changeInput.classList.add('text-red-600');
+            changeInput.classList.remove('text-green-600');
+            btnPay.disabled = true;
+        } else {
+            changeInput.value = formattedChange;
+            changeInput.classList.remove('text-red-600');
+            changeInput.classList.add('text-green-600');
+            btnPay.disabled = false;
+        }
+    });
+
+    // --- 2. SCRIPT SWEETALERT (YANG SUDAH ADA) ---
     document.addEventListener('DOMContentLoaded', function () {
         const forms = document.querySelectorAll('.form-submit-confirm');
         forms.forEach(form => {
