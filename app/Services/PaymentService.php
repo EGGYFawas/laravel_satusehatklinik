@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Log;
 class PaymentService
 {
     // Konstanta harga jasa agar konsisten di seluruh aplikasi
+    // Jasa Klinik ini adalah biaya admin/pendaftaran, di luar tindakan dokter
     protected const JASA_KLINIK = 15000; 
 
     public function __construct()
@@ -23,13 +24,14 @@ class PaymentService
     }
 
     /**
-     * Hitung total tagihan dan update ke database.
-     * Fungsi ini memastikan total_price di database selalu sinkron dengan item.
+     * Hitung total tagihan (Obat + Tindakan Medis + Jasa Klinik) dan update ke database.
+     * Fungsi ini memastikan total_price di database selalu sinkron.
      */
     public function calculateTotal(Prescription $prescription)
     {
         $total = 0;
         
+        // 1. Hitung Biaya Obat
         // Load relasi obat jika belum ada
         $prescription->loadMissing('details.medicine');
 
@@ -39,7 +41,20 @@ class PaymentService
             $total += ($hargaSatuan * $qty);
         }
 
-        // Tambah Biaya Jasa
+        // 2. Hitung Biaya Tindakan Medis (Pemeriksaan Tambahan)
+        // Load relasi ke MedicalRecord -> Actions
+        $medicalRecord = $prescription->medicalRecord;
+        
+        if ($medicalRecord) {
+            $medicalRecord->loadMissing('actions'); // Pastikan relasi actions terload
+            
+            foreach ($medicalRecord->actions as $action) {
+                // Ambil price dari tabel transaksi (medical_record_actions), bukan master
+                $total += $action->price;
+            }
+        }
+
+        // 3. Tambah Biaya Jasa Klinik (Admin/Sarana)
         $total += self::JASA_KLINIK;
 
         // Simpan ke database
@@ -50,24 +65,28 @@ class PaymentService
 
     /**
      * Request Snap Token ke Midtrans (Smart Logic for Android/Web)
+     * Mengirimkan detail item lengkap (Obat + Tindakan)
      */
     public function getSnapToken(Prescription $prescription)
     {
-        // Load relasi penting (User, Pasien, Obat)
-        $prescription->loadMissing(['details.medicine', 'medicalRecord.patient.user']);
+        // Load semua relasi penting:
+        // 1. Detail Obat
+        // 2. Data Pasien & User (untuk customer details)
+        // 3. Tindakan Medis (untuk item details tambahan)
+        $prescription->loadMissing([
+            'details.medicine', 
+            'medicalRecord.patient.user',
+            'medicalRecord.actions' // <-- PENTING: Load tindakan
+        ]);
 
         // --- STRATEGI: SELALU BUAT ORDER ID BARU ---
         // Kita tidak menggunakan token lama. Setiap kali klik "Bayar", kita generate Order ID baru.
-        // Ini mengatasi masalah user tidak bisa ganti metode pembayaran atau token nyangkut.
         
-        /* // Logika lama (Dihapus/Dikomentar):
-        if ($prescription->midtrans_snap_token && ... ) { return ... } 
-        */
-
-        // 1. Susun Item Details (Rincian Obat)
+        // Inisialisasi variabel
         $itemDetails = [];
         $realTotal = 0; // Hitung ulang total di sini untuk validasi
 
+        // 1. Susun Item Details (RINCIAN OBAT)
         foreach ($prescription->details as $detail) {
             $price = (int) ($detail->medicine->price ?? 0);
             $qty = (int) $detail->quantity;
@@ -76,12 +95,28 @@ class PaymentService
                 'id' => 'OBAT-' . $detail->medicine_id,
                 'price' => $price,
                 'quantity' => $qty,
-                'name' => substr($detail->medicine->name, 0, 45), // Limit nama 50 char
+                'name' => substr($detail->medicine->name, 0, 45), // Limit nama 45 char (Midtrans limit)
             ];
             $realTotal += ($price * $qty);
         }
+
+        // 2. Susun Item Details (RINCIAN TINDAKAN MEDIS) - [BARU]
+        $medicalRecord = $prescription->medicalRecord;
+        if ($medicalRecord && $medicalRecord->actions->count() > 0) {
+            foreach ($medicalRecord->actions as $action) {
+                $price = (int) $action->price;
+                
+                $itemDetails[] = [
+                    'id' => 'ACT-' . $action->id, // Prefix ACT untuk Action
+                    'price' => $price,
+                    'quantity' => 1, // Jasa/Tindakan biasanya qty 1
+                    'name' => substr($action->action_name, 0, 45),
+                ];
+                $realTotal += $price;
+            }
+        }
         
-        // 2. Tambah Jasa Klinik
+        // 3. Tambah Jasa Klinik (Biaya Admin)
         $itemDetails[] = [
             'id' => 'JASA-LAYANAN',
             'price' => self::JASA_KLINIK,
@@ -90,25 +125,23 @@ class PaymentService
         ];
         $realTotal += self::JASA_KLINIK;
 
-        // 3. Update total di database biar sama persis dengan yang dikirim ke Midtrans
+        // 4. Update total di database biar sama persis dengan yang dikirim ke Midtrans
         if ($prescription->total_price != $realTotal) {
             $prescription->update(['total_price' => $realTotal]);
         }
 
-        // 4. Buat Order ID Baru yang Unik
+        // 5. Buat Order ID Baru yang Unik
         // Format: INV-[ID_RESEP]-[TIMESTAMP]
-        // Timestamp penting agar ID selalu beda setiap detik
         $orderId = 'INV-' . $prescription->id . '-' . time();
 
-        // 5. Susun Data Customer
+        // 6. Susun Data Customer
         $customerDetails = [
             'first_name' => $prescription->medicalRecord->patient->full_name ?? 'Pasien',
-            // Gunakan email valid atau fallback ke dummy (Midtrans butuh field ini)
             'email' => $prescription->medicalRecord->patient->user->email ?? 'pasien@klinik.com',
             'phone' => $prescription->medicalRecord->patient->phone_number ?? '08123456789',
         ];
 
-        // 6. Susun Payload Utama
+        // 7. Susun Payload Utama
         $params = [
             'transaction_details' => [
                 'order_id' => $orderId,
@@ -119,7 +152,6 @@ class PaymentService
             
             // [PENTING UNTUK ANDROID/WEBVIEW]
             // Callbacks memberitahu Midtrans harus redirect kemana setelah selesai.
-            // Ini mencegah halaman stuck di Midtrans setelah bayar.
             'callbacks' => [
                 'finish' => route('pasien.billing.index'), // Kembali ke daftar tagihan
             ]

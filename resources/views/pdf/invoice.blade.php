@@ -57,7 +57,7 @@
             <tr>
                 <th style="width: 5%;">No</th>
                 <th>Nama Obat / Layanan</th>
-                <th style="width: 10%; text-align: center;">Qty</th>
+                <th style="width: 10%; text-align: center;">Total Kuantitas</th>
                 <th style="width: 20%; text-align: right;">Harga Satuan</th>
                 <th style="width: 20%; text-align: right;">Total</th>
             </tr>
@@ -74,13 +74,31 @@
             </tr>
             @endforeach
             
-            <tr>
-                <td style="text-align: center;">{{ $no++ }}</td>
-                <td>Jasa Layanan Klinik</td>
-                <td style="text-align: center;">1</td>
-                <td class="text-right">Rp 15.000</td>
-                <td class="text-right">Rp 15.000</td>
-            </tr>
+            @if(isset($actions) && count($actions) > 0)
+                @foreach($actions as $action)
+                <tr>
+                    <td style="text-align: center;">{{ $no++ }}</td>
+                    <td>
+                        {{ $action->action_name }}
+                        @if($action->result_notes && $action->result_notes !== '-')
+                            <br><small style="color: #666; font-size: 8pt;">Hasil: {{ $action->result_notes }}</small>
+                        @endif
+                    </td>
+                    <td style="text-align: center;">1</td>
+                    <td class="text-right">Rp {{ number_format($action->price, 0, ',', '.') }}</td>
+                    <td class="text-right">Rp {{ number_format($action->price, 0, ',', '.') }}</td>
+                </tr>
+                @endforeach
+            @else
+                {{-- Fallback jika tidak ada tindakan spesifik, mungkin jasa konsultasi default --}}
+                <tr>
+                    <td style="text-align: center;">{{ $no++ }}</td>
+                    <td>Jasa Konsultasi Dokter (Default)</td>
+                    <td style="text-align: center;">1</td>
+                    <td class="text-right">Rp 15.000</td>
+                    <td class="text-right">Rp 15.000</td>
+                </tr>
+            @endif
         </tbody>
         <tfoot>
             <tr class="total-row">

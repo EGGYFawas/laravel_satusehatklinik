@@ -15,7 +15,7 @@
 
     <div class="w-full max-w-lg mx-auto pb-20">
         
-        <!-- [BARU] Informasi Panduan Pembayaran -->
+        <!-- Informasi Panduan Pembayaran -->
         <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 shadow-sm">
             <h3 class="font-bold text-blue-800 mb-3 flex items-center">
                 <i class="fas fa-info-circle mr-2 text-xl"></i> Panduan Pembayaran
@@ -64,21 +64,34 @@
 
         <!-- Daftar Tagihan -->
         @forelse($bills as $bill)
-            {{-- [LOGIC FIX] Hitung Total Secara Dinamis (On-the-fly) --}}
+            {{-- [LOGIC FIX] Hitung Total Secara Dinamis (Obat + Tindakan + Jasa) --}}
             @php
+                // 1. Hitung Total Obat
                 $totalObat = 0;
                 foreach($bill->details as $detail) {
                     $totalObat += $detail->medicine->price * $detail->quantity;
                 }
+
+                // 2. Hitung Total Tindakan Medis (BARU)
+                $totalTindakan = 0;
+                // Pastikan akses ke relasi medicalRecord -> actions aman
+                $actions = $bill->medicalRecord->actions ?? collect([]); 
+                foreach($actions as $action) {
+                    $totalTindakan += $action->price;
+                }
+
+                // 3. Biaya Jasa Layanan (Admin)
                 $biayaLayanan = 15000;
-                $grandTotal = $totalObat + $biayaLayanan;
+
+                // 4. Grand Total
+                $grandTotal = $totalObat + $totalTindakan + $biayaLayanan;
             @endphp
 
             <div class="bg-white rounded-xl shadow-md border border-gray-100 mb-6 overflow-hidden relative">
                 <!-- Header Card -->
                 <div class="px-4 py-3 bg-gray-50 border-b border-gray-100 flex justify-between items-start">
                     <div class="flex flex-col">
-                        <!-- [BARU] Menampilkan ID Tagihan -->
+                        <!-- Menampilkan ID Tagihan -->
                         <div class="flex items-center mb-1">
                             <span class="bg-gray-200 text-gray-700 text-xs font-bold px-2 py-0.5 rounded mr-2">
                                 ID: #{{ $bill->id }}
@@ -105,36 +118,56 @@
                     </div>
                 </div>
 
-                <!-- Body Card (Rincian Obat) -->
+                <!-- Body Card (Rincian Biaya) -->
                 <div class="p-5">
-                    <p class="text-xs text-gray-500 mb-3 font-semibold uppercase border-b border-gray-100 pb-1">Rincian Obat & Biaya</p>
+                    <p class="text-xs text-gray-500 mb-3 font-semibold uppercase border-b border-gray-100 pb-1">Rincian Obat & Layanan</p>
                     <ul class="space-y-3 mb-4">
+                        
+                        {{-- 1. LIST OBAT --}}
                         @foreach($bill->details as $detail)
                             <li class="flex justify-between items-start text-sm text-gray-700 border-b border-dashed border-gray-100 pb-2 last:border-0">
                                 <div class="flex flex-col">
-                                    {{-- Nama Obat --}}
                                     <span class="font-medium text-gray-800">{{ $detail->medicine->name }}</span>
-                                    
-                                    {{-- Detail Harga Satuan x Jumlah --}}
                                     <span class="text-xs text-gray-500 mt-1">
                                         Rp {{ number_format($detail->medicine->price, 0, ',', '.') }} x {{ $detail->quantity }} unit
                                     </span>
                                 </div>
-                                
-                                {{-- Total Harga per Item --}}
                                 <span class="font-semibold text-gray-800 mt-1">
                                     Rp {{ number_format($detail->medicine->price * $detail->quantity, 0, ',', '.') }}
                                 </span>
                             </li>
                         @endforeach
+
+                        {{-- 2. LIST TINDAKAN (JIKA ADA) --}}
+                        @if($actions->count() > 0)
+                            <li class="text-xs text-gray-500 font-bold uppercase mt-3 pt-2 border-t border-gray-100">
+                                Tindakan Tambahan
+                            </li>
+                            @foreach($actions as $action)
+                                <li class="flex justify-between items-start text-sm text-gray-700 border-b border-dashed border-gray-100 pb-2">
+                                    <div class="flex flex-col">
+                                        <span class="font-medium text-gray-800">{{ $action->action_name }}</span>
+                                        @if($action->result_notes && $action->result_notes !== '-')
+                                            <span class="text-xs text-gray-500 mt-0.5">
+                                                <i class="fas fa-notes-medical mr-1"></i>Hasil: {{ $action->result_notes }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                    <span class="font-semibold text-gray-800">
+                                        Rp {{ number_format($action->price, 0, ',', '.') }}
+                                    </span>
+                                </li>
+                            @endforeach
+                        @endif
                         
-                        <!-- Jasa Layanan -->
-                        <li class="flex justify-between items-center text-sm text-teal-700 font-semibold pt-2 border-t border-gray-100">
-                            <span>Jasa Layanan</span>
+                        {{-- 3. JASA LAYANAN KLINIK --}}
+                        <li class="flex justify-between items-center text-sm text-teal-700 font-semibold pt-2 border-t border-gray-100 mt-2">
+                            <span>Jasa Layanan Klinik</span>
                             <span>Rp {{ number_format($biayaLayanan, 0, ',', '.') }}</span>
                         </li>
                     </ul>
 
+                    <!-- Total Tagihan -->
                     <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg mb-4">
                         <span class="text-gray-600 font-bold text-sm">Total Tagihan</span>
                         {{-- Menggunakan hasil perhitungan dinamis $grandTotal --}}
@@ -144,13 +177,13 @@
                     <!-- Tombol Aksi -->
                     <div class="mt-4 space-y-2">
                         @if($bill->payment_status == 'paid')
-                            <!-- Tombol Download (Hanya Muncul Jika Lunas) -->
+                            <!-- Tombol Download -->
                             <a href="{{ route('invoice.download', $bill->id) }}" target="_blank"
                                class="block w-full text-center bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-4 rounded-lg shadow transition">
                                 <i class="fas fa-file-pdf mr-2"></i> Download Struk PDF
                             </a>
 
-                            <!-- Tombol Kembali ke Dashboard -->
+                            <!-- Tombol Kembali -->
                             <a href="{{ route('pasien.dashboard') }}" 
                                class="block w-full text-center bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-4 rounded-lg shadow transition">
                                 <i class="fas fa-home mr-2"></i> Kembali ke Dashboard
@@ -168,7 +201,6 @@
                                 <i class="fas fa-sync-alt mr-2"></i> Cek Status Pembayaran
                             </a>
                             
-                            <!-- Info tambahan untuk pembayaran Cash -->
                             <p class="text-xs text-center text-gray-500 mt-2 italic">
                                 *Untuk pembayaran tunai, sebutkan <strong>ID: #{{ $bill->id }}</strong> ke kasir.
                             </p>

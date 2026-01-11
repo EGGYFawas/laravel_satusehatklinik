@@ -128,15 +128,26 @@
 
                 <div>
                     <label for="email" class="block text-sm font-medium text-text-dark mb-1">Email</label>
+                    <!-- Tambahkan autocomplete="off" dan trik readonly + onfocus -->
                     <input type="email" id="email" name="email" value="" required placeholder="contoh: email@gmail.com"
+                           autocomplete="off"
+                           readonly
+                           onfocus="this.removeAttribute('readonly');"
+                           style="background-color: white;" 
                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary transition">
+                        <small class="text-xs text-text-grey mt-1">Akun email Harus valid untuk verifikasi email.</small>
                 </div>
                 
                 <div>
                     <label for="password" class="block text-sm font-medium text-text-dark mb-1">Password</label>
+                    <!-- Gunakan autocomplete="new-password" agar browser tahu ini password baru -->
                     <input type="password" id="password" name="password" required placeholder="Buat Password Anda"
+                           autocomplete="new-password"
+                           readonly
+                           onfocus="this.removeAttribute('readonly');"
+                           style="background-color: white;"
                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary transition">
-                    <small class="text-xs text-text-grey mt-1">Minimal 6 karakter.</small>
+                    <small class="text-xs text-text-grey mt-1">Minimal 6 karakter dengan kombinasi huruf dan angka.</small>
                 </div>
                 
                 <div>

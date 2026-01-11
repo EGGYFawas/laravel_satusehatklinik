@@ -131,6 +131,23 @@
                                     <p class="text-gray-500 italic">-</p>
                                 @endif
                             </div>
+
+                            {{-- [MODIFIKASI] TINDAKAN MEDIS (ACTIONS) --}}
+                            @if ($record->actions && $record->actions->isNotEmpty())
+                            <div class="detail-section border-t pt-4">
+                                <h4>Tindakan / Pemeriksaan Tambahan</h4>
+                                <ul class="list-disc pl-5">
+                                    @foreach ($record->actions as $action)
+                                        <li class="text-gray-800">
+                                            <span class="font-medium">{{ $action->action_name }}</span>
+                                            @if($action->result_notes && $action->result_notes !== '-')
+                                                <span class="text-sm text-gray-600 block italic">Hasil: {{ $action->result_notes }}</span>
+                                            @endif
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                            @endif
                             
                             {{-- Rencana Penatalaksanaan --}}
                             @if ($record->doctor_notes)
@@ -155,7 +172,7 @@
                                     @endforeach
                                 </div>
 
-                                {{-- [NEW] Button Download Invoice --}}
+                                {{-- Button Download Invoice --}}
                                 @if($record->prescription->payment_status == 'paid')
                                     <div class="mt-4 pt-4 border-t border-dashed border-gray-200">
                                         <a href="{{ route('invoice.download', $record->prescription->id) }}" target="_blank"

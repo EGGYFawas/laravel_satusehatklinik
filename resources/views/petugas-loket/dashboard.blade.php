@@ -40,19 +40,48 @@
                         <p class="text-sm font-semibold text-gray-700 mb-3">{{ $queue->clinicQueue->patient->full_name }}</p>
                         
                         <div class="text-xs text-gray-600 border-t pt-2">
-                            <p class="font-semibold mb-1">Resep Obat:</p>
-                            <ul class="list-disc pl-4 space-y-1">
-                                @foreach ($queue->prescription->prescriptionDetails as $detail)
-                                    <li>{{ $detail->medicine->name }} ({{ $detail->quantity }})</li>
-                                @endforeach
-                            </ul>
+                            {{-- 1. Tampilkan Obat (Jika Ada) --}}
+                            @if($queue->prescription->prescriptionDetails->count() > 0)
+                                <p class="font-semibold mb-1">Resep Obat:</p>
+                                <ul class="list-disc pl-4 space-y-1 mb-2">
+                                    @foreach ($queue->prescription->prescriptionDetails as $detail)
+                                        <li>{{ $detail->medicine->name }} ({{ $detail->quantity }})</li>
+                                    @endforeach
+                                </ul>
+                            @endif
+
+                            {{-- 2. [MODIFIKASI] Tampilkan Tindakan Medis (Jika Ada) --}}
+                            @php
+                                // Ambil actions via relasi: Prescription -> MedicalRecord -> Actions
+                                $actions = $queue->prescription->medicalRecord->actions ?? collect([]);
+                            @endphp
+
+                            @if($actions->count() > 0)
+                                <div class="{{ $queue->prescription->prescriptionDetails->count() > 0 ? 'border-t border-dashed pt-2 mt-2' : '' }}">
+                                    <p class="font-semibold mb-1 text-indigo-700">Tindakan Medis:</p>
+                                    <ul class="list-disc pl-4 space-y-1 text-indigo-900">
+                                        @foreach ($actions as $action)
+                                            <li>
+                                                {{ $action->action_name }}
+                                                {{-- Opsional: Tampilkan harga kecil --}}
+                                                {{-- <span class="text-[10px] text-gray-400">(Rp {{ number_format($action->price,0,',','.') }})</span> --}}
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
+
+                            {{-- Fallback jika kosong keduanya --}}
+                            @if($queue->prescription->prescriptionDetails->count() == 0 && $actions->count() == 0)
+                                <p class="italic text-gray-400">Tidak ada rincian data.</p>
+                            @endif
                         </div>
                         
                         <form action="{{ route('petugas-loket.antrean-apotek.updateStatus', $queue->id) }}" method="POST" class="mt-4 form-submit-confirm">
                             @csrf @method('PATCH')
                             <input type="hidden" name="status" value="SEDANG_DIRACIK">
                             <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md transition-colors">
-                                Proses Resep
+                                Proses / Siapkan
                             </button>
                         </form>
                     </div>
@@ -77,12 +106,31 @@
                         <p class="text-sm font-semibold text-gray-700 mb-3">{{ $queue->clinicQueue->patient->full_name }}</p>
                         
                         <div class="text-xs text-gray-600 border-t pt-2">
-                            <p class="font-semibold mb-1">Resep Obat:</p>
-                            <ul class="list-disc pl-4 space-y-1">
-                                @foreach ($queue->prescription->prescriptionDetails as $detail)
-                                    <li>{{ $detail->medicine->name }} ({{ $detail->quantity }})</li>
-                                @endforeach
-                            </ul>
+                            {{-- 1. Tampilkan Obat --}}
+                            @if($queue->prescription->prescriptionDetails->count() > 0)
+                                <p class="font-semibold mb-1">Resep Obat:</p>
+                                <ul class="list-disc pl-4 space-y-1 mb-2">
+                                    @foreach ($queue->prescription->prescriptionDetails as $detail)
+                                        <li>{{ $detail->medicine->name }} ({{ $detail->quantity }})</li>
+                                    @endforeach
+                                </ul>
+                            @endif
+
+                            {{-- 2. [MODIFIKASI] Tampilkan Tindakan Medis --}}
+                            @php
+                                $actions = $queue->prescription->medicalRecord->actions ?? collect([]);
+                            @endphp
+
+                            @if($actions->count() > 0)
+                                <div class="{{ $queue->prescription->prescriptionDetails->count() > 0 ? 'border-t border-dashed pt-2 mt-2' : '' }}">
+                                    <p class="font-semibold mb-1 text-indigo-700">Tindakan Medis:</p>
+                                    <ul class="list-disc pl-4 space-y-1 text-indigo-900">
+                                        @foreach ($actions as $action)
+                                            <li>{{ $action->action_name }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endif
                         </div>
                         
                         <form action="{{ route('petugas-loket.antrean-apotek.updateStatus', $queue->id) }}" method="POST" class="mt-4 form-submit-confirm">
@@ -99,7 +147,7 @@
             </div>
         </div>
 
-        <!-- Kolom 3: Siap Diambil (MODIFIKASI UTAMA DI SINI) -->
+        <!-- Kolom 3: Siap Diambil -->
         <div class="bg-white/80 rounded-xl shadow-md flex flex-col">
             <h3 class="text-lg font-bold text-green-800 border-b-2 border-green-200 p-4 bg-green-100 rounded-t-xl">
                 Siap Diambil ({{ $siapDiambil->count() }})
@@ -108,6 +156,7 @@
                 @forelse ($siapDiambil as $queue)
                     @php
                         $isPaid = $queue->prescription->payment_status == 'paid';
+                        // Total price sudah dihitung di backend (PaymentService) mencakup Obat + Tindakan
                         $totalPrice = $queue->prescription->total_price;
                     @endphp
 
@@ -124,13 +173,13 @@
                         
                         <!-- Info Tagihan -->
                         <div class="bg-gray-50 p-2 rounded border border-gray-200 mb-3">
-                            <p class="text-xs text-gray-500">Total Tagihan:</p>
+                            <p class="text-xs text-gray-500">Total Tagihan (Obat + Tindakan):</p>
                             <p class="text-lg font-bold text-gray-800">Rp {{ number_format($totalPrice, 0, ',', '.') }}</p>
                         </div>
 
                         <!-- LOGIKA TOMBOL -->
                         @if(!$isPaid)
-                            {{-- MODIFIKASI: Tombol membuka Modal, bukan submit langsung --}}
+                            {{-- Tombol membuka Modal --}}
                             <button onclick="openPaymentModal('{{ $queue->id }}', '{{ $queue->clinicQueue->patient->full_name }}', '{{ $totalPrice }}')" 
                                 class="w-full mb-2 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-md text-sm transition-colors flex items-center justify-center">
                                 <i class="fas fa-money-bill-wave mr-2"></i> Terima Tunai (Cash)
