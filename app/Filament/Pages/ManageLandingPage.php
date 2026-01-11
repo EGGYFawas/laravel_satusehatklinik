@@ -103,7 +103,7 @@ class ManageLandingPage extends Page
                                     ])
                                     // Validasi Backend: Pastikan hanya angka
                                     ->regex('/^[0-9]+$/') 
-                                    ->  X(),
+                                
                             ]),
                     ])
                     ->columnSpanFull(), // Agar Tabs memenuhi lebar halaman
