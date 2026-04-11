@@ -112,7 +112,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/doctors-by-poli/{poli_id}', [PasienDashboardController::class, 'getDoctorsByPoli'])->name('doctors.by.poli');
         Route::get('/check-in/{clinic_uuid}', [CheckInController::class, 'processCheckInAjax'])->name('checkin.ajax');
         Route::post('/antrean/apotek/{pharmacyQueueId}/konfirmasi', [PasienDashboardController::class, 'konfirmasiPenerimaanObat'])->name('antrean.apotek.konfirmasi');
-        
+        Route::get('/check-bpjs', [App\Http\Controllers\Pasien\DashboardController::class, 'checkBpjsStatus'])->name('check-bpjs');
+
         // Profil
         Route::get('/profil', [PasienProfileController::class, 'show'])->name('profil.show');
         Route::put('/profil', [PasienProfileController::class, 'update'])->name('profil.update');
@@ -161,5 +162,6 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/antrean-offline/{antrean}/check-in', [AntreanOfflineController::class, 'checkIn'])->name('antrean-offline.checkin');
         Route::get('/doctors-by-poli/{poli}', [AntreanOfflineController::class, 'getDoctorsByPoli'])->name('doctors.by.poli');
         Route::get('/check-patient-nik/{nik}', [AntreanOfflineController::class, 'checkPatientByNIK'])->name('check-patient-nik');
-    });
+        Route::get('/petugas-loket/check-bpjs/{nik}', [App\Http\Controllers\PetugasLoket\AntreanOfflineController::class, 'checkBpjsStatus'])->name('petugas-loket.check-bpjs');
+        });
 });

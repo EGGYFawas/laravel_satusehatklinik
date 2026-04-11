@@ -7,15 +7,9 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         /* Animasi untuk kartu panggilan */
-        .blinking-warning {
-            animation: blinker 1.5s linear infinite;
-        }
-
+        .blinking-warning { animation: blinker 1.5s linear infinite; }
         @keyframes blinker {
-            50% {
-                background-color: #fef3c7; /* yellow-100 */
-                border-color: #fcd34d; /* yellow-300 */
-            }
+            50% { background-color: #fef3c7; border-color: #fcd34d; }
         }
     </style>
 @endpush
@@ -29,12 +23,8 @@
         <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-md shadow-md" role="alert">
             <p class="font-bold">Terjadi Kesalahan</p>
             <ul>
-                @if(session('error'))
-                    <li>{{ session('error') }}</li>
-                @endif
-                @foreach ($errors->all() as $error)
-                    <li class="list-disc ml-4">{{ $error }}</li>
-                @endforeach
+                @if(session('error')) <li>{{ session('error') }}</li> @endif
+                @foreach ($errors->all() as $error) <li class="list-disc ml-4">{{ $error }}</li> @endforeach
             </ul>
         </div>
     @endif
@@ -47,6 +37,34 @@
                                 ($antreanApotek && !in_array($antreanApotek->status, ['DITERIMA_PASIEN', 'BATAL']));
         @endphp
 
+        <!-- WIDGET CEK BPJS PASIEN (BARU) -->
+        <div class="w-full max-w-5xl bg-white rounded-2xl shadow-sm border border-green-200 p-6 mb-8 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="absolute -right-10 -top-10 w-40 h-40 bg-green-50 rounded-full opacity-50 pointer-events-none"></div>
+            
+            <div class="relative z-10 flex-1">
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="bg-green-100 p-2 rounded-lg text-green-600"><i class="fas fa-id-card"></i></div>
+                    <h3 class="text-xl font-bold text-gray-800">Cek Status JKN / BPJS Anda</h3>
+                </div>
+                <p class="text-sm text-gray-600 mb-4">Pastikan kartu BPJS Anda dalam status <strong class="text-green-600">AKTIF</strong> untuk dapat mendaftar menggunakan jalur BPJS Kesehatan.</p>
+                <button type="button" id="btn_patient_cek_bpjs" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg text-sm font-semibold transition shadow-sm">
+                    <i class="fas fa-search mr-2"></i> Cek Status Sekarang
+                </button>
+            </div>
+
+            <!-- Hasil Cek BPJS (Hidden by default) -->
+            <div id="patient_bpjs_result" class="hidden w-full md:w-80 bg-gray-50 rounded-xl p-4 border border-gray-200 relative z-10">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs font-bold text-gray-500 uppercase">Hasil Pengecekan</span>
+                    <span id="patient_bpjs_badge" class="text-[10px] font-bold px-2 py-1 rounded-md"></span>
+                </div>
+                <p id="patient_bpjs_nama" class="font-bold text-gray-800 mb-1">-</p>
+                <p class="text-xs text-gray-500 mb-1">No. Kartu: <strong id="patient_bpjs_nokartu" class="text-gray-700">-</strong></p>
+                <p class="text-xs text-gray-500">Jenis: <strong id="patient_bpjs_jenis" class="text-gray-700">-</strong></p>
+            </div>
+        </div>
+        <!-- END WIDGET BPJS -->
+
         <!-- card daftar antrian -->
         @if(!$hasActiveProcess)
             <div class="w-full max-w-lg bg-white rounded-xl shadow-lg p-6 text-center mb-8">
@@ -58,7 +76,6 @@
         @endif
 
         <div class="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-8">
-
             <!-- ====================================================== -->
             <!-- == KARTU ANTRIAN BEROBAT == -->
             <!-- ====================================================== -->
@@ -69,16 +86,11 @@
                     @php
                         $statusText = ''; $bgColor = ''; $textColor = ''; $borderColor = ''; $pulseAnimation = '';
                         switch ($antreanBerobat->status) {
-                            case 'MENUNGGU':
-                                $statusText = 'Menunggu Check-In'; $bgColor = 'bg-blue-100'; $textColor = 'text-blue-800'; $borderColor = 'border-blue-300'; break;
-                            case 'HADIR':
-                                $statusText = 'Hadir (Siap Dipanggil)'; $bgColor = 'bg-indigo-100'; $textColor = 'text-indigo-800'; $borderColor = 'border-indigo-300'; break;
-                            case 'DIPANGGIL':
-                                $statusText = 'Giliran Anda!'; $bgColor = 'bg-yellow-100'; $textColor = 'text-yellow-800'; $borderColor = 'border-yellow-300'; $pulseAnimation = 'blinking-warning'; break;
-                            case 'SELESAI':
-                                $statusText = 'Pemeriksaan Selesai'; $bgColor = 'bg-green-100'; $textColor = 'text-green-800'; $borderColor = 'border-green-300'; break;
-                            default:
-                                $statusText = ucwords(strtolower($antreanBerobat->status)); $bgColor = 'bg-gray-100'; $textColor = 'text-gray-800'; $borderColor = 'border-gray-300'; break;
+                            case 'MENUNGGU': $statusText = 'Menunggu Check-In'; $bgColor = 'bg-blue-100'; $textColor = 'text-blue-800'; $borderColor = 'border-blue-300'; break;
+                            case 'HADIR': $statusText = 'Hadir (Siap Dipanggil)'; $bgColor = 'bg-indigo-100'; $textColor = 'text-indigo-800'; $borderColor = 'border-indigo-300'; break;
+                            case 'DIPANGGIL': $statusText = 'Giliran Anda!'; $bgColor = 'bg-yellow-100'; $textColor = 'text-yellow-800'; $borderColor = 'border-yellow-300'; $pulseAnimation = 'blinking-warning'; break;
+                            case 'SELESAI': $statusText = 'Pemeriksaan Selesai'; $bgColor = 'bg-green-100'; $textColor = 'text-green-800'; $borderColor = 'border-green-300'; break;
+                            default: $statusText = ucwords(strtolower($antreanBerobat->status)); $bgColor = 'bg-gray-100'; $textColor = 'text-gray-800'; $borderColor = 'border-gray-300'; break;
                         }
                     @endphp
 
@@ -86,6 +98,11 @@
                         <p class="text-sm font-medium {{ $textColor }} mb-2">Poli {{ $antreanBerobat->poli->name }}</p>
                         <p class="text-6xl font-extrabold text-[#24306E]">{{ $antreanBerobat->queue_number }}</p>
                         <p id="status-text-berobat" class="text-lg {{ $textColor }} font-semibold mt-4 bg-white/50 rounded-full px-4 py-1 inline-block">{{ $statusText }}</p>
+                        
+                        <!-- [BARU] Indikator Jalur -->
+                        <div class="mt-3">
+                            <span class="text-xs font-bold px-3 py-1 rounded-full {{ $antreanBerobat->payment_method == 'BPJS' ? 'bg-green-200 text-green-800' : 'bg-blue-200 text-blue-800' }}">JALUR: {{ strtoupper($antreanBerobat->payment_method ?? 'UMUM') }}</span>
+                        </div>
                     </div>
 
                     <div class="mt-6 space-y-4">
@@ -116,11 +133,7 @@
                             <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
                                 <span class="font-semibold text-gray-700">Selesai Pada:</span>
                                 <span class="text-lg font-bold text-gray-900">
-                                    @if($antreanBerobat->finish_time)
-                                        {{ $antreanBerobat->finish_time->format('H:i') }} WIB
-                                    @else
-                                        -
-                                    @endif
+                                    {{ $antreanBerobat->finish_time ? $antreanBerobat->finish_time->format('H:i') . ' WIB' : '-' }}
                                 </span>
                             </div>
                             @if($antreanApotek && $antreanApotek->status != 'DITERIMA_PASIEN')
@@ -144,24 +157,19 @@
                 @elseif($riwayatBerobatTerakhir)
                     <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
                         <p class="font-semibold text-gray-700">Kunjungan Terakhir Anda</p>
-
                         @if($riwayatBerobatTerakhir->finish_time)
                             <p class="text-2xl font-bold text-gray-800 mt-2">
                                 {{ $riwayatBerobatTerakhir->finish_time->setTimezone('Asia/Jakarta')->translatedFormat('l, d F Y') }}
                             </p>
                             <div class="mt-4 text-left space-y-2 text-sm">
-                                <p>
-                                    <span class="font-semibold w-24 inline-block">Selesai Pukul</span>:
-                                    {{ $riwayatBerobatTerakhir->finish_time->setTimezone('Asia/Jakarta')->format('H:i') }} WIB
-                                </p>
+                                <p><span class="font-semibold w-24 inline-block">Selesai Pukul</span>: {{ $riwayatBerobatTerakhir->finish_time->setTimezone('Asia/Jakarta')->format('H:i') }} WIB</p>
                                 <p><span class="font-semibold w-24 inline-block">Poli</span>: {{ $riwayatBerobatTerakhir->poli->name }}</p>
                                 <p><span class="font-semibold w-24 inline-block">Dokter</span>: {{ $riwayatBerobatTerakhir->doctor->user->full_name ?? 'N/A' }}</p>
+                                <p><span class="font-semibold w-24 inline-block">Cara Bayar</span>: {{ $riwayatBerobatTerakhir->payment_method ?? 'Umum' }}</p>
                             </div>
                         @else
-                            <p class="text-lg text-gray-600 mt-2">
-                                Data waktu kunjungan tidak lengkap.
-                            </p>
-                             <div class="mt-4 text-left space-y-2 text-sm">
+                            <p class="text-lg text-gray-600 mt-2">Data waktu kunjungan tidak lengkap.</p>
+                            <div class="mt-4 text-left space-y-2 text-sm">
                                 <p><span class="font-semibold w-24 inline-block">Poli</span>: {{ $riwayatBerobatTerakhir->poli->name }}</p>
                                 <p><span class="font-semibold w-24 inline-block">Dokter</span>: {{ $riwayatBerobatTerakhir->doctor->user->full_name ?? 'N/A' }}</p>
                             </div>
@@ -169,9 +177,7 @@
                         <a href="{{ route('pasien.riwayat.show', $riwayatBerobatTerakhir->patient_id) }}" class="mt-4 inline-block bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg text-sm">Lihat Detail Riwayat</a>
                     </div>
                 @else
-                    <div class="text-center text-gray-500 py-8">
-                        <p>Belum ada antrean berobat atau riwayat kunjungan.</p>
-                    </div>
+                    <div class="text-center text-gray-500 py-8"><p>Belum ada antrean berobat atau riwayat kunjungan.</p></div>
                 @endif
             </div>
 
@@ -184,20 +190,13 @@
                     @php
                         $statusTextApotek = ''; $bgColorApotek = ''; $textColorApotek = ''; $borderColorApotek = ''; $pulseAnimationApotek = '';
                         switch ($antreanApotek->status) {
-                            case 'DALAM_ANTREAN':
-                                $statusTextApotek = 'Dalam Antrean Apotek'; $bgColorApotek = 'bg-cyan-100'; $textColorApotek = 'text-cyan-800'; $borderColorApotek = 'border-cyan-300'; break;
-                            case 'SEDANG_DIRACIK':
-                                $statusTextApotek = 'Obat Sedang Disiapkan'; $bgColorApotek = 'bg-orange-100'; $textColorApotek = 'text-orange-800'; $borderColorApotek = 'border-orange-300'; break;
-                            case 'SIAP_DIAMBIL':
-                                $statusTextApotek = 'Obat Siap Diambil!'; $bgColorApotek = 'bg-yellow-100'; $textColorApotek = 'text-yellow-800'; $borderColorApotek = 'border-yellow-300'; $pulseAnimationApotek = 'blinking-warning'; break;
-                            case 'DISERAHKAN':
-                                $statusTextApotek = 'Menunggu Konfirmasi Anda'; $bgColorApotek = 'bg-purple-100'; $textColorApotek = 'text-purple-800'; $borderColorApotek = 'border-purple-300'; break;
-                            case 'DITERIMA_PASIEN':
-                                $statusTextApotek = 'Proses Selesai'; $bgColorApotek = 'bg-green-100'; $textColorApotek = 'text-green-800'; $borderColorApotek = 'border-green-300'; break;
-                            case 'BATAL':
-                                $statusTextApotek = 'Dibatalkan'; $bgColorApotek = 'bg-red-100'; $textColorApotek = 'text-red-800'; $borderColorApotek = 'border-red-300'; break;
-                            default:
-                                $statusTextApotek = 'Menunggu Proses'; $bgColorApotek = 'bg-gray-100'; $textColorApotek = 'text-gray-800'; $borderColorApotek = 'border-gray-300'; break;
+                            case 'DALAM_ANTREAN': $statusTextApotek = 'Dalam Antrean Apotek'; $bgColorApotek = 'bg-cyan-100'; $textColorApotek = 'text-cyan-800'; $borderColorApotek = 'border-cyan-300'; break;
+                            case 'SEDANG_DIRACIK': $statusTextApotek = 'Obat Sedang Disiapkan'; $bgColorApotek = 'bg-orange-100'; $textColorApotek = 'text-orange-800'; $borderColorApotek = 'border-orange-300'; break;
+                            case 'SIAP_DIAMBIL': $statusTextApotek = 'Obat Siap Diambil!'; $bgColorApotek = 'bg-yellow-100'; $textColorApotek = 'text-yellow-800'; $borderColorApotek = 'border-yellow-300'; $pulseAnimationApotek = 'blinking-warning'; break;
+                            case 'DISERAHKAN': $statusTextApotek = 'Menunggu Konfirmasi Anda'; $bgColorApotek = 'bg-purple-100'; $textColorApotek = 'text-purple-800'; $borderColorApotek = 'border-purple-300'; break;
+                            case 'DITERIMA_PASIEN': $statusTextApotek = 'Proses Selesai'; $bgColorApotek = 'bg-green-100'; $textColorApotek = 'text-green-800'; $borderColorApotek = 'border-green-300'; break;
+                            case 'BATAL': $statusTextApotek = 'Dibatalkan'; $bgColorApotek = 'bg-red-100'; $textColorApotek = 'text-red-800'; $borderColorApotek = 'border-red-300'; break;
+                            default: $statusTextApotek = 'Menunggu Proses'; $bgColorApotek = 'bg-gray-100'; $textColorApotek = 'text-gray-800'; $borderColorApotek = 'border-gray-300'; break;
                         }
                     @endphp
 
@@ -231,18 +230,13 @@
 
                         <div class="pt-4 border-t">
                             @if($antreanApotek->status == 'SIAP_DIAMBIL')
-
-                                {{-- FITUR BILLING/TAGIHAN --}}
+                                {{-- FITUR BILLING --}}
                                 @if(isset($tagihanObat) && $tagihanObat->payment_status == 'pending')
                                     <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4 text-left">
                                         <div class="flex">
                                             <div class="ml-3">
-                                                <p class="text-sm text-yellow-700 font-bold">
-                                                    Tagihan obat belum dibayar.
-                                                </p>
-                                                <p class="text-xs text-yellow-600 mt-1">
-                                                    Silakan lakukan pembayaran agar obat dapat diserahkan.
-                                                </p>
+                                                <p class="text-sm text-yellow-700 font-bold">Tagihan obat belum dibayar.</p>
+                                                <p class="text-xs text-yellow-600 mt-1">Silakan lakukan pembayaran agar obat dapat diserahkan.</p>
                                             </div>
                                         </div>
                                     </div>
@@ -250,7 +244,6 @@
                                         <i class="fas fa-wallet mr-2"></i> Lihat & Bayar Tagihan
                                     </a>
                                 @else
-                                    {{-- Jika sudah lunas atau tidak ada tagihan --}}
                                     <div class="w-full bg-green-500 text-white font-bold py-3 px-6 rounded-lg text-center text-lg animate-pulse">
                                         SEGERA MENUJU LOKET APOTEK
                                         @if(isset($tagihanObat) && $tagihanObat->payment_status == 'paid')
@@ -258,7 +251,6 @@
                                         @endif
                                     </div>
                                 @endif
-
                             @elseif($antreanApotek->status == 'DISERAHKAN')
                                  <form action="{{ route('pasien.antrean.apotek.konfirmasi', $antreanApotek->id) }}" method="POST" id="konfirmasiObatForm">
                                      @csrf
@@ -308,7 +300,6 @@
                                  alt="Gambar Artikel: {{ $article->title }}"
                                  class="w-full h-full object-cover transition duration-500 group-hover:scale-105">
                         </a>
-
                         <div class="p-6 flex-grow flex flex-col">
                             <h3 class="font-bold text-lg mb-2 text-gray-800 line-clamp-2">
                                 <a href="{{ route('pasien.artikel.show', $article->slug) }}" class="hover:text-[#24306E] transition">
@@ -328,7 +319,6 @@
             </div>
         @else
             <div class="text-center text-gray-500 py-12 bg-white rounded-xl shadow-lg border border-dashed border-gray-200">
-                <svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 12h6M7 8h6"></path></svg>
                 <p>Belum ada artikel kesehatan yang diterbitkan.</p>
             </div>
         @endif
@@ -361,12 +351,19 @@
                              </div>
                         </div>
 
-                        <div x-show="isFamily" style="display: none;" class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-4 border-b border-gray-200 pb-4">
-                            <!-- Konten form keluarga disembunyikan -->
-                        </div>
-
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                             <h4 class="md:col-span-2 text-lg font-semibold text-gray-700 mb-2 pt-4 border-t border-gray-200">Detail Pendaftaran</h4>
+                            
+                             <!-- [BARU] PILIHAN CARA BAYAR -->
+                             <div class="md:col-span-2 bg-blue-50 border border-blue-200 p-4 rounded-lg mb-2">
+                                <label for="payment_method" class="block text-sm font-bold text-blue-900 mb-2">Pilih Jalur Pendaftaran (Cara Bayar) <span class="text-red-500">*</span></label>
+                                <select id="payment_method" name="payment_method" class="w-full p-2.5 border border-blue-300 rounded-md font-semibold text-gray-800 focus:ring-blue-500 focus:border-blue-500" required>
+                                    <option value="Umum" selected>JALUR UMUM (Pribadi)</option>
+                                    <option value="BPJS">JALUR BPJS KESEHATAN (JKN)</option>
+                                </select>
+                                <p class="text-xs text-blue-700 mt-2">*Jika memilih BPJS, pastikan Anda telah mengecek status kepesertaan aktif di dashboard.</p>
+                             </div>
+
                              <div>
                                 <label for="poli" class="block text-sm font-medium text-gray-700 mb-1">Pilih Poli <span class="text-red-500">*</span></label>
                                 <select id="poli" name="poli_id" class="w-full p-2 border border-gray-300 rounded-md" required>
@@ -396,17 +393,9 @@
             </div>
             <div class="flex justify-center items-center gap-4 p-6 border-t border-gray-200 flex-shrink-0">
                 <button type="button" id="cancelModalBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg">Batal</button>
-                <button type="submit" form="antrianForm" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-lg">Daftar</button>
+                <button type="submit" form="antrianForm" id="btnSubmitAntrian" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-lg transition-colors">Daftar Antrean</button>
             </div>
        </div>
-    </div>
-    <div id="qrScannerModal" class="hidden fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 text-center relative">
-            <h3 class="text-xl font-bold text-gray-800 mb-4">Pindai QR Code Check-In</h3>
-            <p class="text-gray-600 mb-4 text-sm">Arahkan kamera ke QR Code yang tersedia di meja pendaftaran.</p>
-            <div id="qr-reader" class="w-full border rounded-lg overflow-hidden"></div>
-            <button id="closeScannerBtn" class="mt-6 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg">Tutup</button>
-        </div>
     </div>
 @endpush
 
@@ -414,53 +403,169 @@
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const ambilAntrianBtn = document.getElementById('ambilAntrianBtn');
-        if (ambilAntrianBtn) {
-             const antrianModal = document.getElementById('antrianModal');
-             const cancelModalBtn = document.getElementById('cancelModalBtn');
-             const antrianForm = document.getElementById('antrianForm');
-             const poliSelect = document.getElementById('poli');
-             const doctorSelect = document.getElementById('doctor');
-             ambilAntrianBtn.addEventListener('click', () => antrianModal.classList.remove('hidden'));
-             cancelModalBtn.addEventListener('click', () => antrianModal.classList.add('hidden'));
-             antrianModal.addEventListener('click', (e) => { if (e.target.id === 'antrianModal') antrianModal.classList.add('hidden'); });
+        
+        // ========================================================
+        // 1. LOGIKA WIDGET CEK STATUS BPJS (MANDIRI)
+        // ========================================================
+        const btnCek = document.getElementById('btn_patient_cek_bpjs');
+        const resultContainer = document.getElementById('patient_bpjs_result');
+        
+        if(btnCek) {
+            btnCek.addEventListener('click', function() {
+                const oriText = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Mengecek Data...';
+                this.disabled = true;
 
-             antrianForm.addEventListener('submit', function(e) {
-                 e.preventDefault();
-                 Swal.fire({ title: 'Apakah data sudah benar?', icon: 'question', showCancelButton: true, confirmButtonColor: '#28a745', cancelButtonColor: '#d33', confirmButtonText: 'Ya, daftarkan!', cancelButtonText: 'Periksa Lagi'
-                 }).then((result) => { if (result.isConfirmed) { antrianForm.submit(); } });
-             });
+                fetch(`{{ route('pasien.check-bpjs') }}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        this.innerHTML = oriText;
+                        this.disabled = false;
 
-             poliSelect.addEventListener('change', function() {
-                 const poliId = this.value;
-                 doctorSelect.innerHTML = '<option value="">Memuat dokter...</option>';
-                 doctorSelect.disabled = true;
-                 if (poliId) {
-                     fetch(`{{ url('/pasien/doctors-by-poli') }}/${poliId}`)
-                     .then(response => response.json())
-                     .then(data => {
-                         doctorSelect.innerHTML = '<option value="" disabled selected>-- Silahkan Pilih Dokter --</option>';
-                         if (data.length > 0) {
-                             data.forEach(doctor => {
-                                 const option = document.createElement('option');
-                                 option.value = doctor.id;
-                                 option.textContent = doctor.name;
-                                 doctorSelect.appendChild(option);
-                             });
-                             doctorSelect.disabled = false;
-                         } else {
-                             doctorSelect.innerHTML = '<option value="">-- Tidak ada dokter praktek --</option>';
-                         }
-                     }).catch(error => console.error('Fetch Error:', error));
-                 }
-             });
+                        if(data.success) {
+                            const p = data.data;
+                            document.getElementById('patient_bpjs_nama').textContent = p.nama || p.name || '-';
+                            document.getElementById('patient_bpjs_nokartu').textContent = p.noKartu || p.no_kartu || '-';
+                            document.getElementById('patient_bpjs_jenis').textContent = p.jenisPeserta?.keterangan || p.jenis_peserta || '-';
+                            
+                            const status = p.statusPeserta?.keterangan || p.status || '-';
+                            const badge = document.getElementById('patient_bpjs_badge');
+                            badge.textContent = status;
+                            
+                            if(status.toUpperCase().includes('AKTIF') && !status.toUpperCase().includes('TIDAK')) {
+                                badge.className = 'text-[10px] font-bold px-2 py-1 rounded-md bg-green-100 text-green-700';
+                            } else {
+                                badge.className = 'text-[10px] font-bold px-2 py-1 rounded-md bg-red-100 text-red-700';
+                            }
+                            
+                            resultContainer.classList.remove('hidden');
+                            Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Data BPJS ditemukan', showConfirmButton: false, timer: 3000 });
+                        } else {
+                            Swal.fire('Gagal', data.message || 'Data kepesertaan tidak ditemukan. Pastikan NIK Anda benar di menu Profil.', 'error');
+                            resultContainer.classList.add('hidden');
+                        }
+                    }).catch(err => {
+                        this.innerHTML = oriText;
+                        this.disabled = false;
+                        Swal.fire('Error', 'Koneksi ke server BPJS terputus.', 'error');
+                    });
+            });
         }
 
+        // ========================================================
+        // 2. LOGIKA MODAL ANTREAN & PILIH DOKTER
+        // ========================================================
+        const ambilAntrianBtn = document.getElementById('ambilAntrianBtn');
+        const btnSubmitAntrian = document.getElementById('btnSubmitAntrian'); // Tombol submit pendaftaran
+        
+        if (ambilAntrianBtn) {
+            const antrianModal = document.getElementById('antrianModal');
+            const cancelModalBtn = document.getElementById('cancelModalBtn');
+            const antrianForm = document.getElementById('antrianForm');
+            const poliSelect = document.getElementById('poli');
+            const doctorSelect = document.getElementById('doctor');
+            const paymentSelect = document.getElementById('payment_method'); // Dropdown BPJS/Umum
+
+            ambilAntrianBtn.addEventListener('click', () => antrianModal.classList.remove('hidden'));
+            cancelModalBtn.addEventListener('click', () => antrianModal.classList.add('hidden'));
+            antrianModal.addEventListener('click', (e) => { if (e.target.id === 'antrianModal') antrianModal.classList.add('hidden'); });
+
+            // Submit Form Confirmation
+            antrianForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                Swal.fire({ 
+                    title: 'Apakah data sudah benar?', 
+                    icon: 'question', showCancelButton: true, confirmButtonColor: '#28a745', cancelButtonColor: '#d33', 
+                    confirmButtonText: 'Ya, daftarkan!', cancelButtonText: 'Periksa Lagi'
+                }).then((result) => { 
+                    if (result.isConfirmed) { antrianForm.submit(); } 
+                });
+            });
+
+            // AJAX Dokter berdasarkan Poli
+            poliSelect.addEventListener('change', function() {
+                const poliId = this.value;
+                doctorSelect.innerHTML = '<option value="">Memuat dokter...</option>';
+                doctorSelect.disabled = true;
+                if (poliId) {
+                    fetch(`{{ url('/pasien/doctors-by-poli') }}/${poliId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        doctorSelect.innerHTML = '<option value="" disabled selected>-- Silahkan Pilih Dokter --</option>';
+                        if (data.length > 0) {
+                            data.forEach(doctor => {
+                                const option = document.createElement('option');
+                                option.value = doctor.id;
+                                option.textContent = doctor.name;
+                                doctorSelect.appendChild(option);
+                            });
+                            doctorSelect.disabled = false;
+                        } else {
+                            doctorSelect.innerHTML = '<option value="">-- Tidak ada dokter praktek --</option>';
+                        }
+                    }).catch(error => console.error('Fetch Error:', error));
+                }
+            });
+
+            // [BARU] Validasi Realtime Jika Pasien Milih "JALUR BPJS"
+            if(paymentSelect && btnSubmitAntrian) {
+                paymentSelect.addEventListener('change', function() {
+                    if(this.value === 'BPJS') {
+                        // Kunci tombol submit sementara saat ngecek
+                        btnSubmitAntrian.disabled = true;
+                        btnSubmitAntrian.classList.replace('bg-green-500', 'bg-gray-400');
+                        
+                        Swal.fire({
+                            title: 'Memverifikasi BPJS...',
+                            text: 'Mohon tunggu, sistem sedang menghubungi server BPJS.',
+                            allowOutsideClick: false,
+                            didOpen: () => { Swal.showLoading(); }
+                        });
+
+                        fetch(`{{ route('pasien.check-bpjs') }}`)
+                            .then(res => res.json())
+                            .then(data => {
+                                if(data.success) {
+                                    const status = data.data.statusPeserta?.keterangan || data.data.status || '';
+                                    if(status.toUpperCase().includes('AKTIF') && !status.toUpperCase().includes('TIDAK')) {
+                                        Swal.fire('Terverifikasi!', 'Status BPJS Anda AKTIF. Silakan lanjutkan pendaftaran.', 'success');
+                                        btnSubmitAntrian.disabled = false;
+                                        btnSubmitAntrian.classList.replace('bg-gray-400', 'bg-green-500');
+                                    } else {
+                                        Swal.fire('Mohon Maaf', 'Status BPJS Anda tidak aktif / menunggak. Pembayaran dialihkan ke jalur Umum.', 'warning');
+                                        paymentSelect.value = 'Umum';
+                                        btnSubmitAntrian.disabled = false;
+                                        btnSubmitAntrian.classList.replace('bg-gray-400', 'bg-green-500');
+                                    }
+                                } else {
+                                    Swal.fire('Tidak Ditemukan', 'NIK Anda belum terdaftar di BPJS / Kemenkes. Pembayaran dialihkan ke jalur Umum.', 'error');
+                                    paymentSelect.value = 'Umum';
+                                    btnSubmitAntrian.disabled = false;
+                                    btnSubmitAntrian.classList.replace('bg-gray-400', 'bg-green-500');
+                                }
+                            }).catch(err => {
+                                Swal.fire('Error', 'Gagal memverifikasi BPJS. Coba lagi nanti.', 'error');
+                                paymentSelect.value = 'Umum';
+                                btnSubmitAntrian.disabled = false;
+                                btnSubmitAntrian.classList.replace('bg-gray-400', 'bg-green-500');
+                            });
+                    } else {
+                        // Jika pindah kembali ke Umum, buka kunci tombol
+                        btnSubmitAntrian.disabled = false;
+                        btnSubmitAntrian.classList.replace('bg-gray-400', 'bg-green-500');
+                    }
+                });
+            }
+        }
+
+        // ========================================================
+        // 3. LOGIKA CHECK-IN (QR SCANNER)
+        // ========================================================
         const checkInBtn = document.getElementById('checkInBtn');
         const qrScannerModal = document.getElementById('qrScannerModal');
         const closeScannerBtn = document.getElementById('closeScannerBtn');
 
-        if (checkInBtn) {
+        if (checkInBtn && qrScannerModal) {
             const html5QrCode = new Html5Qrcode("qr-reader");
 
             const qrCodeSuccessCallback = (decodedText, decodedResult) => {
@@ -486,7 +591,6 @@
                         antreanCard.querySelector('.text-sm').className = 'text-sm font-medium text-indigo-800 mb-2';
                         antreanCard.querySelector('.text-lg').className = 'text-lg text-indigo-800 font-semibold mt-4 bg-white/50 rounded-full px-4 py-1 inline-block';
                         document.getElementById('action-button-container').innerHTML = `<div class="w-full bg-gray-200 text-gray-600 font-bold py-3 px-6 rounded-lg text-center text-base">Anda Sudah Melakukan Check-In</div>`;
-
                     } else {
                         Swal.fire({ icon: 'error', title: 'Check-In Gagal', text: data.message || 'Terjadi kesalahan.' });
                     }
@@ -514,6 +618,9 @@
             });
         }
 
+        // ========================================================
+        // 4. LOGIKA KONFIRMASI PENERIMAAN OBAT
+        // ========================================================
         const konfirmasiObatBtn = document.getElementById('konfirmasiObatBtn');
         if (konfirmasiObatBtn){
             konfirmasiObatBtn.addEventListener('click', function(e) {
@@ -534,6 +641,7 @@
                 });
             });
         }
+        
     });
     </script>
 @endpush

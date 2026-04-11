@@ -3,6 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <title>Struk Pembayaran</title>
+    @php
+        // Mengambil data pengaturan klinik dari database
+        $setting = \App\Models\ClinicSetting::first();
+        $namaKlinik = $setting?->name ?? $klinik_name ?? 'Klinik Sehat';
+        $alamatKlinik = $setting?->address ?? $klinik_address ?? 'Jl. Kesehatan No. 123, Jakarta';
+        $telpKlinik = $setting?->phone ?? '(021) 555-1234';
+        $emailKlinik = $setting?->email ?? 'info@kliniksehat.com';
+    @endphp
     <style>
         body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 10pt; color: #333; line-height: 1.4; }
         .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #ddd; padding-bottom: 10px; }
@@ -18,6 +26,7 @@
         .total-row td { font-weight: bold; background-color: #f9f9f9; }
         .footer { margin-top: 30px; text-align: center; font-size: 8pt; color: #888; }
         .status-paid { color: #008000; border: 1px solid #008000; padding: 2px 8px; border-radius: 4px; font-weight: bold; display: inline-block; font-size: 9pt; }
+        .status-bpjs { color: #0284c7; border: 1px solid #0284c7; padding: 2px 8px; border-radius: 4px; font-weight: bold; display: inline-block; font-size: 9pt; background-color: #e0f2fe; }
         .petugas-section { margin-top: 40px; text-align: right; padding-right: 20px; }
         .petugas-name { margin-top: 60px; font-weight: bold; text-decoration: underline; }
     </style>
@@ -25,15 +34,14 @@
 <body>
 
     <div class="header">
-        <h1>{{ $klinik_name }}</h1>
-        <p>{{ $klinik_address }}</p>
-        <p>Telp: (021) 555-1234 | Email: info@kliniksehat.com</p>
+        <h1>{{ $namaKlinik }}</h1>
+        <p>{{ $alamatKlinik }}</p>
+        <p>Telp: {{ $telpKlinik }} | Email: {{ $emailKlinik }}</p>
     </div>
 
     <table class="meta-info">
         <tr>
             <td class="label">No. Invoice</td>
-            {{-- Menggunakan $prescription yang benar dari Controller --}}
             <td>: {{ $prescription->midtrans_booking_code ?? 'INV-' . $prescription->id }}</td>
             <td class="label">Tanggal Cetak</td>
             <td>: {{ $date_print }}</td>
@@ -46,7 +54,13 @@
         </tr>
         <tr>
             <td class="label">Status Pembayaran</td>
-            <td>: <span class="status-paid">LUNAS</span></td>
+            <td>: 
+                @if($is_bpjs)
+                    <span class="status-bpjs">DITANGGUNG BPJS</span>
+                @else
+                    <span class="status-paid">LUNAS</span>
+                @endif
+            </td>
             <td class="label">Waktu Ambil Obat</td>
             <td>: {{ $taken_time }}</td>
         </tr>
@@ -90,7 +104,6 @@
                 </tr>
                 @endforeach
             @else
-                {{-- Fallback jika tidak ada tindakan spesifik, mungkin jasa konsultasi default --}}
                 <tr>
                     <td style="text-align: center;">{{ $no++ }}</td>
                     <td>Jasa Konsultasi Dokter (Default)</td>
@@ -105,16 +118,16 @@
                 <td colspan="4" class="text-right">Total Tagihan</td>
                 <td class="text-right">Rp {{ number_format($prescription->total_price, 0, ',', '.') }}</td>
             </tr>
-            {{-- Detail Pembayaran & Kembalian --}}
-            <tr>
-                <td colspan="4" class="text-right">Tunai / Bayar</td>
-                {{-- Gunakan amount_paid jika ada, jika tidak (misal midtrans/data lama) pakai total_price --}}
-                <td class="text-right">Rp {{ number_format($prescription->amount_paid ?? $prescription->total_price, 0, ',', '.') }}</td>
-            </tr>
-            <tr>
-                <td colspan="4" class="text-right">Kembalian</td>
-                <td class="text-right">Rp {{ number_format($prescription->change_amount ?? 0, 0, ',', '.') }}</td>
-            </tr>
+            @if(!$is_bpjs)
+                <tr>
+                    <td colspan="4" class="text-right">Tunai / Bayar</td>
+                    <td class="text-right">Rp {{ number_format($prescription->amount_paid ?? $prescription->total_price, 0, ',', '.') }}</td>
+                </tr>
+                <tr>
+                    <td colspan="4" class="text-right">Kembalian</td>
+                    <td class="text-right">Rp {{ number_format($prescription->change_amount ?? 0, 0, ',', '.') }}</td>
+                </tr>
+            @endif
         </tfoot>
     </table>
 
@@ -125,7 +138,7 @@
 
     <div class="footer">
         <p>Terima kasih atas kepercayaan Anda.</p>
-        <p>Dokumen ini adalah bukti pembayaran yang sah.</p>
+        <p>Dokumen ini adalah bukti transaksi yang sah.</p>
     </div>
 
 </body>

@@ -32,15 +32,22 @@
             </h3>
             <div class="p-4 space-y-4 overflow-y-auto flex-grow" style="max-height: 70vh;">
                 @forelse ($dalamAntrean as $queue)
-                    <div class="bg-white rounded-lg shadow-lg p-4 border-l-4 border-slate-500">
+                    <div class="bg-white rounded-lg shadow-lg p-4 border-l-4 {{ $queue->clinicQueue->payment_method == 'BPJS' ? 'border-green-500' : 'border-slate-500' }}">
                         <div class="flex justify-between items-start mb-2">
-                            <span class="font-bold text-2xl text-gray-800">{{ $queue->pharmacy_queue_number }}</span>
+                            <div>
+                                <span class="font-bold text-2xl text-gray-800">{{ $queue->pharmacy_queue_number }}</span>
+                                <!-- [MODIFIKASI] Label BPJS/UMUM -->
+                                @if($queue->clinicQueue->payment_method == 'BPJS')
+                                    <span class="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded">BPJS</span>
+                                @else
+                                    <span class="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold rounded">UMUM</span>
+                                @endif
+                            </div>
                             <span class="text-xs font-semibold text-gray-500">{{ $queue->clinicQueue->poli->name }}</span>
                         </div>
                         <p class="text-sm font-semibold text-gray-700 mb-3">{{ $queue->clinicQueue->patient->full_name }}</p>
                         
                         <div class="text-xs text-gray-600 border-t pt-2">
-                            {{-- 1. Tampilkan Obat (Jika Ada) --}}
                             @if($queue->prescription->prescriptionDetails->count() > 0)
                                 <p class="font-semibold mb-1">Resep Obat:</p>
                                 <ul class="list-disc pl-4 space-y-1 mb-2">
@@ -50,9 +57,7 @@
                                 </ul>
                             @endif
 
-                            {{-- 2. [MODIFIKASI] Tampilkan Tindakan Medis (Jika Ada) --}}
                             @php
-                                // Ambil actions via relasi: Prescription -> MedicalRecord -> Actions
                                 $actions = $queue->prescription->medicalRecord->actions ?? collect([]);
                             @endphp
 
@@ -61,17 +66,12 @@
                                     <p class="font-semibold mb-1 text-indigo-700">Tindakan Medis:</p>
                                     <ul class="list-disc pl-4 space-y-1 text-indigo-900">
                                         @foreach ($actions as $action)
-                                            <li>
-                                                {{ $action->action_name }}
-                                                {{-- Opsional: Tampilkan harga kecil --}}
-                                                {{-- <span class="text-[10px] text-gray-400">(Rp {{ number_format($action->price,0,',','.') }})</span> --}}
-                                            </li>
+                                            <li>{{ $action->action_name }}</li>
                                         @endforeach
                                     </ul>
                                 </div>
                             @endif
 
-                            {{-- Fallback jika kosong keduanya --}}
                             @if($queue->prescription->prescriptionDetails->count() == 0 && $actions->count() == 0)
                                 <p class="italic text-gray-400">Tidak ada rincian data.</p>
                             @endif
@@ -98,15 +98,21 @@
             </h3>
             <div class="p-4 space-y-4 overflow-y-auto flex-grow" style="max-height: 70vh;">
                 @forelse ($sedangDiracik as $queue)
-                    <div class="bg-white rounded-lg shadow-lg p-4 border-l-4 border-yellow-500">
+                    <div class="bg-white rounded-lg shadow-lg p-4 border-l-4 {{ $queue->clinicQueue->payment_method == 'BPJS' ? 'border-green-500' : 'border-yellow-500' }}">
                         <div class="flex justify-between items-start mb-2">
-                            <span class="font-bold text-2xl text-gray-800">{{ $queue->pharmacy_queue_number }}</span>
+                            <div>
+                                <span class="font-bold text-2xl text-gray-800">{{ $queue->pharmacy_queue_number }}</span>
+                                @if($queue->clinicQueue->payment_method == 'BPJS')
+                                    <span class="ml-2 px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded">BPJS</span>
+                                @else
+                                    <span class="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold rounded">UMUM</span>
+                                @endif
+                            </div>
                             <span class="text-xs font-semibold text-gray-500">{{ $queue->clinicQueue->poli->name }}</span>
                         </div>
                         <p class="text-sm font-semibold text-gray-700 mb-3">{{ $queue->clinicQueue->patient->full_name }}</p>
                         
                         <div class="text-xs text-gray-600 border-t pt-2">
-                            {{-- 1. Tampilkan Obat --}}
                             @if($queue->prescription->prescriptionDetails->count() > 0)
                                 <p class="font-semibold mb-1">Resep Obat:</p>
                                 <ul class="list-disc pl-4 space-y-1 mb-2">
@@ -116,7 +122,6 @@
                                 </ul>
                             @endif
 
-                            {{-- 2. [MODIFIKASI] Tampilkan Tindakan Medis --}}
                             @php
                                 $actions = $queue->prescription->medicalRecord->actions ?? collect([]);
                             @endphp
@@ -156,17 +161,21 @@
                 @forelse ($siapDiambil as $queue)
                     @php
                         $isPaid = $queue->prescription->payment_status == 'paid';
-                        // Total price sudah dihitung di backend (PaymentService) mencakup Obat + Tindakan
                         $totalPrice = $queue->prescription->total_price;
+                        $isBPJS = $queue->clinicQueue->payment_method == 'BPJS';
                     @endphp
 
                     <div class="bg-white rounded-lg shadow-lg p-4 border-l-4 {{ $isPaid ? 'border-green-500' : 'border-red-500' }}">
                         <div class="flex justify-between items-start mb-2">
                             <span class="font-bold text-2xl text-gray-800">{{ $queue->pharmacy_queue_number }}</span>
                             @if($isPaid)
-                                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full">LUNAS</span>
+                                @if($isBPJS)
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 text-[10px] font-bold rounded-full border border-green-300">DITANGGUNG BPJS</span>
+                                @else
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 text-[10px] font-bold rounded-full">LUNAS</span>
+                                @endif
                             @else
-                                <span class="px-2 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full animate-pulse">BELUM BAYAR</span>
+                                <span class="px-2 py-1 bg-red-100 text-red-800 text-[10px] font-bold rounded-full animate-pulse">BELUM BAYAR</span>
                             @endif
                         </div>
                         <p class="text-sm font-semibold text-gray-700 mb-1">{{ $queue->clinicQueue->patient->full_name }}</p>
@@ -177,19 +186,16 @@
                             <p class="text-lg font-bold text-gray-800">Rp {{ number_format($totalPrice, 0, ',', '.') }}</p>
                         </div>
 
-                        <!-- LOGIKA TOMBOL -->
+                        <!-- LOGIKA TOMBOL (BPJS akan otomatis masuk ke kondisi ELSE karena $isPaid = true) -->
                         @if(!$isPaid)
-                            {{-- Tombol membuka Modal --}}
                             <button onclick="openPaymentModal('{{ $queue->id }}', '{{ $queue->clinicQueue->patient->full_name }}', '{{ $totalPrice }}')" 
                                 class="w-full mb-2 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-md text-sm transition-colors flex items-center justify-center">
                                 <i class="fas fa-money-bill-wave mr-2"></i> Terima Tunai (Cash)
                             </button>
-                            
                             <p class="text-xs text-center text-gray-400 mt-1">
                                 Atau tunggu pasien bayar via QRIS (Otomatis Lunas)
                             </p>
                         @else
-                            {{-- Jika Sudah Bayar: Tombol Struk & Serahkan --}}
                             <div class="flex gap-2 mb-2">
                                 <a href="{{ route('invoice.download', $queue->prescription->id) }}" target="_blank" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-2 rounded-md text-xs text-center flex items-center justify-center">
                                     <i class="fas fa-print mr-1"></i> Struk
@@ -222,13 +228,20 @@
                         <div class="flex justify-between items-start mb-2">
                             <span class="font-bold text-2xl text-gray-800">{{ $queue->pharmacy_queue_number }}</span>
                             @if($queue->status == 'DITERIMA_PASIEN')
-                                <span class="text-xs font-bold text-purple-600 bg-purple-200 px-2 py-1 rounded-full">Selesai</span>
+                                <span class="text-[10px] font-bold text-purple-600 bg-purple-200 px-2 py-1 rounded-full">Selesai</span>
                             @else
-                                <span class="text-xs font-semibold text-gray-600 bg-gray-200 px-2 py-1 rounded-full">Diserahkan</span>
+                                <span class="text-[10px] font-semibold text-gray-600 bg-gray-200 px-2 py-1 rounded-full">Diserahkan</span>
                             @endif
                         </div>
                         <p class="text-sm font-semibold text-gray-700 mb-1">{{ $queue->clinicQueue->patient->full_name }}</p>
-                        <p class="text-xs text-green-600 font-bold mb-3">LUNAS - Rp {{ number_format($queue->prescription->total_price ?? 0, 0, ',', '.') }}</p>
+                        
+                        <p class="text-xs text-green-600 font-bold mb-3">
+                            @if($queue->clinicQueue->payment_method == 'BPJS')
+                                LUNAS (BPJS) - Rp {{ number_format($queue->prescription->total_price ?? 0, 0, ',', '.') }}
+                            @else
+                                LUNAS - Rp {{ number_format($queue->prescription->total_price ?? 0, 0, ',', '.') }}
+                            @endif
+                        </p>
                     </div>
                 @empty
                     <p class="text-center text-gray-500 py-10">Belum ada riwayat.</p>
@@ -293,7 +306,6 @@
         </div>
     </div>
 @endsection
-
 @push('scripts')
 <script>
     // --- 1. SCRIPT LOGIKA MODAL PEMBAYARAN ---

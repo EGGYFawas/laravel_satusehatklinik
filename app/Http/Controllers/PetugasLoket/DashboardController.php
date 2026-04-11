@@ -18,27 +18,36 @@ class DashboardController extends Controller
     {
         $today = Carbon::today();
 
-        // [MODIFIKASI] Tambahkan 'prescription.medicalRecord.actions'
-        // Ini wajib agar data tindakan (MedicalAction) terambil dan tidak error saat akses relasi 'actions'
+        // [MODIFIKASI] Pastikan 'clinicQueue' ter-load untuk mengecek payment_method (BPJS/Umum)
         $allQueues = PharmacyQueue::with([
                 'clinicQueue.patient', 
                 'clinicQueue.poli',
                 'prescription.prescriptionDetails.medicine',
-                'prescription.medicalRecord.actions' // <--- PERBAIKAN DISINI
+                'prescription.medicalRecord.actions'
             ])
             ->whereDate('entry_time', $today)
             ->orderBy('pharmacy_queue_number', 'asc')
             ->get();
 
-        // Trigger hitung total jika 0
         $paymentService = new PaymentService();
         foreach ($allQueues as $q) {
-            // Pastikan prescription dan medicalRecord ada sebelum hitung
+            // Trigger hitung total jika 0
             if ($q->prescription && $q->prescription->total_price <= 0) {
-                // PaymentService akan mengakses relasi 'actions' di sini
-                // Karena sudah di-load di atas, ini akan lebih aman dan cepat
                 $paymentService->calculateTotal($q->prescription);
             }
+
+            // ====================================================================
+            // [LOGIKA BARU - SPRINT 2]: AUTO LUNAS UNTUK JALUR BPJS
+            // ====================================================================
+            if ($q->clinicQueue && $q->clinicQueue->payment_method === 'BPJS' && $q->prescription && $q->prescription->payment_status === 'pending') {
+                $q->prescription->update([
+                    'payment_status' => 'paid',
+                    'payment_method' => 'BPJS', // Menandakan dibayar oleh BPJS
+                    'amount_paid' => $q->prescription->total_price, // Dianggap dibayar full oleh BPJS
+                    'paid_at' => now()
+                ]);
+            }
+            // ====================================================================
         }
 
         $dalamAntrean = $allQueues->where('status', 'DALAM_ANTREAN');
@@ -56,12 +65,8 @@ class DashboardController extends Controller
         ));
     }
 
-    /**
-     * [MODIFIKASI] Bayar Tunai dengan Input Nominal & Hitung Kembalian
-     */
     public function bayarTunai(Request $request, $pharmacyQueueId)
     {
-        // 1. Validasi Input Uang
         $request->validate([
             'amount_paid' => 'required|numeric|min:0',
         ]);
@@ -76,31 +81,31 @@ class DashboardController extends Controller
                 return back()->with('error', 'Data resep tidak ditemukan.');
             }
 
-            // 2. Logika Hitung Kembalian
+            // Cegah double bayar jika ternyata BPJS
+            if ($prescription->payment_status === 'paid') {
+                return back()->with('error', 'Tagihan ini sudah lunas sebelumnya.');
+            }
+
             $totalTagihan = $prescription->total_price;
             $uangDibayar = $request->amount_paid;
 
-            // Cek jika uang kurang
             if ($uangDibayar < $totalTagihan) {
                 return back()->with('error', 'Nominal pembayaran kurang dari total tagihan!');
             }
 
             $kembalian = $uangDibayar - $totalTagihan;
 
-            // 3. Update Database
             $prescription->update([
                 'payment_status' => 'paid',
                 'payment_method' => 'cash',
-                'amount_paid' => $uangDibayar,     // Simpan uang diterima
-                'change_amount' => $kembalian,     // Simpan kembalian
+                'amount_paid' => $uangDibayar,     
+                'change_amount' => $kembalian,     
                 'paid_at' => now(),
             ]);
 
             DB::commit();
 
-            // Format rupiah untuk pesan sukses
             $kembalianFormatted = number_format($kembalian, 0, ',', '.');
-            
             return back()->with('success', "Pembayaran Berhasil! Kembalian: Rp $kembalianFormatted.");
 
         } catch (\Exception $e) {

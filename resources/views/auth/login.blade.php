@@ -4,7 +4,7 @@
 
 @section('content')
 {{-- Kontainer utama yang membungkus seluruh halaman --}}
-<div class="flex items-center justify-center min-h-screen bg-brand-bg p-4">
+<div class="flex items-center justify-center min-h-screen bg-brand-bg p-6">
 
     {{-- Kartu login utama --}}
     <div class="flex flex-col md:flex-row w-full max-w-4xl bg-white shadow-2xl rounded-2xl overflow-hidden">
@@ -14,8 +14,11 @@
             {{-- Ganti src ini jika path gambar Anda berbeda --}}
             <img src="{{ asset('assets/img/logo_login.png') }}" alt="Ilustrasi Medis" class="max-w-[250px] mb-6">
             
-            <p class="text-lg font-medium text-text-dark mb-6">“Berobat lebih mudah tanpa antri”</p>
-            
+            <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap" rel="stylesheet">
+
+            <p class="text-3xl text-text-dark mb-6" style="font-family: 'Caveat', cursive; letter-spacing: 0.02em;">
+                “Berobat lebih mudah tanpa antri”
+            </p>    
             <div class="flex items-center gap-4 w-full justify-center">
                 {{-- Tombol untuk membuat akun baru --}}
                 <a href="{{ route('register') }}" 

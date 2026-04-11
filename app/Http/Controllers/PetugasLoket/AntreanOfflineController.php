@@ -10,6 +10,7 @@ use App\Models\Poli;
 use App\Models\Doctor;
 use App\Models\User;
 use App\Models\PharmacyQueue;
+use App\Services\BpjsService; // [BARU] Import BpjsService
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -25,6 +26,7 @@ use Carbon\Carbon;
 | 'auth' dan 'role:petugas_loket' Anda.
 |
 | Route::get('/petugas-loket/check-patient-nik/{nik}', [AntreanOfflineController::class, 'checkPatientByNIK'])->name('petugas-loket.check-patient-nik');
+| Route::get('/petugas-loket/check-bpjs/{nik}', [AntreanOfflineController::class, 'checkBpjsStatus'])->name('petugas-loket.check-bpjs');
 |
 */
 
@@ -37,7 +39,6 @@ class AntreanOfflineController extends Controller
     {
         $today = Carbon::today();
 
-        // [MODIFIKASI PERMINTAAN 2: Optimalkan Kartu Antrean]
         // Ambil SEMUA antrean berobat hari ini, bukan hanya yang menunggu/hadir
         // Urutkan berdasarkan status (agar yang aktif di atas) lalu berdasarkan waktu registrasi
         $daftarAntreanBerobat = ClinicQueue::whereDate('registration_time', $today)
@@ -62,7 +63,6 @@ class AntreanOfflineController extends Controller
 
         $totalAntreanBerobat = ClinicQueue::whereDate('registration_time', $today)->count();
 
-        // [MODIFIKASI PERMINTAAN 2: Optimalkan Kartu Antrean]
         // Ambil SEMUA antrean apotek hari ini, bukan hanya yang aktif
         // Urutkan berdasarkan status (agar yang aktif di atas) lalu berdasarkan waktu pembuatan
         $daftarAntreanApotek = PharmacyQueue::whereDate('pharmacy_queues.created_at', $today)
@@ -105,7 +105,6 @@ class AntreanOfflineController extends Controller
      */
     public function store(Request $request)
     {
-        // [MODIFIKASI PERMINTAAN 1: NIK]
         // Menambahkan validasi 'sometimes' untuk data pasien
         // Jika NIK sudah ada, data ini tidak akan divalidasi (karena diambil dari DB)
         $validator = Validator::make($request->all(), [
@@ -125,7 +124,6 @@ class AntreanOfflineController extends Controller
         try {
             DB::beginTransaction();
 
-            // [MODIFIKASI PERMINTAAN 1: NIK]
             // Logika updateOrCreate sudah benar.
             // Jika NIK ditemukan, ia akan update data (jika ada perubahan, misal nama di-edit).
             // Jika NIK tidak ditemukan, ia akan membuat record Patient baru.
@@ -142,16 +140,19 @@ class AntreanOfflineController extends Controller
 
             $registrationDate = Carbon::today();
 
-            // Cek antrean aktif (Sudah benar)
+            // Cek antrean aktif
             if (ClinicQueue::where('patient_id', $patient->id)->whereDate('registration_time', $registrationDate)->whereIn('status', ['MENUNGGU', 'HADIR', 'DIPANGGIL'])->exists()) {
                 DB::rollBack();
                 return redirect()->back()->withInput()->with('error', 'Pasien sudah memiliki antrean aktif untuk hari ini.');
             }
 
-            // Pembuatan nomor antrean (Sudah benar)
+            // Pembuatan nomor antrean
             $poli = Poli::findOrFail($request->poli_id);
             $lastQueueCount = ClinicQueue::where('poli_id', $request->poli_id)->whereDate('registration_time', $registrationDate)->count();
-            $queueNumber = $poli->code . '-' . str_pad($lastQueueCount + 1, 3, '0', STR_PAD_LEFT);
+            
+            // Format prefix poli, misal Poli Umum (U), Gigi (G)
+            $prefix = $poli->prefix ?? strtoupper(substr($poli->name, 0, 1));
+            $queueNumber = $prefix . '-' . str_pad($lastQueueCount + 1, 3, '0', STR_PAD_LEFT);
 
             ClinicQueue::create([
                 'patient_id' => $patient->id,
@@ -161,8 +162,9 @@ class AntreanOfflineController extends Controller
                 'queue_number' => $queueNumber,
                 'chief_complaint' => $request->chief_complaint,
                 'patient_relationship' => 'Diri Sendiri', // Default untuk walk-in
-                'status' => 'MENUNGGU',
+                'status' => 'HADIR', // Pasien offline otomatis HADIR di tempat
                 'registration_time' => now(),
+                'check_in_time' => now(),
             ]);
 
             DB::commit();
@@ -192,7 +194,6 @@ class AntreanOfflineController extends Controller
                 return redirect()->route('petugas-loket.antrean-offline.index')->with('error', 'Data antrean tidak ditemukan. Mungkin sudah dihapus.');
             }
 
-            // [MODIFIKASI PERMINTAAN 3: Batasi Check-in]
             // Cek apakah antrean ini adalah antrean 'online' (didaftarkan mandiri oleh pasien)
             // Antrean 'online' memiliki registered_by_user_id = NULL
             if ($antrean->registered_by_user_id == null) {
@@ -221,7 +222,6 @@ class AntreanOfflineController extends Controller
     }
 
     /**
-     * [BARU - PERMINTAAN 1]
      * Mengecek data pasien berdasarkan NIK untuk auto-fill form.
      */
     public function checkPatientByNIK($nik)
@@ -253,13 +253,34 @@ class AntreanOfflineController extends Controller
     }
 
     /**
+     * [BARU] Mengecek Kepesertaan BPJS via API V-Claim/P-Care (AJAX)
+     */
+    public function checkBpjsStatus($nik)
+    {
+        $bpjsService = new BpjsService();
+        $response = $bpjsService->getPesertaByNIK($nik);
+
+        if ($response['success']) {
+            return response()->json([
+                'success' => true,
+                'data' => $response['data'] // Berisi nama, noKartu, statusPeserta, provUmum, dll
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => $response['message']
+        ]);
+    }
+
+    /**
      * Mengambil daftar dokter berdasarkan poli yang dipilih untuk dropdown dinamis.
      */
     public function getDoctorsByPoli(Poli $poli)
     {
-        // Logika ini sudah benar, tidak perlu diubah
         Carbon::setLocale('id');
         $dayName = ucfirst(Carbon::now()->dayName);
+        
         $doctors = Doctor::where('poli_id', $poli->id)
             ->whereHas('doctorSchedules', function ($query) use ($dayName) {
                 $query->where('day_of_week', $dayName)->where('is_active', true);
@@ -269,6 +290,7 @@ class AntreanOfflineController extends Controller
             ->map(function ($doctor) {
                 return ['id' => $doctor->id, 'name' => $doctor->user->full_name ?? 'Dokter (Nama tidak tersedia)'];
             });
+            
         return response()->json($doctors);
     }
 }

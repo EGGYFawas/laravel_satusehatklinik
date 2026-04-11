@@ -6,18 +6,17 @@
     {{-- CDN untuk SweetAlert2 --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
-        /* [BARU] Style untuk NIK-loader */
         .nik-status-indicator {
             position: absolute;
-            right: 0.75rem; /* 12px */
+            right: 0.75rem; 
             top: 50%;
             transform: translateY(-50%);
-            display: none; /* Sembunyi by default */
+            display: none; 
         }
         .nik-status-indicator.loading {
             display: inline-block;
-            border: 3px solid #f3f3f3; /* Light grey */
-            border-top: 3px solid #3498db; /* Blue */
+            border: 3px solid #f3f3f3; 
+            border-top: 3px solid #3498db; 
             border-radius: 50%;
             width: 20px;
             height: 20px;
@@ -25,11 +24,11 @@
         }
         .nik-status-indicator.success {
             display: inline-block;
-            color: #10B981; /* green-500 */
+            color: #10B981; 
         }
          .nik-status-indicator.error {
             display: inline-block;
-            color: #EF4444; /* red-500 */
+            color: #EF4444; 
         }
         @keyframes spin {
             0% { transform: translateY(-50%) rotate(0deg); }
@@ -77,30 +76,50 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 border-b border-gray-200 pb-6">
                     <h4 class="md:col-span-2 text-lg font-semibold text-gray-700">Data Pasien</h4>
                     
-                    {{-- [MODIFIKASI PERMINTAAN 1: NIK] --}}
                     <div class="relative">
                         <label for="new_patient_nik" class="block text-sm font-medium text-gray-700 mb-1">NIK (16 Digit) <span class="text-red-500">*</span></label>
-                        {{-- Tambahkan id="new_patient_nik" --}}
                         <input type="text" id="new_patient_nik" name="new_patient_nik" value="{{ old('new_patient_nik') }}" class="w-full p-2 border border-gray-300 rounded-md" required maxlength="16" x-model="nikInput" @input="nikInput = nikInput.replace(/\D/g, '')">
                         <p x-show="nikInput.length > 0 && nikInput.length !== 16" class="text-xs text-red-600 mt-1">NIK harus terdiri dari 16 digit angka.</p>
                         
-                        {{-- Indikator loading/success/error --}}
                         <div id="nik_status_indicator" class="nik-status-indicator"></div>
                         <p id="nik_message" class="text-xs text-blue-600 mt-1 hidden"></p>
+
+                        <!-- [BARU] TOMBOL CEK BPJS & WADAH KARTU -->
+                        <div class="mt-3">
+                            <button type="button" id="btn_cek_bpjs" class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded text-green-700 bg-green-100 hover:bg-green-200 transition-colors shadow-sm border border-green-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                                Cek Kepesertaan BPJS
+                            </button>
+                            
+                            <!-- Kartu Info BPJS (Awalnya disembunyikan) -->
+                            <div id="bpjs_info_card" class="hidden mt-3 bg-white p-4 rounded-lg border shadow-sm relative overflow-hidden">
+                                <div class="absolute left-0 top-0 bottom-0 w-1.5" id="bpjs_status_bar"></div>
+                                <div class="pl-2">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider">Status Kepesertaan JKN</p>
+                                        <span id="bpjs_status_badge" class="px-2 py-0.5 rounded text-xs font-bold"></span>
+                                    </div>
+                                    <p id="bpjs_nama" class="font-bold text-gray-800 text-lg"></p>
+                                    <p class="text-sm text-gray-600">No. Kartu: <span id="bpjs_no_kartu" class="font-medium"></span></p>
+                                    <p class="text-xs text-gray-500 mt-2">Faskes Tk. 1: <span id="bpjs_faskes" class="font-medium text-gray-700"></span></p>
+                                    <p class="text-xs text-gray-500">Jenis Peserta: <span id="bpjs_jenis" class="font-medium text-gray-700"></span></p>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                     <div>
                         <label for="new_patient_name" class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap Pasien <span class="text-red-500">*</span></label>
-                         {{-- Tambahkan id="new_patient_name" --}}
                         <input type="text" id="new_patient_name" name="new_patient_name" value="{{ old('new_patient_name') }}" class="w-full p-2 border border-gray-300 rounded-md bg-gray-50" required @input="event.target.value = event.target.value.toUpperCase()">
                     </div>
                     <div>
                         <label for="new_patient_dob" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Lahir <span class="text-red-500">*</span></label>
-                         {{-- Tambahkan id="new_patient_dob" --}}
                         <input type="date" id="new_patient_dob" name="new_patient_dob" value="{{ old('new_patient_dob') }}" class="w-full p-2 border border-gray-300 rounded-md bg-gray-50" required>
                     </div>
                     <div>
                         <label for="new_patient_gender" class="block text-sm font-medium text-gray-700 mb-1">Jenis Kelamin <span class="text-red-500">*</span></label>
-                         {{-- Tambahkan id="new_patient_gender" --}}
                         <select id="new_patient_gender" name="new_patient_gender" class="w-full p-2 border border-gray-300 rounded-md bg-gray-50" required>
                             <option value="" disabled selected>-- Pilih Jenis Kelamin --</option>
                             <option value="Laki-laki" @if(old('new_patient_gender') == 'Laki-laki') selected @endif>Laki-laki</option>
@@ -156,33 +175,16 @@
             <hr>
             <div>
                 <h4 class="font-semibold text-gray-700 mb-2">Daftar Pasien Hari Ini:</h4>
-                {{-- [MODIFIKASI PERMINTAAN 2: Optimalkan Kartu] Tambah max-h-96 --}}
                 <div class="space-y-3 max-h-96 overflow-y-auto pr-2">
                     @forelse ($daftarAntreanBerobat as $antrean)
                     @php
                         $bgColor = ''; $statusText = '';
-                        // [MODIFIKASI PERMINTAAN 2] Tambah status lengkap
                         switch($antrean->status) {
-                            case 'MENUNGGU':
-                                $bgColor = 'bg-yellow-50 border-l-4 border-yellow-400';
-                                $statusText = 'Menunggu';
-                                break;
-                            case 'HADIR':
-                                $bgColor = 'bg-green-50 border-l-4 border-green-400';
-                                $statusText = 'Hadir';
-                                break;
-                            case 'DIPANGGIL':
-                                $bgColor = 'bg-blue-50 border-l-4 border-blue-400';
-                                $statusText = 'Dipanggil';
-                                break;
-                            case 'SELESAI':
-                                $bgColor = 'bg-gray-100 border-l-4 border-gray-400 text-gray-500';
-                                $statusText = 'Selesai';
-                                break;
-                            case 'BATAL':
-                                $bgColor = 'bg-red-50 border-l-4 border-red-400 text-red-600';
-                                $statusText = 'Batal';
-                                break;
+                            case 'MENUNGGU': $bgColor = 'bg-yellow-50 border-l-4 border-yellow-400'; $statusText = 'Menunggu'; break;
+                            case 'HADIR': $bgColor = 'bg-green-50 border-l-4 border-green-400'; $statusText = 'Hadir'; break;
+                            case 'DIPANGGIL': $bgColor = 'bg-blue-50 border-l-4 border-blue-400'; $statusText = 'Dipanggil'; break;
+                            case 'SELESAI': $bgColor = 'bg-gray-100 border-l-4 border-gray-400 text-gray-500'; $statusText = 'Selesai'; break;
+                            case 'BATAL': $bgColor = 'bg-red-50 border-l-4 border-red-400 text-red-600'; $statusText = 'Batal'; break;
                         }
                     @endphp
                     <div class="flex items-center justify-between {{ $bgColor }} p-3 rounded-lg shadow-sm">
@@ -191,11 +193,9 @@
                             <p class="text-sm text-gray-500">Poli: {{ $antrean->poli->name }} | <span class="font-semibold">{{ $statusText }}</span></p>
                         </div>
                         
-                        {{-- [MODIFIKASI PERMINTAAN 3: Batasi Check-in] --}}
                         <div class="w-28 text-center">
                             @if ($antrean->status == 'MENUNGGU')
                                 @if ($antrean->registered_by_user_id != null)
-                                    {{-- Ini adalah antrean walk-in, BISA check-in --}}
                                     <form action="{{ route('petugas-loket.antrean-offline.checkin', $antrean->id) }}" method="POST" class="checkin-form">
                                         @csrf
                                         @method('PATCH')
@@ -204,27 +204,18 @@
                                         </button>
                                     </form>
                                 @else
-                                    {{-- Ini adalah antrean online, TIDAK BISA check-in manual --}}
                                     <div class="px-2 py-1 bg-yellow-200 text-yellow-800 text-xs font-bold rounded-full">
                                         Menunggu<br>Check-in QR
                                     </div>
                                 @endif
                             @elseif ($antrean->status == 'HADIR')
-                                <div class="px-3 py-1 bg-green-200 text-green-800 text-sm font-bold rounded-full">
-                                    Hadir
-                                </div>
+                                <div class="px-3 py-1 bg-green-200 text-green-800 text-sm font-bold rounded-full">Hadir</div>
                             @elseif ($antrean->status == 'DIPANGGIL')
-                                <div class="px-3 py-1 bg-blue-200 text-blue-800 text-sm font-bold rounded-full">
-                                    Dipanggil
-                                </div>
+                                <div class="px-3 py-1 bg-blue-200 text-blue-800 text-sm font-bold rounded-full">Dipanggil</div>
                             @elseif ($antrean->status == 'SELESAI')
-                                <div class="px-3 py-1 bg-gray-200 text-gray-800 text-sm font-bold rounded-full">
-                                    Selesai
-                                </div>
+                                <div class="px-3 py-1 bg-gray-200 text-gray-800 text-sm font-bold rounded-full">Selesai</div>
                             @elseif ($antrean->status == 'BATAL')
-                                <div class="px-3 py-1 bg-red-200 text-red-800 text-sm font-bold rounded-full">
-                                    Batal
-                                </div>
+                                <div class="px-3 py-1 bg-red-200 text-red-800 text-sm font-bold rounded-full">Batal</div>
                             @endif
                         </div>
                     </div>
@@ -249,12 +240,10 @@
             <hr>
             <div>
                  <h4 class="font-semibold text-gray-700 mb-2">Daftar Antrean Resep:</h4>
-                 {{-- [MODIFIKASI PERMINTAAN 2: Optimalkan Kartu] Tambah max-h-96 --}}
                  <div class="space-y-3 max-h-96 overflow-y-auto pr-2">
                     @forelse ($daftarAntreanApotek as $antrean)
                     @php
                         $statusTextApotek = ''; $bgColorApotek = '';
-                        // [MODIFIKASI PERMINTAAN 2] Tambah status lengkap
                         switch ($antrean->status) {
                             case 'DALAM_ANTREAN': $statusTextApotek = 'Dalam Antrean'; $bgColorApotek = 'bg-cyan-100'; break;
                             case 'SEDANG_DIRACIK': $statusTextApotek = 'Obat Disiapkan'; $bgColorApotek = 'bg-orange-100'; break;
@@ -286,22 +275,33 @@ document.addEventListener('DOMContentLoaded', function () {
     const antreanForm = document.getElementById('antreanOfflineForm');
     const checkinForms = document.querySelectorAll('.checkin-form');
 
-    // [BARU - PERMINTAAN 1: NIK Auto-fill]
     const nikInput = document.getElementById('new_patient_nik');
     const nameInput = document.getElementById('new_patient_name');
     const dobInput = document.getElementById('new_patient_dob');
     const genderSelect = document.getElementById('new_patient_gender');
     const nikStatusIndicator = document.getElementById('nik_status_indicator');
     const nikMessage = document.getElementById('nik_message');
-    let fetchNikTimer; // Timer untuk debounce
+    let fetchNikTimer; 
 
-    // Fungsi untuk mengunci/membuka form data pasien
+    // [BARU] LOGIKA CEK BPJS
+    const btnCekBpjs = document.getElementById('btn_cek_bpjs');
+    const bpjsInfoCard = document.getElementById('bpjs_info_card');
+
     function setPatientFormReadOnly(isReadOnly) {
         nameInput.readOnly = isReadOnly;
         dobInput.readOnly = isReadOnly;
-        genderSelect.disabled = isReadOnly;
         
-        // Ubah tampilan agar terlihat terkunci/terbuka
+        // [PERBAIKAN BUG GENDER]
+        // Jangan pakai .disabled = true karena data tidak akan terkirim saat submit.
+        // Gunakan CSS pointer-events untuk mengunci interaksi klik.
+        if (isReadOnly) {
+            genderSelect.style.pointerEvents = 'none';
+            genderSelect.setAttribute('tabindex', '-1'); // Hilangkan dari urutan tombol Tab
+        } else {
+            genderSelect.style.pointerEvents = 'auto';
+            genderSelect.removeAttribute('tabindex');
+        }
+        
         [nameInput, dobInput, genderSelect].forEach(el => {
             if (isReadOnly) {
                 el.classList.add('bg-gray-200', 'text-gray-500');
@@ -313,59 +313,48 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Fungsi untuk mereset form data pasien
     function resetPatientForm() {
         nameInput.value = '';
         dobInput.value = '';
         genderSelect.value = '';
         nikMessage.classList.add('hidden');
         nikMessage.textContent = '';
-        setPatientFormReadOnly(false); // Buka kunci form
+        bpjsInfoCard.classList.add('hidden'); // Sembunyikan kartu BPJS
+        setPatientFormReadOnly(false); 
     }
 
-    // Set form ke non-readonly saat halaman dimuat
     setPatientFormReadOnly(false);
-    // Jika ada old-data (setelah validation error), isi dan biarkan terbuka
-    if (nameInput.value) {
-         setPatientFormReadOnly(false);
-    }
+    if (nameInput.value) { setPatientFormReadOnly(false); }
 
     nikInput.addEventListener('input', function() {
-        clearTimeout(fetchNikTimer); // Hapus timer sebelumnya
+        clearTimeout(fetchNikTimer); 
         const nik = this.value;
 
-        // Reset status
         nikStatusIndicator.className = 'nik-status-indicator';
         nikMessage.classList.add('hidden');
+        bpjsInfoCard.classList.add('hidden'); // Reset card BPJS tiap ngetik ulang
 
         if (nik.length !== 16) {
-            // Jika NIK belum 16 digit, reset form (jika sebelumnya terisi)
-            if (nameInput.readOnly) {
-                 resetPatientForm();
-            }
-            return; // Jangan lakukan fetch
+            if (nameInput.readOnly) resetPatientForm();
+            return; 
         }
 
-        // Mulai loading
         nikStatusIndicator.className = 'nik-status-indicator loading';
-        setPatientFormReadOnly(true); // Kunci form sementara loading
+        setPatientFormReadOnly(true); 
 
-        // Debounce: tunggu 500ms setelah user berhenti mengetik
         fetchNikTimer = setTimeout(() => {
+            // Ubah URL di bawah ini sesuai dengan Route Name Anda
             fetch(`{{ url('/petugas-loket/check-patient-nik') }}/${nik}`)
                 .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Respon server tidak baik.');
-                    }
+                    if (!response.ok) throw new Error('Respon server tidak baik.');
                     return response.json();
                 })
                 .then(data => {
                     if (data.found) {
-                        // NIK Ditemukan
                         nikStatusIndicator.className = 'nik-status-indicator success';
-                        nikStatusIndicator.innerHTML = '&#10003;'; // Checkmark
+                        nikStatusIndicator.innerHTML = '&#10003;'; 
                         
-                        nikMessage.textContent = 'Data pasien ditemukan.';
+                        nikMessage.textContent = 'Data pasien lama ditemukan.';
                         nikMessage.classList.remove('hidden', 'text-red-600');
                         nikMessage.classList.add('text-blue-600');
 
@@ -373,35 +362,104 @@ document.addEventListener('DOMContentLoaded', function () {
                         dobInput.value = data.date_of_birth;
                         genderSelect.value = data.gender;
                         
-                        setPatientFormReadOnly(true); // Kunci form karena data ada
+                        setPatientFormReadOnly(true); 
                     } else {
-                        // NIK Tidak Ditemukan
                         nikStatusIndicator.className = 'nik-status-indicator error';
-                        nikStatusIndicator.innerHTML = '&#10005;'; // X mark
+                        nikStatusIndicator.innerHTML = '&#10005;'; 
                         
-                        nikMessage.textContent = 'NIK tidak ditemukan. Silakan isi data pasien baru.';
+                        nikMessage.textContent = 'Pasien baru. Silakan isi form dan tekan "Cek Kepesertaan BPJS".';
                         nikMessage.classList.remove('hidden', 'text-blue-600');
                         nikMessage.classList.add('text-red-600');
 
                         resetPatientForm();
-                        setPatientFormReadOnly(false); // Buka kunci form
+                        setPatientFormReadOnly(false); 
                     }
                 })
                 .catch(error => {
                     console.error('Fetch Error:', error);
                     nikStatusIndicator.className = 'nik-status-indicator error';
-                    nikStatusIndicator.innerHTML = '&#10005;'; // X mark
-                    
-                    nikMessage.textContent = 'Gagal mengambil data. Coba lagi.';
+                    nikStatusIndicator.innerHTML = '&#10005;'; 
+                    nikMessage.textContent = 'Gagal memuat data lokal.';
                     nikMessage.classList.remove('hidden');
                     nikMessage.classList.add('text-red-600');
-                    
-                    setPatientFormReadOnly(false); // Buka kunci form
+                    setPatientFormReadOnly(false); 
                 });
         }, 500);
     });
 
-    // Logika Poli -> Dokter (Tidak berubah)
+    // [BARU] EVENT LISTENER CEK BPJS
+    btnCekBpjs.addEventListener('click', function() {
+        const nik = nikInput.value;
+        if(nik.length !== 16) {
+            Swal.fire('Oops!', 'Masukkan 16 digit NIK terlebih dahulu.', 'warning');
+            return;
+        }
+
+        const originalText = this.innerHTML;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin mr-1.5"></i> Menghubungi BPJS...';
+        this.disabled = true;
+
+        fetch(`{{ url('/petugas-loket/check-bpjs') }}/${nik}`)
+            .then(res => res.json())
+            .then(data => {
+                this.innerHTML = originalText;
+                this.disabled = false;
+
+                if(data.success) {
+                    const peserta = data.data; // Response BPJS (Nama, status, faskes, dll)
+                    
+                    // Pastikan variabel response sesuai dengan API BPJS V-Claim v2 lo
+                    const nama = peserta.nama || peserta.name || '-';
+                    const noKartu = peserta.noKartu || peserta.no_kartu || '-';
+                    const status = peserta.statusPeserta?.keterangan || peserta.status || 'Tidak Diketahui';
+                    const faskes = peserta.provUmum?.nmProvider || peserta.faskes || '-';
+                    const jenisPeserta = peserta.jenisPeserta?.keterangan || peserta.jenis_peserta || '-';
+
+                    // Update UI Card
+                    document.getElementById('bpjs_nama').textContent = nama;
+                    document.getElementById('bpjs_no_kartu').textContent = noKartu;
+                    document.getElementById('bpjs_faskes').textContent = faskes;
+                    document.getElementById('bpjs_jenis').textContent = jenisPeserta;
+                    
+                    const badge = document.getElementById('bpjs_status_badge');
+                    const bar = document.getElementById('bpjs_status_bar');
+                    const card = document.getElementById('bpjs_info_card');
+                    
+                    badge.textContent = status;
+                    
+                    // Jika Status Aktif
+                    if (status.toUpperCase().includes('AKTIF') && !status.toUpperCase().includes('TIDAK')) {
+                        badge.className = 'px-2 py-0.5 rounded text-xs font-bold bg-green-100 text-green-700';
+                        bar.className = 'absolute left-0 top-0 bottom-0 w-1.5 bg-green-500';
+                        card.className = 'mt-3 bg-green-50/50 p-4 rounded-lg border border-green-200 shadow-sm relative overflow-hidden';
+                    } else {
+                        // Jika Status Tidak Aktif / Menunggak
+                        badge.className = 'px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700';
+                        bar.className = 'absolute left-0 top-0 bottom-0 w-1.5 bg-red-500';
+                        card.className = 'mt-3 bg-red-50/50 p-4 rounded-lg border border-red-200 shadow-sm relative overflow-hidden';
+                    }
+
+                    bpjsInfoCard.classList.remove('hidden');
+
+                    // Jika form belum terkunci (Pasien Baru), auto-fill nama dari BPJS
+                    if(!nameInput.readOnly && nameInput.value === '') {
+                        nameInput.value = nama;
+                    }
+
+                } else {
+                    Swal.fire('Tidak Ditemukan', data.message || 'NIK tidak terdaftar sebagai peserta JKN/BPJS.', 'error');
+                    bpjsInfoCard.classList.add('hidden');
+                }
+            })
+            .catch(err => {
+                this.innerHTML = originalText;
+                this.disabled = false;
+                Swal.fire('Error System', 'Terjadi kesalahan saat menghubungi server BPJS.', 'error');
+                bpjsInfoCard.classList.add('hidden');
+            });
+    });
+
+    // Logika Poli -> Dokter
     poliSelect.addEventListener('change', function() {
         const poliId = this.value;
         doctorSelect.innerHTML = '<option value="">Memuat dokter...</option>';
@@ -424,13 +482,12 @@ document.addEventListener('DOMContentLoaded', function () {
                         doctorSelect.innerHTML = '<option value="">-- Tidak ada dokter praktek --</option>';
                     }
                 }).catch(error => {
-                    console.error('Fetch Error:', error);
                     doctorSelect.innerHTML = '<option value="">-- Gagal memuat dokter --</option>';
                 });
         }
     });
 
-    // Konfirmasi Pendaftaran (Tidak berubah)
+    // Konfirmasi Pendaftaran
     if (antreanForm) {
         antreanForm.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -445,7 +502,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 cancelButtonText: 'Periksa Lagi'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Disable tombol submit untuk mencegah double-click
                     antreanForm.querySelector('button[type="submit"]').disabled = true;
                     antreanForm.querySelector('button[type="submit"]').textContent = 'Mendaftarkan...';
                     antreanForm.submit();
@@ -454,12 +510,12 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Konfirmasi Check-in (Tidak berubah)
+    // Konfirmasi Check-in
     if (checkinForms) {
         checkinForms.forEach(form => {
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
-                const currentForm = this; // Simpan 'this' (form)
+                const currentForm = this; 
                 Swal.fire({
                     title: 'Konfirmasi Kehadiran',
                     text: "Anda akan melakukan check-in untuk pasien ini.",
@@ -471,7 +527,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     cancelButtonText: 'Batal'
                 }).then((result) => {
                     if (result.isConfirmed) {
-                         // Disable tombol submit untuk mencegah double-click
                         currentForm.querySelector('button[type="submit"]').disabled = true;
                         currentForm.querySelector('button[type="submit"]').textContent = '...';
                         currentForm.submit();

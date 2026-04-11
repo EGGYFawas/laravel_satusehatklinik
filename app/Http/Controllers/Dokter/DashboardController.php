@@ -22,6 +22,7 @@ use App\Models\Medicine;
 use App\Models\Icd10;
 use App\Models\MedicalAction;
 use App\Models\MedicalRecordAction;
+use App\Services\SatuSehatService; // [BARU] Import Service SatuSehat
 
 class DashboardController extends Controller
 {
@@ -119,7 +120,6 @@ class DashboardController extends Controller
     
     /**
      * Method untuk menyimpan hasil pemeriksaan.
-     * [MODIFIED] Menghandle kasus "Tanpa Obat tapi Ada Tindakan"
      */
     public function simpanPemeriksaan(Request $request, ClinicQueue $antrean)
     {
@@ -201,7 +201,6 @@ class DashboardController extends Controller
             }
 
             // 3. Simpan Tindakan / Pemeriksaan Tambahan
-            // Kita simpan dulu tindakannya untuk memastikan data masuk
             if (!empty($validatedData['actions'])) {
                 foreach ($validatedData['actions'] as $actionItem) {
                     $masterAction = MedicalAction::find($actionItem['id']);
@@ -219,8 +218,7 @@ class DashboardController extends Controller
                 }
             }
 
-            // 4. [LOGIKA BARU] Penentuan Apakah Perlu Tagihan/Resep
-            // Kita buat tagihan jika ada OBAT atau ada TINDAKAN
+            // 4. Penentuan Apakah Perlu Tagihan/Resep
             $hasMedicines = !empty($validatedData['medicines']);
             $hasActions   = !empty($validatedData['actions']);
             
@@ -229,11 +227,10 @@ class DashboardController extends Controller
                 $prescription = Prescription::create([
                     'medical_record_id' => $medicalRecord->id,
                     'prescription_date' => now(),
-                    'total_price' => 0, // Akan dihitung ulang oleh PaymentService
+                    'total_price' => 0, 
                     'payment_status' => 'pending' 
                 ]);
 
-                // Jika ada obat, masukkan ke detail
                 if ($hasMedicines) {
                     foreach ($validatedData['medicines'] as $med) {
                         $medicine = Medicine::lockForUpdate()->find($med['id']);
@@ -254,8 +251,6 @@ class DashboardController extends Controller
                     }
                 }
                 
-                // Buat Antrean Farmasi / Kasir
-                // Walaupun tidak ada obat (cuma tindakan), pasien tetap harus ke "Farmasi/Kasir" untuk bayar
                 $todayStart = now()->startOfDay();
                 $countToday = PharmacyQueue::where('created_at', '>=', $todayStart)->count();
                 $nextQueueNumberInt = $countToday + 1;
@@ -265,26 +260,52 @@ class DashboardController extends Controller
                     'clinic_queue_id' => $antrean->id,
                     'prescription_id' => $prescription->id,
                     'pharmacy_queue_number' => $formattedQueueNumber, 
-                    // Jika obat kosong tapi ada tindakan, status bisa langsung 'SIAP_DIAMBIL' atau tetap 'DALAM_ANTREAN'
-                    // Agar sederhana, kita samakan 'DALAM_ANTREAN', kasir nanti tinggal proses bayar.
                     'status' => 'DALAM_ANTREAN', 
                     'entry_time' => now(),
                 ]);
             }
 
-            // 5. Update Status Antrean Klinik jadi SELESAI
+            // 5. Update Status Antrean
             $antrean->update([
                 'finish_time' => now(),
                 'status' => 'SELESAI',
             ]);
 
-            DB::commit();
+            DB::commit(); // <--- SIMPAN LOKAL SUKSES
+
+            // ====================================================================
+            // [BARU] 6. KIRIM REKAM MEDIS KE SATUSEHAT KEMENKES (NON-BLOCKING)
+            // ====================================================================
+            try {
+                // Hanya kirim jika pasien memiliki IHS Number
+                if (!empty($patient->ihs_number)) {
+                    $satuSehat = new SatuSehatService();
+                    
+                    // Kita oper object medical record, ini akan di-handle di Service
+                    $response = $satuSehat->sendMedicalRecord($medicalRecord);
+                    
+                    if ($response['success'] && isset($response['encounter_id'])) {
+                        // Simpan ID Kunjungan Kemenkes ke DB kita
+                        $medicalRecord->update([
+                            'satusehat_encounter_id' => $response['encounter_id']
+                        ]);
+                        Log::info("SatuSehat Success: MR {$medicalRecord->id} sent to Kemenkes.");
+                    } else {
+                        Log::warning("SatuSehat Failed: " . ($response['message'] ?? 'Unknown Error'));
+                    }
+                }
+            } catch (\Exception $e) {
+                // Jika error, biarkan saja (jangan di-rollback). Data lokal klinik tetap aman!
+                Log::error("SatuSehat Exception: " . $e->getMessage());
+            }
+            // ====================================================================
+
             return redirect()->route('dokter.dashboard')->with('success', 'Pemeriksaan selesai dan rekam medis berhasil disimpan.');
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("Gagal menyimpan pemeriksaan: {$e->getMessage()}");
-             return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('error', 'Terjadi kesalahan sistem: ' . $e->getMessage());
         }
     }
 }

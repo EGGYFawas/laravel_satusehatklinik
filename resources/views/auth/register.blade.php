@@ -51,18 +51,15 @@
 
         <!-- Bagian Branding (Kiri) -->
         <div class="w-full md:w-[45%] bg-brand-primary/10 text-center p-8 flex flex-col justify-center items-center order-last md:order-first">
-            {{-- Ganti src ini jika path gambar Anda berbeda --}}
             <img src="{{ asset('assets/img/logo_login.png') }}" alt="Ilustrasi Medis" class="max-w-[250px] mb-6">
             
             <p class="text-lg font-medium text-text-dark mb-6">“Berobat lebih mudah tanpa antri”</p>
             
             <div class="flex items-center gap-4 w-full justify-center">
-                {{-- Tombol Kembali --}}
                 <a href="{{ route('login') }}" 
                    class="w-1/2 bg-blue-200 text-putih font-semibold py-3 px-6 rounded-full hover:opacity-90 transition-opacity duration-300 shadow-lg">
                    Kembali
                 </a>
-                {{-- Tombol untuk men-submit form di sebelah kanan --}}
                 <button type="submit" form="registerForm" 
                         class="w-1/2 bg-brand-primary text-brand-text font-semibold py-3 px-6 rounded-full hover:opacity-90 transition-opacity duration-300 shadow-lg">
                    Daftar Akun
@@ -89,6 +86,9 @@
             <form id="registerForm" action="{{ route('register') }}" method="POST" class="space-y-3">
                 @csrf
                 
+                <!-- [BARU] Hidden Input untuk menyimpan ID SatuSehat dari Kemenkes -->
+                <input type="hidden" id="ihs_number" name="ihs_number" value="{{ old('ihs_number') }}">
+
                 {{-- NIK Input dengan wrapper --}}
                 <div class="relative">
                     <label for="nik" class="block text-sm font-medium text-text-dark mb-1">NIK</label>
@@ -128,19 +128,17 @@
 
                 <div>
                     <label for="email" class="block text-sm font-medium text-text-dark mb-1">Email</label>
-                    <!-- Tambahkan autocomplete="off" dan trik readonly + onfocus -->
                     <input type="email" id="email" name="email" value="" required placeholder="contoh: email@gmail.com"
                            autocomplete="off"
                            readonly
                            onfocus="this.removeAttribute('readonly');"
                            style="background-color: white;" 
                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary transition">
-                        <small class="text-xs text-text-grey mt-1">Akun email Harus valid untuk verifikasi email.</small>
+                    <small class="text-xs text-text-grey mt-1">Akun email Harus valid untuk verifikasi email.</small>
                 </div>
                 
                 <div>
                     <label for="password" class="block text-sm font-medium text-text-dark mb-1">Password</label>
-                    <!-- Gunakan autocomplete="new-password" agar browser tahu ini password baru -->
                     <input type="password" id="password" name="password" required placeholder="Buat Password Anda"
                            autocomplete="new-password"
                            readonly
@@ -203,7 +201,6 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // --- Konstanta Form ---
     const passwordInput = document.getElementById('password');
     const confirmPasswordInput = document.getElementById('password_confirmation');
     const messageElement = document.getElementById('passwordMatchMessage');
@@ -214,20 +211,18 @@ document.addEventListener('DOMContentLoaded', function() {
     const nikStatusIndicator = document.getElementById('nik_status_indicator');
     const nikMessage = document.getElementById('nik_message');
     const emailInput = document.getElementById('email');
+    const ihsNumberInput = document.getElementById('ihs_number'); // ID SatuSehat
 
-    // --- Konstanta Modal ---
     const accountExistsModal = document.getElementById('accountExistsModal');
     const modalBackdrop = document.getElementById('modalBackdrop');
     const modalPanel = document.querySelector('.modal-panel');
     const modalPatientName = document.getElementById('modalPatientName');
     const closeModalBtn = document.getElementById('closeModalBtn');
-    let fetchNikTimer; // Timer untuk debounce
+    let fetchNikTimer; 
 
-    // --- Fungsi Modal ---
     function openModal(patientName) {
         modalPatientName.textContent = patientName;
         accountExistsModal.classList.remove('hidden');
-        // Trigger transisi
         setTimeout(() => {
             modalBackdrop.classList.remove('opacity-0');
             modalPanel.classList.remove('opacity-0', 'scale-95');
@@ -235,20 +230,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function closeModal() {
-        // Trigger transisi keluar
         modalBackdrop.classList.add('opacity-0');
         modalPanel.classList.add('opacity-0', 'scale-95');
-        // Sembunyikan setelah transisi selesai
-        setTimeout(() => {
-            accountExistsModal.classList.add('hidden');
-        }, 300); // 300ms = durasi transisi
+        setTimeout(() => { accountExistsModal.classList.add('hidden'); }, 300); 
     }
 
-    // Event listener untuk menutup modal
     closeModalBtn.addEventListener('click', closeModal);
     modalBackdrop.addEventListener('click', closeModal);
 
-    // --- Logika Password Matcher ---
     function validatePassword() {
         messageElement.classList.remove('text-green-600', 'text-red-600');
         if (confirmPasswordInput.value === '') { messageElement.textContent = ''; return; }
@@ -263,9 +252,6 @@ document.addEventListener('DOMContentLoaded', function() {
     passwordInput.addEventListener('input', validatePassword);
     confirmPasswordInput.addEventListener('input', validatePassword);
 
-    // --- Logika NIK Auto-fill ---
-
-    // Fungsi untuk mengunci/membuka form data pasien
     function setPatientFormReadOnly(isReadOnly) {
         nameInput.readOnly = isReadOnly;
         dobInput.readOnly = isReadOnly;
@@ -282,7 +268,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Fungsi untuk mereset form data akun
     function resetAccountForm() {
         emailInput.value = '';
         passwordInput.value = '';
@@ -291,27 +276,23 @@ document.addEventListener('DOMContentLoaded', function() {
         messageElement.classList.remove('text-green-600', 'text-red-600');
     }
 
-    // Fungsi untuk mereset form data pasien
     function resetPatientForm() {
         nameInput.value = '';
         dobInput.value = '';
         genderSelect.value = '';
+        ihsNumberInput.value = ''; // Kosongkan IHS
         nikMessage.classList.add('hidden');
         nikMessage.textContent = '';
-        setPatientFormReadOnly(false); // Buka kunci form
+        setPatientFormReadOnly(false); 
     }
 
-    // Set form ke non-readonly saat halaman dimuat
     setPatientFormReadOnly(false);
-    // Jika ada input lama (dari error validasi), biarkan form terbuka dan isi email
     if (nameInput.value && '{{ old('full_name') }}') {
          setPatientFormReadOnly(false);
          emailInput.value = '{{ old('email') }}';
     } else {
-        // Pastikan form akun kosong saat pertama kali memuat
         resetAccountForm();
     }
-
 
     nikInput.addEventListener('input', function() {
         clearTimeout(fetchNikTimer);
@@ -319,19 +300,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
         nikStatusIndicator.className = 'nik-status-indicator';
         nikMessage.classList.add('hidden');
-        nikMessage.textContent = ''; // Hapus pesan NIK sebelumnya
+        nikMessage.textContent = ''; 
 
         if (nik.length !== 16) {
-            if (nameInput.readOnly) {
-                 resetPatientForm();
-            }
+            if (nameInput.readOnly) { resetPatientForm(); }
             return;
         }
 
         nikStatusIndicator.className = 'nik-status-indicator loading';
-        setPatientFormReadOnly(true); // Kunci form sementara loading
-        
-        // Reset form akun SETIAP kali NIK 16 digit diketik
+        setPatientFormReadOnly(true); 
         resetAccountForm();
 
         fetchNikTimer = setTimeout(() => {
@@ -346,55 +323,64 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(data => {
                     if (data.found) {
                         if (data.has_account) {
-                            // Skenario 1: NIK Ditemukan TAPI SUDAH PUNYA AKUN
+                            // Skenario 1: Sudah ada di DB Lokal dan Punya Akun
                             nikStatusIndicator.className = 'nik-status-indicator error';
-                            nikStatusIndicator.innerHTML = '&#10005;'; // X mark
+                            nikStatusIndicator.innerHTML = '&#10005;'; 
+                            openModal(data.data.full_name); 
                             
-                            openModal(data.data.full_name); // Panggil modal
-                            
-                            // Isi form dengan data, lalu kunci
                             nameInput.value = data.data.full_name;
                             dobInput.value = data.data.date_of_birth;
                             genderSelect.value = data.data.gender;
-                            setPatientFormReadOnly(true); // Kunci form
+                            setPatientFormReadOnly(true); 
 
                         } else {
-                            // Skenario 2: NIK Ditemukan & BELUM PUNYA AKUN (Pasien walk-in)
+                            // Skenario 2: Belum punya akun (Bisa dari lokal walk-in ATAU dari SatuSehat Kemenkes)
                             nikStatusIndicator.className = 'nik-status-indicator success';
-                            nikStatusIndicator.innerHTML = '&#10003;'; // Checkmark
+                            nikStatusIndicator.innerHTML = '<i class="fas fa-check-circle"></i>'; 
                             
-                            nikMessage.textContent = 'Data pasien ditemukan. Silakan lengkapi email & password.';
-                            nikMessage.classList.remove('hidden', 'text-red-600');
-                            nikMessage.classList.add('text-green-600');
+                            if (data.is_satusehat) {
+                                nikMessage.innerHTML = '<strong>Data Tervalidasi Kemenkes RI!</strong> Silakan lengkapi akun Anda.';
+                                nikMessage.classList.remove('hidden', 'text-red-600', 'text-green-600');
+                                nikMessage.classList.add('text-blue-600'); // Biru biar beda
+                            } else {
+                                nikMessage.textContent = 'Data pasien lama (Walk-in) ditemukan. Silakan buat akun.';
+                                nikMessage.classList.remove('hidden', 'text-red-600', 'text-blue-600');
+                                nikMessage.classList.add('text-green-600');
+                            }
 
                             nameInput.value = data.data.full_name;
                             dobInput.value = data.data.date_of_birth;
                             genderSelect.value = data.data.gender;
                             
-                            setPatientFormReadOnly(true); // Kunci form karena data ada
+                            // Set IHS number jika dikirim dari server
+                            if (data.data.ihs_number) {
+                                ihsNumberInput.value = data.data.ihs_number;
+                            }
+                            
+                            setPatientFormReadOnly(true); 
                         }
                     } else {
-                        // Skenario 3: NIK Tidak Ditemukan
+                        // Skenario 3: NIK Tidak Ditemukan di lokal maupun di Kemenkes
                         nikStatusIndicator.className = 'nik-status-indicator';
                         
-                        nikMessage.textContent = 'NIK tidak ditemukan. Silakan lengkapi data diri Anda.';
-                        nikMessage.classList.remove('hidden', 'text-red-600', 'text-green-600');
-                        nikMessage.classList.add('text-blue-600');
+                        nikMessage.textContent = 'NIK tidak ditemukan di database. Silakan isi manual.';
+                        nikMessage.classList.remove('hidden', 'text-red-600', 'text-green-600', 'text-blue-600');
+                        nikMessage.classList.add('text-gray-500');
 
-                        resetPatientForm(); // Ini akan mengosongkan form pasien
-                        setPatientFormReadOnly(false); // Buka kunci form
+                        resetPatientForm(); 
+                        setPatientFormReadOnly(false); 
                     }
                 })
                 .catch(error => {
                     console.error('Fetch Error:', error);
                     nikStatusIndicator.className = 'nik-status-indicator error';
-                    nikStatusIndicator.innerHTML = '&#10005;'; // X mark
+                    nikStatusIndicator.innerHTML = '&#10005;'; 
                     
-                    nikMessage.textContent = 'Gagal mengambil data. Coba lagi.';
+                    nikMessage.textContent = 'Gagal memvalidasi NIK. Cek koneksi Anda.';
                     nikMessage.classList.remove('hidden');
                     nikMessage.classList.add('text-red-600');
                     
-                    setPatientFormReadOnly(false); // Buka kunci form
+                    setPatientFormReadOnly(false); 
                 });
         }, 500);
     });
