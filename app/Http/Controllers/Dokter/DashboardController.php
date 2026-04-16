@@ -111,10 +111,57 @@ class DashboardController extends Controller
             return redirect()->back()->with('error', 'Selesaikan pemeriksaan pasien saat ini terlebih dahulu.');
         }
 
+        // 1. Update status antrean yang dipanggil
         $antrean->update([
             'status'    => 'DIPANGGIL',
             'call_time' => now(),
         ]);
+
+        // ====================================================================
+        // 2. [LOGIKA PUSH NOTIF WA] CEK PASIEN URUTAN KE-2 SELANJUTNYA
+        // ====================================================================
+        try {
+            // Ambil daftar antrean yang masih menunggu/hadir di Poli & Dokter yang sama hari ini
+            // Tambahkan 'poli' di eager loading agar tidak berat saat memanggil nama poli
+            $antreanSelanjutnya = ClinicQueue::with(['patient.user', 'poli'])
+                ->where('doctor_id', $doctor->id)
+                ->whereDate('registration_time', today())
+                ->whereIn('status', ['MENUNGGU', 'HADIR'])
+                ->orderBy('registration_time', 'asc') // Urutkan berdasarkan waktu daftar
+                ->get();
+
+            // Cek apakah ada pasien di urutan ke-2 (Index 1 array)
+            // Selisih 2 orang = Jika sekarang no 4 masuk, no 5 itu index 0, no 6 itu index 1.
+            if ($antreanSelanjutnya->count() >= 2) {
+                $pasienTargetWA = $antreanSelanjutnya[1]; // Ambil orang kedua di daftar tunggu
+                
+                // Cari nomor HP (Bisa dari tabel user kalau dia daftar online, atau tabel patient kalau walk-in)
+                $noHp = $pasienTargetWA->patient->user->phone ?? $pasienTargetWA->patient->phone ?? null;
+
+                if (!empty($noHp)) {
+                    $namaPasien = $pasienTargetWA->patient->user->full_name ?? $pasienTargetWA->patient->full_name;
+                    $noAntreanTarget = $pasienTargetWA->queue_number;
+                    $namaPoli = $pasienTargetWA->poli->name ?? 'Poli';
+                    $namaKlinik = \App\Models\ClinicSetting::first()->name ?? 'Klinik Sehat';
+
+                    // Buat template pesan WhatsApp
+                    $pesan = "🔔 *PENGINGAT ANTREAN - {$namaKlinik}*\n\n"
+                           . "Halo Bpk/Ibu *$namaPasien*,\n\n"
+                           . "Pemberitahuan bahwa antrean Anda dengan nomor *$noAntreanTarget* di *$namaPoli* akan segera dipanggil (kurang 2 antrean lagi).\n\n"
+                           . "Mohon untuk segera bersiap dan menuju ke ruang tunggu depan ruangan dokter.\n\n"
+                           . "Terima kasih dan semoga lekas sembuh! 🙏";
+
+                    // Kirim pesan menggunakan Fonnte Service
+                    $fonnte = new \App\Services\FonnteService();
+                    $fonnte->sendMessage($noHp, $pesan);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error("Gagal mengirim WA Panggilan: " . $e->getMessage());
+            // Sengaja tidak di-throw error ke halaman dokter agar proses panggil pasien tetap lancar meskipun WA gagal terkirim
+        }
+        // ====================================================================
+
         return redirect()->route('dokter.dashboard')->with('success', "Pasien dengan nomor antrean {$antrean->queue_number} telah dipanggil.");
     }
     

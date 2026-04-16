@@ -28,6 +28,9 @@ class MedicalRecord extends Model
         // Data ini disimpan tapi nanti TIDAK PERLU ditampilkan di view Pasien
         'primary_icd10_code',
         'primary_icd10_name',
+
+        // [BARU] Wajib ditambahkan agar sistem bisa menyimpan ID dari Kemenkes
+        'satusehat_encounter_id',
     ];
 
     public function clinicQueue()
