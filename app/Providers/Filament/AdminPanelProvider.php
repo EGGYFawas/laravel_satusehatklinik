@@ -32,32 +32,28 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin') 
-            ->login(false) 
+            // PERUBAHAN 1: Jika Anda menggunakan Breeze/UI custom, biarkan false.
+            // Tapi JIKA ANDA INGIN PAKAI LOGIN BAWAAN FILAMENT, ini HARUS ->login()
+            ->login() // <-- KITA AKTIFKAN SEMENTARA UNTUK MEMASTIKAN
             
+            // PERUBAHAN 2: TEGASKAN GUARD
+            ->authGuard('web') 
+
             // === MODIFIKASI BRANDING & TEMA ===
             ->brandLogo(asset('assets/img/logo_login.png'))
-            ->brandLogoHeight('5rem') // Logo lebih besar
+            ->brandLogoHeight('5rem') 
             ->font('Poppins')
             ->colors([
-                'primary' => '#4F46E5', // Warna primer dari referensi
-                'gray' => Color::Slate, // Warna gray yang lebih formal
+                'primary' => '#4F46E5', 
+                'gray' => Color::Slate, 
             ])
-            // === AKHIR MODIFIKASI BRANDING ===
 
-            // === [FIXED] FITUR BARU: SIDEBAR BUKA-TUTUP ===
+            // === FITUR BARU: SIDEBAR BUKA-TUTUP ===
             ->sidebarCollapsibleOnDesktop(true) 
-            ->sidebarWidth('18rem') // Lebar sidebar (opsional)
-            // === AKHIR PERBAIKAN ===
+            ->sidebarWidth('18rem') 
 
-            // === [PERBAIKAN ERROR] FITUR BARU: TOMBOL LOGOUT ===
-            ->profile(isSimple: false) // Menampilkan dropdown user lengkap
-            
-            // === [DIHAPUS] SEMUA BLOK userMenuItems DIHAPUS ===
-            
-            // === [PENGHAPUSAN STRATEGI C] ===
-            // HAPUS baris ->viteTheme(...) dari sini
-            // ->viteTheme('resources/css/filament-theme.css') 
-            // === AKHIR PENGHAPUSAN ===
+            // === FITUR BARU: TOMBOL LOGOUT ===
+            ->profile(isSimple: false) 
             
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
