@@ -17,6 +17,19 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 
+/*
+|--------------------------------------------------------------------------
+| TAMBAHKAN ROUTE INI DI routes/web.php
+|--------------------------------------------------------------------------
+|
+| Pastikan Anda menambahkan route ini di dalam grup middleware
+| 'auth' dan 'role:petugas_loket' Anda.
+|
+| Route::get('/petugas-loket/check-patient-nik/{nik}', [AntreanOfflineController::class, 'checkPatientByNIK'])->name('petugas-loket.check-patient-nik');
+| Route::get('/petugas-loket/check-bpjs/{nik}', [AntreanOfflineController::class, 'checkBpjsStatus'])->name('petugas-loket.check-bpjs');
+|
+*/
+
 class AntreanOfflineController extends Controller
 {
     /**

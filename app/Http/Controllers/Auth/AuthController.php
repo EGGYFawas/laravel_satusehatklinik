@@ -14,9 +14,8 @@ use Illuminate\Support\Facades\Password;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Validation\Rules\Password as PasswordRules;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str; 
-use Illuminate\Auth\Events\PasswordReset; 
-use App\Services\SatuSehatService; // [BARU] Wajib di-import untuk cek NIK Kemenkes
+use Illuminate\Support\Str; // [BARU] Wajib untuk generate token
+use Illuminate\Auth\Events\PasswordReset; // [BARU] Event reset password
 
 class AuthController extends Controller
 {
@@ -45,8 +44,7 @@ class AuthController extends Controller
             'date_of_birth' => 'required|date',
             'email' => 'required|string|email|max:255|unique:users,email',
             'password' => ['required', 'confirmed', PasswordRules::min(6)],
-            'terms' => 'accepted',
-            'ihs_number' => 'nullable|string' // [BARU] Menangkap ID SatuSehat dari form hidden
+            'terms' => 'accepted'
         ], [
             'full_name.required' => 'Nama lengkap wajib diisi.',
             'nik.required' => 'NIK wajib diisi.',
@@ -92,24 +90,18 @@ class AuthController extends Controller
                     ]);
                 }
                 
-                // Jika data lama belum ada IHS Number tapi di form ada (hasil tembak API baru), update sekalian
-                $updateData = ['user_id' => $user->id];
-                if (empty($existingPatient->ihs_number) && !empty($validatedData['ihs_number'])) {
-                    $updateData['ihs_number'] = $validatedData['ihs_number'];
-                }
-
-                $existingPatient->update($updateData);
-
+                $existingPatient->update([
+                    'user_id' => $user->id,
+                ]);
                 Log::info('Akun user baru (ID: ' . $user->id . ') berhasil ditautkan ke pasien lama (ID: ' . $existingPatient->id . ') via NIK.');
             } else {
-                // Jika pasien benar-benar baru (Skenario dari SatuSehat atau Manual Baru)
+                // Jika pasien benar-benar baru
                 Patient::create([
                     'user_id' => $user->id,
                     'full_name' => strtoupper($validatedData['full_name']),
                     'nik' => $validatedData['nik'],
                     'gender' => $validatedData['gender'],
                     'date_of_birth' => $validatedData['date_of_birth'],
-                    'ihs_number' => $validatedData['ihs_number'] ?? null, // [BARU] Simpan IHS Number
                 ]);
             }
 
@@ -198,7 +190,7 @@ class AuthController extends Controller
     }
 
     // =========================================================================
-    // 3. BAGIAN CEK NIK (AJAX UNTUK FRONTEND & SATUSEHAT INJECTION)
+    // 3. BAGIAN CEK NIK (AJAX UNTUK FRONTEND)
     // =========================================================================
 
     /**
@@ -214,55 +206,30 @@ class AuthController extends Controller
             return response()->json(['error' => 'NIK tidak valid.'], 400);
         }
 
-        // 1. CEK KE DATABASE LOKAL DULU (Data Walk-in Loket)
         $patient = Patient::where('nik', $nik)->first();
 
-        if ($patient) {
-            $patientData = [
-                'full_name' => $patient->full_name,
-                'date_of_birth' => $patient->date_of_birth,
-                'gender' => $patient->gender,
-                'ihs_number' => $patient->ihs_number ?? null // Ambil IHS jika sudah ada
-            ];
+        if (!$patient) {
+            return response()->json(['found' => false]);
+        }
 
+        $patientData = [
+            'full_name' => $patient->full_name,
+            'date_of_birth' => $patient->date_of_birth,
+            'gender' => $patient->gender,
+        ];
+
+        if ($patient->user_id) {
             return response()->json([
                 'found' => true,
-                'is_satusehat' => false, // Flag bahwa ini data lokal
-                'has_account' => $patient->user_id ? true : false,
+                'has_account' => true,
                 'data' => $patientData
             ]);
         }
 
-        // 2. JIKA LOKAL TIDAK ADA, TEMBAK API SATUSEHAT KEMENKES!
-        // Pastikan class SatuSehatService sudah lo buat di app/Services/SatuSehatService.php
-        $satuSehat = new SatuSehatService();
-        $kemenkesResponse = $satuSehat->getPatientByNIK($nik);
-
-        if ($kemenkesResponse['success']) {
-            $satusehatData = $kemenkesResponse['data'];
-
-            // Format gender Kemenkes (male/female) ke format DB kita
-            $genderLokal = '';
-            if (strtolower($satusehatData['gender']) == 'male') $genderLokal = 'Laki-laki';
-            if (strtolower($satusehatData['gender']) == 'female') $genderLokal = 'Perempuan';
-
-            return response()->json([
-                'found' => true,
-                'is_satusehat' => true, // Flag penting buat merubah warna teks di Frontend
-                'has_account' => false, // Dari Kemenkes pasti belum punya akun di web klinik kita
-                'data' => [
-                    'full_name' => strtoupper($satusehatData['name']),
-                    'date_of_birth' => $satusehatData['birthDate'],
-                    'gender' => $genderLokal,
-                    'ihs_number' => $satusehatData['ihs_number'] // Wajib dikirim ke view
-                ]
-            ]);
-        }
-
-        // 3. JIKA LOKAL KOSONG & KEMENKES KOSONG / ERROR
         return response()->json([
-            'found' => false,
-            'message' => $kemenkesResponse['message'] ?? 'Data tidak ditemukan.'
+            'found' => true,
+            'has_account' => false,
+            'data' => $patientData
         ]);
     }
 
@@ -292,6 +259,7 @@ class AuthController extends Controller
     }
 
     // --- [BARU] RESET PASSWORD (Proses Update Password) ---
+    // Method ini yang tadi hilang dan menyebabkan error
     
     public function resetPassword(Request $request)
     {
@@ -329,7 +297,7 @@ class AuthController extends Controller
 
     public function showVerificationNotice()
     {
-        // Tampilkan view yang meminta user cek email
+        // Tampilkan view yang meminta user cek email (resources/views/auth/verify.blade.php)
         return view('auth.verify'); 
     }
 

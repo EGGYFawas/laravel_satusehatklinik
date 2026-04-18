@@ -15,6 +15,40 @@
 
     <div class="w-full max-w-lg mx-auto pb-20">
         
+        <!-- Informasi Panduan Pembayaran -->
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 shadow-sm">
+            <h3 class="font-bold text-blue-800 mb-3 flex items-center">
+                <i class="fas fa-info-circle mr-2 text-xl"></i> Panduan Pembayaran
+            </h3>
+            <div class="space-y-3">
+                <!-- Metode Cash -->
+                <div class="flex items-start bg-white p-3 rounded-lg border border-blue-100">
+                    <div class="bg-green-100 p-2 rounded-full mr-3 flex-shrink-0">
+                        <i class="fas fa-money-bill-wave text-green-600"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-800 text-sm">Tunai (Cash)</h4>
+                        <p class="text-xs text-gray-600 mt-1 leading-relaxed">
+                            Silakan datang langsung ke <strong>Kasir Apotek</strong>. Sebutkan <strong>ID Tagihan</strong> yang tertera di kartu tagihan dan bayar dengan uang pas.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Metode Cashless -->
+                <div class="flex items-start bg-white p-3 rounded-lg border border-blue-100">
+                    <div class="bg-purple-100 p-2 rounded-full mr-3 flex-shrink-0">
+                        <i class="fas fa-mobile-alt text-purple-600 pl-1"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-gray-800 text-sm">Non-Tunai (QRIS)</h4>
+                        <p class="text-xs text-gray-600 mt-1 leading-relaxed">
+                            Klik tombol <strong>"Bayar Sekarang"</strong> di bawah. Setelah pembayaran sukses, silakan langsung menuju <strong>Loket Penyerahan Obat</strong>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Menampilkan Pesan Error atau Sukses -->
         @if(session('error'))
             <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-md shadow-sm" role="alert">
@@ -30,76 +64,48 @@
 
         <!-- Daftar Tagihan -->
         @forelse($bills as $bill)
+            {{-- [LOGIC FIX] Hitung Total Secara Dinamis (Obat + Tindakan + Jasa) --}}
             @php
-                $isBPJS = ($bill->medicalRecord->clinicQueue->payment_method ?? '') === 'BPJS';
-
                 // 1. Hitung Total Obat
                 $totalObat = 0;
                 foreach($bill->details as $detail) {
                     $totalObat += $detail->medicine->price * $detail->quantity;
                 }
 
-                // 2. Hitung Total Tindakan Medis 
+                // 2. Hitung Total Tindakan Medis (BARU)
                 $totalTindakan = 0;
+                // Pastikan akses ke relasi medicalRecord -> actions aman
                 $actions = $bill->medicalRecord->actions ?? collect([]); 
                 foreach($actions as $action) {
                     $totalTindakan += $action->price;
                 }
 
-                // 3. Biaya Jasa Layanan
+                // 3. Biaya Jasa Layanan (Admin)
                 $biayaLayanan = 15000;
 
                 // 4. Grand Total
                 $grandTotal = $totalObat + $totalTindakan + $biayaLayanan;
             @endphp
 
-            <!-- Panduan Pembayaran (Sembunyikan kalau BPJS) -->
-            @if(!$isBPJS && $bill->payment_status !== 'paid')
-                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 shadow-sm">
-                    <h3 class="font-bold text-blue-800 mb-3 flex items-center">
-                        <i class="fas fa-info-circle mr-2 text-xl"></i> Panduan Pembayaran
-                    </h3>
-                    <div class="space-y-3">
-                        <div class="flex items-start bg-white p-3 rounded-lg border border-blue-100">
-                            <div class="bg-green-100 p-2 rounded-full mr-3 flex-shrink-0"><i class="fas fa-money-bill-wave text-green-600"></i></div>
-                            <div>
-                                <h4 class="font-bold text-gray-800 text-sm">Tunai (Cash)</h4>
-                                <p class="text-xs text-gray-600 mt-1 leading-relaxed">Silakan datang langsung ke <strong>Kasir Apotek</strong>. Sebutkan <strong>ID Tagihan</strong> yang tertera di kartu tagihan dan bayar dengan uang pas.</p>
-                            </div>
-                        </div>
-                        <div class="flex items-start bg-white p-3 rounded-lg border border-blue-100">
-                            <div class="bg-purple-100 p-2 rounded-full mr-3 flex-shrink-0"><i class="fas fa-mobile-alt text-purple-600 pl-1"></i></div>
-                            <div>
-                                <h4 class="font-bold text-gray-800 text-sm">Non-Tunai (QRIS)</h4>
-                                <p class="text-xs text-gray-600 mt-1 leading-relaxed">Klik tombol <strong>"Bayar Sekarang"</strong> di bawah. Setelah pembayaran sukses, silakan langsung menuju <strong>Loket Penyerahan Obat</strong>.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            @endif
-
             <div class="bg-white rounded-xl shadow-md border border-gray-100 mb-6 overflow-hidden relative">
                 <!-- Header Card -->
                 <div class="px-4 py-3 bg-gray-50 border-b border-gray-100 flex justify-between items-start">
                     <div class="flex flex-col">
+                        <!-- Menampilkan ID Tagihan -->
                         <div class="flex items-center mb-1">
-                            <span class="bg-gray-200 text-gray-700 text-xs font-bold px-2 py-0.5 rounded mr-2">ID: #{{ $bill->id }}</span>
+                            <span class="bg-gray-200 text-gray-700 text-xs font-bold px-2 py-0.5 rounded mr-2">
+                                ID: #{{ $bill->id }}
+                            </span>
                         </div>
+                        
                         <p class="text-xs text-gray-500 font-medium uppercase tracking-wider mt-1">Tanggal Resep</p>
                         <p class="text-sm font-semibold text-gray-800">{{ $bill->created_at->format('d M Y') }}</p>
                     </div>
                     <div>
-                        <!-- [MODIFIKASI] Label LUNAS vs BPJS -->
                         @if($bill->payment_status == 'paid')
-                            @if($isBPJS)
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-800 border border-green-300">
-                                    <i class="fas fa-shield-alt mr-1"></i> DITANGGUNG BPJS
-                                </span>
-                            @else
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    <i class="fas fa-check-circle mr-1"></i> LUNAS
-                                </span>
-                            @endif
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <i class="fas fa-check-circle mr-1"></i> LUNAS
+                            </span>
                         @elseif($bill->payment_status == 'failed')
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                                 <i class="fas fa-times-circle mr-1"></i> GAGAL
@@ -132,7 +138,7 @@
                             </li>
                         @endforeach
 
-                        {{-- 2. LIST TINDAKAN --}}
+                        {{-- 2. LIST TINDAKAN (JIKA ADA) --}}
                         @if($actions->count() > 0)
                             <li class="text-xs text-gray-500 font-bold uppercase mt-3 pt-2 border-t border-gray-100">
                                 Tindakan Tambahan
@@ -164,6 +170,7 @@
                     <!-- Total Tagihan -->
                     <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg mb-4">
                         <span class="text-gray-600 font-bold text-sm">Total Tagihan</span>
+                        {{-- Menggunakan hasil perhitungan dinamis $grandTotal --}}
                         <span class="text-xl font-extrabold text-teal-600">Rp {{ number_format($grandTotal, 0, ',', '.') }}</span>
                     </div>
 

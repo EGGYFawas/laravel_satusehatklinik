@@ -65,22 +65,8 @@
                             <div class="flex items-start justify-between">
                                 <div>
                                     <p class="text-sm text-emerald-700">{{ $pasienSedangDipanggil ? 'Pasien Saat Ini:' : 'Pasien Berikutnya (Siap Dipanggil):' }}</p>
-                                    <p class="text-xl font-bold text-emerald-900 mb-1">{{ $patient->full_name }} ({{ \Carbon\Carbon::parse($patient->date_of_birth)->age }} thn)</p>
-                                    
-                                    <!-- [BARU] INDIKATOR SATU SEHAT -->
-                                    @if($patient->ihs_number)
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
-                                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-                                            SatuSehat ({{ $patient->ihs_number }})
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200" title="Data rekam medis ini tidak akan terkirim ke Kemenkes karena pasien belum divalidasi.">
-                                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
-                                            IHS Tidak Ditemukan
-                                        </span>
-                                    @endif
-                                    
-                                    <p class="text-sm text-gray-600 mt-2">No. Antrean: <span class="font-semibold">{{ $pasienAktif->queue_number }}</span></p>
+                                    <p class="text-xl font-bold text-emerald-900">{{ $patient->full_name }} ({{ \Carbon\Carbon::parse($patient->date_of_birth)->age }} thn)</p>
+                                    <p class="text-sm text-gray-600">No. Antrean: <span class="font-semibold">{{ $pasienAktif->queue_number }}</span></p>
                                 </div>
                                 <div class="text-right flex-shrink-0 ml-4">
                                     <p class="text-sm text-emerald-700">Keluhan Utama:</p>
@@ -186,7 +172,7 @@
                                                 Cari ICD-10
                                             </button>
                                         </div>
-                                        <p class="text-xs text-blue-600 mt-1">Diagnosis utama wajib menggunakan standar ICD-10 untuk integrasi SatuSehat.</p>
+                                        <p class="text-xs text-blue-600 mt-1">Diagnosis utama wajib menggunakan standar ICD-10. Data diambil langsung dari database.</p>
                                     </div>
 
                                     <!-- Diagnosis Tambahan (Tags) -->
@@ -198,7 +184,7 @@
                                         <p class="text-xs text-gray-500 mt-1">Gunakan ini untuk diagnosis sekunder atau catatan tambahan (bebas ketik).</p>
                                     </div>
 
-                                    <!-- TINDAKAN / PEMERIKSAAN TAMBAHAN -->
+                                    <!-- [BARU] TINDAKAN / PEMERIKSAAN TAMBAHAN -->
                                     <div class="bg-indigo-50 p-5 rounded-lg border border-indigo-200 shadow-sm relative overflow-hidden">
                                         <div class="absolute top-0 right-0 w-16 h-16 bg-indigo-100 rounded-bl-full opacity-50"></div>
                                         
@@ -227,7 +213,7 @@
                                             Tambah Tindakan
                                         </button>
                                     </div>
-                                    <!-- END TINDAKAN -->
+                                    <!-- END [BARU] TINDAKAN -->
 
                                     <div>
                                         <label for="doctor_notes" class="block text-lg font-semibold text-gray-700 mb-2">Rencana Penatalaksanaan (Plan) <span class="text-red-500">*</span></label>
@@ -238,7 +224,7 @@
                                         <h3 class="text-lg font-semibold text-gray-700 mb-3">Resep Obat</h3>
                                         <button type="button" id="showObatModalBtn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 px-4 rounded-md transition duration-300 ease-in-out transform hover:scale-105">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" /></svg>
-                                            Tambah & Pilih Obat
+                                                Tambah & Pilih Obat
                                         </button>
                                         <div id="resep-obat-list" class="mt-4 space-y-2"></div>
                                     </div>
@@ -286,8 +272,8 @@
             <div class="bg-white rounded-xl shadow-lg mb-8">
                 <h3 class="text-lg font-bold text-gray-800 border-b p-4 bg-green-50 text-green-800">Antrean Hadir Berikutnya</h3>
                 <div class="p-4 max-h-64 overflow-y-auto">
-                    @forelse($antreanHadir as $index => $antrean)
-                        <div class="flex items-center justify-between p-3 rounded-md border-b">
+                    @forelse($antreanMenunggu as $index => $antrean)
+                        <div class="flex items-center justify-between p-3 rounded-md {{ $loop->first ? 'bg-blue-50 border border-blue-200' : 'border-b' }}">
                             <div>
                                 <p class="font-bold text-xl text-gray-800">{{ $antrean->queue_number }}</p>
                                 <p class="text-sm text-gray-600">{{ $antrean->patient->user->full_name ?? $antrean->patient->full_name }}</p>
@@ -340,9 +326,9 @@
 
     @if($pasienAktif)
     <!-- MODAL OBAT -->
-    <div id="obatModal" class="fixed inset-0 flex items-center justify-center hidden z-50">
+    <div id="obatModal" class="fixed inset-0 flex items-center justify-center hidden">
         <div class="modal-backdrop" id="modalBackdrop"></div>
-        <div class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-3xl m-4 max-h-[90vh] flex flex-col relative z-50">
+        <div class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-3xl m-4 max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center p-5 border-b">
                 <h3 class="text-2xl font-bold text-gray-800">Formulir Resep Obat</h3>
                 <button id="closeModalBtn" class="text-gray-400 hover:text-gray-600">
@@ -362,7 +348,7 @@
         </div>
     </div>
 
-    <!-- MODAL ICD 10 -->
+    <!-- MODAL ICD 10 (AJAX) -->
     <div id="icd10Modal" class="fixed inset-0 flex items-center justify-center hidden z-50">
         <div class="fixed inset-0 bg-black bg-opacity-50" id="icd10ModalBackdrop"></div>
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl m-4 flex flex-col max-h-[85vh] z-50 relative">
@@ -374,6 +360,7 @@
             </div>
             
             <div class="p-5">
+                <!-- Search Bar -->
                 <div class="relative mb-4">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
@@ -384,11 +371,13 @@
                            placeholder="Ketik kode (Contoh: A00) atau nama penyakit..." autocomplete="off">
                 </div>
 
+                <!-- Loading Indicator -->
                 <div id="icd10Loading" class="hidden text-center py-4 text-blue-500">
                     <svg class="animate-spin h-5 w-5 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                     <span class="text-xs mt-1">Mencari di database...</span>
                 </div>
 
+                <!-- List Container -->
                 <div class="overflow-y-auto h-80 border border-gray-200 rounded-lg custom-scrollbar bg-gray-50" id="icd10ListContainer">
                      <div class="flex flex-col items-center justify-center h-full text-gray-400">
                         <svg class="w-12 h-12 mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 16l2.879-2.879m0 0a3 3 0 104.243-4.242 3 3 0 00-4.243 4.242zM21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>

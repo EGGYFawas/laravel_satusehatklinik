@@ -1,15 +1,9 @@
-\@php
-    $clinicSetting = \App\Models\ClinicSetting::first();
-    $clinicName = $clinicSetting?->name ?? 'Klinik Sehat';
-    $logoUrl = $clinicSetting?->logo ? asset('storage/' . $clinicSetting->logo) : asset('assets/img/logo_login.png');
-@endphp
-
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', $clinicName)</title>
+    <title>@yield('title', 'Klinik Sehat')</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- AlpineJS for easy state management -->
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -50,8 +44,8 @@
         >
             <!-- Logo -->
             <div class="p-4 mb-6 transition-all duration-300" :class="sidebarOpen ? 'p-4' : 'p-2'">
-                <div class="aspect-square bg-[#f1eff1] p-4 rounded-full shadow-lg flex items-center justify-center overflow-hidden">
-                    <img src="{{ $logoUrl }}" alt="Logo {{ $clinicName }}" class="w-full h-full object-contain" onerror="this.src='{{ asset('assets/img/logo_login.png') }}';">
+                <div class="aspect-square bg-[#f1eff1] p-4 rounded-full shadow-lg flex items-center justify-center">
+                    <img src="{{ asset('assets/img/logo_login.png') }}" alt="Logo Klinik" class="w-full h-full object-contain">
                 </div>
             </div>
             
@@ -120,3 +114,4 @@
     @stack('scripts')
 </body>
 </html>
+

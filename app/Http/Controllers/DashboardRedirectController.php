@@ -14,23 +14,25 @@ class DashboardRedirectController extends Controller
     {
         $user = Auth::user();
 
-        // UBAH: Dari 'admin' menjadi 'super_admin' (Sesuai DatabaseSeeder)
-        if ($user->hasRole('super_admin')) {
-            return redirect('/admin'); 
+        // Gunakan hasRole() dari Spatie untuk memeriksa peran pengguna
+        if ($user->hasRole('admin')) {
+            // BENAR: Menggunakan nama rute 'admin.dashboard'
+                        return redirect('/admin'); 
+
         }
 
-        // AMAN: Role 'dokter' sudah sesuai seeder
         if ($user->hasRole('dokter')) {
+            // Anda perlu mendefinisikan rute dengan nama 'dokter.dashboard'
             return redirect()->route('dokter.dashboard');
         }
 
-        // AMAN: Role 'petugas loket' (pakai spasi) sudah sesuai seeder
         if ($user->hasRole('petugas loket')) {
+             // Anda perlu mendefinisikan rute dengan nama 'apotek.dashboard'
             return redirect()->route('petugas-loket.dashboard');
         }
 
-        // AMAN: Role 'pasien' sudah sesuai seeder
         if ($user->hasRole('pasien')) {
+            // BENAR: Menggunakan nama rute 'pasien.dashboard'
             return redirect()->route('pasien.dashboard');
         }
 

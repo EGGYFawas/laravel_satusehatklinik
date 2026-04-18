@@ -15,7 +15,6 @@
         "livewire/livewire": "^3.6",
         "maatwebsite/excel": "^3.1",
         "midtrans/midtrans-php": "^2.6",
-        "nullpunkt/lz-string-php": "^1.3",
         "spatie/laravel-permission": "^6.21"
     },
     "require-dev": {
