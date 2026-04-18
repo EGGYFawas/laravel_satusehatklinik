@@ -20,7 +20,6 @@ class InvoiceController extends Controller
         $prescription = Prescription::with([
             'details.medicine', 
             'medicalRecord.patient',
-            'medicalRecord.actions', // <-- PENTING: Ambil data tindakan
             'pharmacyQueue.pharmacist' 
         ])->findOrFail($id);
 
@@ -73,7 +72,6 @@ class InvoiceController extends Controller
             'prescription' => $prescription,
             'patient' => $prescription->medicalRecord->patient,
             'details' => $prescription->details,
-            'actions' => $prescription->medicalRecord->actions, 
             
             // Variabel dinamis sesuai request
             'petugas' => $namaPetugas, 

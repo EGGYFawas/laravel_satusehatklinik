@@ -18,13 +18,10 @@ class DashboardController extends Controller
     {
         $today = Carbon::today();
 
-        // [MODIFIKASI] Tambahkan 'prescription.medicalRecord.actions'
-        // Ini wajib agar data tindakan (MedicalAction) terambil dan tidak error saat akses relasi 'actions'
         $allQueues = PharmacyQueue::with([
                 'clinicQueue.patient', 
                 'clinicQueue.poli',
-                'prescription.prescriptionDetails.medicine',
-                'prescription.medicalRecord.actions' // <--- PERBAIKAN DISINI
+                'prescription.prescriptionDetails.medicine'
             ])
             ->whereDate('entry_time', $today)
             ->orderBy('pharmacy_queue_number', 'asc')
@@ -33,10 +30,7 @@ class DashboardController extends Controller
         // Trigger hitung total jika 0
         $paymentService = new PaymentService();
         foreach ($allQueues as $q) {
-            // Pastikan prescription dan medicalRecord ada sebelum hitung
             if ($q->prescription && $q->prescription->total_price <= 0) {
-                // PaymentService akan mengakses relasi 'actions' di sini
-                // Karena sudah di-load di atas, ini akan lebih aman dan cepat
                 $paymentService->calculateTotal($q->prescription);
             }
         }

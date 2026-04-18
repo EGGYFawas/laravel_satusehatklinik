@@ -55,8 +55,8 @@ class HistoryController extends Controller
                                                 ->first();
                 if ($queueRegisteredByUser) {
                     $relationship = $queueRegisteredByUser->patient_relationship === 'Lainnya'
-                                            ? $queueRegisteredByUser->patient_relationship_custom
-                                            : $queueRegisteredByUser->patient_relationship;
+                                        ? $queueRegisteredByUser->patient_relationship_custom
+                                        : $queueRegisteredByUser->patient_relationship;
                 }
             }
 
@@ -93,15 +93,13 @@ class HistoryController extends Controller
         }
 
         // [MODIFIKASI UTAMA] Ambil semua riwayat kunjungan yang selesai
-        // Eager load relasi yang dibutuhkan untuk detail termasuk ACTIONS
+        // Eager load relasi yang dibutuhkan untuk detail
         $riwayatKunjungan = ClinicQueue::where('patient_id', $patient->id)
             ->where('status', 'SELESAI')
             ->with([
                 'poli', // Data poli
                 'doctor.user', // Data dokter
-                'medicalRecord.diagnosisTags', // Data diagnosis tags
-                'medicalRecord.actions', // [PENTING] Data Tindakan Medis
-                'medicalRecord.prescription.prescriptionDetails.medicine' // [PENTING] Detail obat biar query efisien
+                'medicalRecord.diagnosisTags' // Data rekam medis & diagnosis
             ])
             ->orderBy('finish_time', 'desc')
             ->get();
@@ -113,3 +111,4 @@ class HistoryController extends Controller
         return view('pasien.riwayat-detail', compact('patient', 'riwayatKunjungan', 'medicalRecordDetail'));
     }
 }
+

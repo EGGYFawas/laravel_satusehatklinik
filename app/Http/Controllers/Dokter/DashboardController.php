@@ -19,9 +19,7 @@ use App\Models\PharmacyQueue;
 use App\Models\Prescription;
 use App\Models\PrescriptionDetail;
 use App\Models\Medicine;
-use App\Models\Icd10;
-use App\Models\MedicalAction;
-use App\Models\MedicalRecordAction;
+use App\Models\Icd10; // Import Model ICD10
 
 class DashboardController extends Controller
 {
@@ -33,20 +31,23 @@ class DashboardController extends Controller
         $user = Auth::user();
         $doctor = Doctor::where('user_id', $user->id)->firstOrFail();
 
+        // Gunakan helper now() agar konsisten dengan timezone aplikasi (Asia/Jakarta)
         $startOfDay = now()->startOfDay();
         $endOfDay = now()->endOfDay();
 
         $allQueues = ClinicQueue::with('patient.user')
             ->where('doctor_id', $doctor->id)
+            // Filter antrean HANYA hari ini
             ->whereBetween('registration_time', [$startOfDay, $endOfDay])
-            ->orderBy('check_in_time', 'asc')
-            ->orderBy('queue_number', 'asc')
+            ->orderBy('check_in_time', 'asc') // Urutkan yang sudah check-in duluan
+            ->orderBy('queue_number', 'asc')  // Lalu urutkan nomor antrean
             ->get();
 
         $pasienSedangDipanggil = $allQueues->firstWhere('status', 'DIPANGGIL');
         
         $pasienBerikutnya = null;
         if(!$pasienSedangDipanggil) {
+            // Prioritaskan pasien yang statusnya HADIR (sudah ada di klinik)
             $pasienBerikutnya = $allQueues->where('status', 'HADIR')->first();
         }
         
@@ -59,27 +60,32 @@ class DashboardController extends Controller
 
         $medicines = null;
         $diagnosisTags = null;
-        $availableActions = null;
         
         $pasienAktif = $pasienSedangDipanggil ?? $pasienBerikutnya;
 
         if ($pasienAktif) {
             $medicines = Medicine::where('stock', '>', 0)->orderBy('name', 'asc')->get(['id', 'name', 'stock']);
             $diagnosisTags = DiagnosisTag::orderBy('tag_name', 'asc')->get(['tag_name']);
-            $availableActions = MedicalAction::orderBy('name', 'asc')->get(['id', 'name', 'price']);
         }
 
         return view('dokter.dashboard', compact(
             'doctor', 'pasienSedangDipanggil', 'pasienBerikutnya', 'antreanHadir', 'antreanMenunggu',
-            'antreanSelesai', 'medicines', 'diagnosisTags', 'availableActions'
+            'antreanSelesai', 'medicines', 'diagnosisTags'
         ));
     }
 
+    /**
+     * [BARU] Method AJAX untuk mencari ICD-10 dari database (Server-side Filtering)
+     */
     public function searchIcd10(Request $request)
     {
         $query = $request->get('q');
-        if (!$query) return response()->json([]);
+        
+        if (!$query) {
+            return response()->json([]);
+        }
 
+        // Cari berdasarkan kode atau nama, batasi 30 hasil agar ringan
         $results = Icd10::where('code', 'like', "%{$query}%")
             ->orWhere('name', 'like', "%{$query}%")
             ->limit(30)
@@ -88,6 +94,9 @@ class DashboardController extends Controller
         return response()->json($results);
     }
 
+    /**
+     * Memanggil pasien berikutnya dalam antrean.
+     */
     public function panggilPasien(ClinicQueue $antrean)
     {
         $user = Auth::user();
@@ -101,8 +110,9 @@ class DashboardController extends Controller
             return redirect()->back()->with('error', 'Pasien belum melakukan check-in kehadiran.');
         }
 
+        // Cek apakah ada pasien lain yang MASIH status 'DIPANGGIL' hari ini
         $isCallingAnother = ClinicQueue::where('doctor_id', $doctor->id)
-            ->whereDate('registration_time', today())
+            ->whereDate('registration_time', today()) // today() mengikuti timezone app
             ->where('status', 'DIPANGGIL')
             ->exists();
 
@@ -166,7 +176,6 @@ class DashboardController extends Controller
     
     /**
      * Method untuk menyimpan hasil pemeriksaan.
-     * [MODIFIED] Menghandle kasus "Tanpa Obat tapi Ada Tindakan"
      */
     public function simpanPemeriksaan(Request $request, ClinicQueue $antrean)
     {
@@ -187,22 +196,19 @@ class DashboardController extends Controller
             'oxygen_saturation' => 'nullable|integer|min:0',
             'physical_examination_notes' => 'nullable|string|max:2000',
             
+            // Diagnosis Utama (Wajib ICD 10)
             'icd10_code' => 'required|string',
             'icd10_name' => 'required|string',
 
+            // Diagnosis Tambahan (Tags - Opsional)
             'diagnosis_tags' => 'nullable|array', 
             'diagnosis_tags.*' => 'string|max:100',
             
             'doctor_notes' => 'required|string|min:5',
-            
             'medicines' => 'nullable|array',
             'medicines.*.id' => 'required|exists:medicines,id',
             'medicines.*.quantity' => 'required|integer|min:1',
             'medicines.*.dosage' => 'required|string|max:255',
-
-            'actions' => 'nullable|array',
-            'actions.*.id' => 'required|exists:medical_actions,id',
-            'actions.*.result' => 'nullable|string|max:255',
         ], [
             'icd10_code.required' => 'Diagnosis Utama (ICD-10) wajib dipilih.',
             'doctor_notes.required' => 'Rencana Penatalaksanaan (Plan) wajib diisi.',
@@ -220,7 +226,7 @@ class DashboardController extends Controller
                 ]);
             }
 
-            // 1. Simpan Rekam Medis
+            // Simpan Rekam Medis
             $medicalRecord = MedicalRecord::create([
                 'clinic_queue_id' => $antrean->id,
                 'patient_id' => $patient->id,
@@ -237,7 +243,7 @@ class DashboardController extends Controller
                 'primary_icd10_name' => $validatedData['icd10_name'],
             ]);
 
-            // 2. Simpan Diagnosis Tambahan
+            // Simpan Diagnosis Tambahan
             $tagIds = [];
             if (!empty($validatedData['diagnosis_tags'])) {
                 foreach ($validatedData['diagnosis_tags'] as $tagName) {
@@ -247,79 +253,51 @@ class DashboardController extends Controller
                 $medicalRecord->diagnosisTags()->sync($tagIds);
             }
 
-            // 3. Simpan Tindakan / Pemeriksaan Tambahan
-            // Kita simpan dulu tindakannya untuk memastikan data masuk
-            if (!empty($validatedData['actions'])) {
-                foreach ($validatedData['actions'] as $actionItem) {
-                    $masterAction = MedicalAction::find($actionItem['id']);
-                    
-                    if($masterAction) {
-                        MedicalRecordAction::create([
-                            'medical_record_id' => $medicalRecord->id,
-                            'medical_action_id' => $masterAction->id,
-                            'action_name'       => $masterAction->name, 
-                            'price'             => $masterAction->price, 
-                            'result_notes'      => $actionItem['result'] ?? '-',
-                            'created_at'        => now(),
-                        ]);
-                    }
-                }
-            }
-
-            // 4. [LOGIKA BARU] Penentuan Apakah Perlu Tagihan/Resep
-            // Kita buat tagihan jika ada OBAT atau ada TINDAKAN
-            $hasMedicines = !empty($validatedData['medicines']);
-            $hasActions   = !empty($validatedData['actions']);
-            
-            if ($hasMedicines || $hasActions) {
-                
+            if (!empty($validatedData['medicines'])) {
                 $prescription = Prescription::create([
                     'medical_record_id' => $medicalRecord->id,
                     'prescription_date' => now(),
-                    'total_price' => 0, // Akan dihitung ulang oleh PaymentService
-                    'payment_status' => 'pending' 
                 ]);
 
-                // Jika ada obat, masukkan ke detail
-                if ($hasMedicines) {
-                    foreach ($validatedData['medicines'] as $med) {
-                        $medicine = Medicine::lockForUpdate()->find($med['id']);
-                        
-                        if ($medicine->stock < $med['quantity']) {
-                            DB::rollBack();
-                            return redirect()->back()->withInput()->with('error', "Stok obat {$medicine->name} tidak mencukupi.");
-                        }
-                        
-                        PrescriptionDetail::create([
-                            'prescription_id' => $prescription->id,
-                            'medicine_id' => $med['id'],
-                            'quantity' => $med['quantity'],
-                            'dosage' => $med['dosage'],
-                        ]);
-                        
-                        $medicine->decrement('stock', $med['quantity']);
+                foreach ($validatedData['medicines'] as $med) {
+                    $medicine = Medicine::find($med['id']);
+                    
+                    // Cek stok sebelum insert detail agar tidak minus
+                    if ($medicine->stock < $med['quantity']) {
+                        DB::rollBack();
+                        return redirect()->back()->withInput()->with('error', "Stok obat {$medicine->name} tidak mencukupi.");
                     }
+                    
+                    PrescriptionDetail::create([
+                        'prescription_id' => $prescription->id,
+                        'medicine_id' => $med['id'],
+                        'quantity' => $med['quantity'],
+                        'dosage' => $med['dosage'],
+                    ]);
+                    
+                    $medicine->decrement('stock', $med['quantity']);
                 }
                 
-                // Buat Antrean Farmasi / Kasir
-                // Walaupun tidak ada obat (cuma tindakan), pasien tetap harus ke "Farmasi/Kasir" untuk bayar
+                // --- [PERBAIKAN BUG KRUSIAL] ---
+                // Jangan gunakan Model statis yang berisiko salah casting string ke int.
+                // Hitung manual di sini agar antrean apotek selalu unique dan berurut.
                 $todayStart = now()->startOfDay();
                 $countToday = PharmacyQueue::where('created_at', '>=', $todayStart)->count();
                 $nextQueueNumberInt = $countToday + 1;
+                
                 $formattedQueueNumber = 'APT-' . str_pad($nextQueueNumberInt, 3, '0', STR_PAD_LEFT); 
 
                 PharmacyQueue::create([
                     'clinic_queue_id' => $antrean->id,
                     'prescription_id' => $prescription->id,
                     'pharmacy_queue_number' => $formattedQueueNumber, 
-                    // Jika obat kosong tapi ada tindakan, status bisa langsung 'SIAP_DIAMBIL' atau tetap 'DALAM_ANTREAN'
-                    // Agar sederhana, kita samakan 'DALAM_ANTREAN', kasir nanti tinggal proses bayar.
-                    'status' => 'DALAM_ANTREAN', 
+                    'status' => 'DALAM_ANTREAN',
                     'entry_time' => now(),
                 ]);
             }
 
-            // 5. Update Status Antrean Klinik jadi SELESAI
+            // Update Status Antrean Klinik jadi SELESAI
+            // Jika ini tidak tereksekusi (karena error di atas), dokter akan stuck.
             $antrean->update([
                 'finish_time' => now(),
                 'status' => 'SELESAI',

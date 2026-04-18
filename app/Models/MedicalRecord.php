@@ -75,10 +75,4 @@ class MedicalRecord extends Model
                     ->using(PrescriptionDetail::class)
                     ->withPivot('quantity', 'dosage');
     }
-
-    public function actions()
-    {
-        // Relasi HasMany ke Model MedicalRecordAction (Bukan MedicalAction!)
-        return $this->hasMany(MedicalRecordAction::class, 'medical_record_id');
-    }
 }
